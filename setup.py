@@ -3,7 +3,7 @@ from setuptools import setup
 setup(name='cosmicfish',
       version='0.1.0',
       description='A Fisher forecasting package for light relic cosmology.',
-      keywords=['fisher forecast cosmology neutrino dark matter']
+      keywords=['fisher forecast cosmology neutrino dark matter'], 
       url='https://github.com/ndeporzio/cosmicfish',
       author='Nicholas DePorzio, Julian Munoz',
       author_email='nicholasdeporzio@g.harvard.edu',
@@ -13,6 +13,7 @@ setup(name='cosmicfish',
       zip_safe=False,
       test_suite='nose.collector',
       tests_require=['nose'],
+      #dependency_links=['https://github.com/lesgourg/class_public'],
       scripts=[
           'bin/test-script',
       ], 
