@@ -1,0 +1,4 @@
+#!/usr/bin/env python
+
+import cosmicfish
+print("Test command line script for cosmicfish.")
