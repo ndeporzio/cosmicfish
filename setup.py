@@ -4,7 +4,7 @@ setup(name='cosmicfish',
       version='0.1.0',
       description='A Fisher forecasting package for light relic cosmology.',
       keywords=['fisher forecast cosmology neutrino dark matter']
-      url='http://github.com/ndeporzio/cosmicfish',
+      url='https://github.com/ndeporzio/cosmicfish',
       author='Nicholas DePorzio, Julian Munoz',
       author_email='nicholasdeporzio@g.harvard.edu',
       license='',
@@ -14,7 +14,7 @@ setup(name='cosmicfish',
       test_suite='nose.collector',
       tests_require=['nose'],
       scripts=[
-          'bin/test_script',
+          'bin/test-script',
       ], 
       install_requires=[
           'numpy',
