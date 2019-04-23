@@ -11,6 +11,8 @@ setup(name='cosmicfish',
       packages=['cosmicfish'],
       include_package_data=True,
       zip_safe=False,
+      test_suite='nose.collector',
+      tests_require=['nose'],
       install_requires=[
           'numpy',
           'matplotlib', 
