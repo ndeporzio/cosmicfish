@@ -3,3 +3,6 @@ __pycache__
 
 #Ignore virtual environment files
 /env
+
+#Ignore files relevant to jupyter notebooks
+.ipynb_checkpoints/

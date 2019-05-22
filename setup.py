@@ -15,7 +15,8 @@ setup(name='cosmicfish',
       tests_require=['nose'],
       #dependency_links=['https://github.com/lesgourg/class_public'],
       scripts=[
-          'bin/test-script',
+        'bin/test-script',
+        'bin/install_class.sh',  
       ], 
       install_requires=[
           'numpy',
