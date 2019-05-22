@@ -1,4 +1,5 @@
-
+#Ignore package binary (?) files
+__pycache__
 
 #Ignore virtual environment files
 /env
