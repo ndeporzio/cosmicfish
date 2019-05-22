@@ -64,6 +64,6 @@ def correct_path(pathname):
     fix2 = os.path.expandvars(fix1)
     fix3 = os.path.normpath(fix2)
     fix4 = os.path.abspath(fix3)
-    if not os.path.isfile(fix4): 
+    if not (os.path.isfile(fix4) or os.path.isdir(fix4)): 
         raise Exception("Invalid path: {}".format(fix4))
     return fix4    
