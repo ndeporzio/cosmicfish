@@ -14,9 +14,14 @@ class spectrum:
         self.h = None
         self.m_ncdm = None
         self.T_ncdm = None
+        self.z_pk = None 
         self.rawdata = None
         self.b_interp_table = None
         self.cdm_interp_table = None
+        self.ps_table = None
+        self.log_ps_table = None
+        self.dps_table = {}
+        self.log_dps_table = {}
         self.dataconfig = correct_path(datadirectory + "/test_parameters.ini")
         self.datapath = correct_path(datadirectory + "/test_tk.dat")
         self.input()
@@ -54,7 +59,21 @@ class spectrum:
         self.b_interp_table = np.interp(k_table, self.rawdata['k (h/Mpc)'], self.rawdata['d_b'])
         self.cdm_interp_table = np.interp(k_table, self.rawdata['k (h/Mpc)'], self.rawdata['d_cdm']) 
 
+    def generate_power_spectrum(self, omega_b, omega_cdm, k_table, primordial_table): 
+        fb = omega_b / (omega_b + omega_cdm) 
+        fcdm = omega_cdm / (omega_b + omega_cdm)
+        table = np.power(self.b_interp_table*fb + self.cdm_interp_table*fcdm, 2.) * primordial_table
+        self.ps_table = table
+        self.log_ps_table = np.log(table) 
+
+    def dPs(self, fid_ps_table, step, theta):
+        table = (self.ps_table - fid_ps_table) / step 
+        self.dps_table[theta] = table 
+        self.log_dps_table[theta] = np.log(table)
+
+ 
         
+                
     
             
 

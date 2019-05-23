@@ -21,18 +21,20 @@ def install_class(classdir):
 
 def generate_data(fiducial, classdir, datastore, **kwargs):
     '''Generates a CLASS dataset with specified parameters.'''
-    if check_data(datastore, **kwargs)==False:
+    modify = {}
+    for key, value in fiducial.items():
+        if key not in kwargs.items():
+            modify[key] = value
+    for key, value in kwargs.items():
+        modify[key] = value
+    
+    check, existingdata = check_data(datastore, **modify)
+    if check==False:
         datastore = correct_path(datastore)
         classdir = correct_path(classdir) 
         start_ini = os.path.join(config_directory(),"prime.ini")
         end_ini = os.path.join(config_directory(),"in.ini")
         os.system('cp ' + start_ini + ' ' + end_ini)
-        modify = {}
-        for key, value in fiducial.items(): 
-            if key not in kwargs.items(): 
-                modify[key] = value
-        for key, value in kwargs.items(): 
-            modify[key] = value
         for key, value in modify.items():
             print('#'+key+'-->'+ key + ' = ' + str(value))
             replace_text(end_ini, '#'+key, key + ' = ' + str(value))
@@ -45,24 +47,30 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
         print("Dataset generated at: " + newdatapath)
         os.system('mv ' + os.path.join(classdir, 'output') + '/* ' + newdatapath)
         os.system('rm ' + end_ini)
-    return None  
+        datasetpath = os.path.join(newdatapath, 'test_parameters.ini') 
+    else: 
+        datasetpath = existingdata 
+    return datasetpath  
                 
 
 def check_data(datastore, **kwargs):             
     '''Checks if CLASS spectrum exists with specified parameters.'''
     datastore = correct_path(datastore)
     check = False
+    preexistingdata = None
     for datapath in next(os.walk(datastore))[1]:
         testfile = os.path.join(datastore, datapath, 'test_parameters.ini') 
         if is_data2(testfile, **kwargs): 
             print("Dataset already exists at: " + os.path.join(datastore, datapath))
             check = True 
-    return check        
+            preexistingdata = testfile 
+    return (check, preexistingdata)         
          
 def is_data2(path, **kwargs): 
     check = 0
     text = open(correct_path(path)).read()
     for key, val in kwargs.items(): 
+        #print(key, str(val)) 
         test = key + ' = ' + str(val)
         if test not in text: 
             check += 1
