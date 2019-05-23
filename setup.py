@@ -21,5 +21,7 @@ setup(name='cosmicfish',
       install_requires=[
           'numpy',
           'matplotlib',
-          'pandas' 
+          'pandas',
+          'time', 
+          'random' 
       ])

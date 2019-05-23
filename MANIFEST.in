@@ -1,3 +1,4 @@
 #List of non *.py files to include in package distribution
 
 README.md
+cosmicfish/config/prime.ini

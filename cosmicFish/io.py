@@ -1,11 +1,44 @@
 import os
+import time
+import random 
 import numpy as np
 import pandas as pd
 
 
+def generate_data(fiducial, classdir, datastore, **kwargs):
+    '''Generates a CLASS dataset with specified parameters.'''
+    if check_data(datastore, **kwargs)==False:
+        datastore = correct_path(datastore)
+        classdir = correct_path(classdir) 
+        start_ini = os.path.join(config_directory(),"prime.ini")
+        end_ini = os.path.join(config_directory(),"in.ini")
+        os.system('cp ' + start_ini + ' ' + end_ini)
+        modify = {}
+        for key, value in fiducial.items(): 
+            if key not in kwargs.items(): 
+                modify[key] = value
+        for key, value in kwargs.items(): 
+            modify[key] = value
+        for key, value in modify.items():
+            print('#'+key+'-->'+ key + ' = ' + str(value))
+            replace_text(end_ini, '#'+key, key + ' = ' + str(value))
+        newdatapath = os.path.join(datastore, str(time.time())+"{0:.6f}".format(random.random()))
+        os.system('mkdir ' + newdatapath)
+        os.system('cd ' + classdir)
+        os.chdir(classdir)
+        print(os.getcwd())
+        os.system('pwd')
+        os.system('./class ' + end_ini)
+        print("Dataset generated at: " + newdatapath)
+        os.system('mv ' + os.path.join(classdir, 'output') + '/* ' + newdatapath)
+        os.system('rm ' + end_ini)
+    return None  
+                
 
-
-
+def check_data(datastore, **kwargs):             
+    '''Checks if CLASS spectrum exists with specified parameters.'''
+    return False        
+         
 
 def is_data(path, 
             A_s, 
@@ -67,3 +100,17 @@ def correct_path(pathname):
     if not (os.path.isfile(fix4) or os.path.isdir(fix4)): 
         raise Exception("Invalid path: {}".format(fix4))
     return fix4    
+
+def config_directory(): 
+    """Returns absolute path of data directory in package distribution."""
+    path = os.path.abspath(__file__)
+    path = os.path.dirname(path)
+    path = os.path.join(path, 'config')
+    return path
+
+def replace_text(document, old_text, new_text):
+    '''Replace text in a specified file.'''
+    with open(document) as f:
+        new_doc=f.read().replace(old_text, new_text)
+    with open(document, "w") as f:
+        f.write(new_doc)

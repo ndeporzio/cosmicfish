@@ -15,6 +15,8 @@ class spectrum:
         self.m_ncdm = None
         self.T_ncdm = None
         self.rawdata = None
+        self.b_interp_table = None
+        self.cdm_interp_table = None
         self.dataconfig = correct_path(datadirectory + "/test_parameters.ini")
         self.datapath = correct_path(datadirectory + "/test_tk.dat")
         self.input()
@@ -47,6 +49,12 @@ class spectrum:
                                     header=None, 
                                     engine="python",
                                     names=["k (h/Mpc)", "d_b", "d_cdm"])
+
+    def interpolate(self, k_table):
+        self.b_interp_table = np.interp(k_table, self.rawdata['k (h/Mpc)'], self.rawdata['d_b'])
+        self.cdm_interp_table = np.interp(k_table, self.rawdata['k (h/Mpc)'], self.rawdata['d_cdm']) 
+
+        
     
             
 
