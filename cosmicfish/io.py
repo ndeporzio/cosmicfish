@@ -39,6 +39,20 @@ def check_data(datastore, **kwargs):
     '''Checks if CLASS spectrum exists with specified parameters.'''
     return False        
          
+def is_data2(path, **kwargs): 
+    check = 0
+    text = open(correct_path(path)).read()
+    for key, val in kwargs.items(): 
+        test = key + ' = ' + str(val)
+        if test not in text: 
+            print(test)
+            check += 1
+    if check > 0:
+        print("This file is not desired dataset.")  
+        print(check)
+        return False
+    else:
+        return True
 
 def is_data(path, 
             A_s, 
