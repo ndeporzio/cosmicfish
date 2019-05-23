@@ -22,6 +22,4 @@ setup(name='cosmicfish',
           'numpy',
           'matplotlib',
           'pandas',
-          'time', 
-          'random' 
       ])

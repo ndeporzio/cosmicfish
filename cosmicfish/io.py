@@ -1,9 +1,23 @@
 import os
 import time
-import random 
+import random
+import subprocess 
 import numpy as np
 import pandas as pd
 
+def install_class(classdir): 
+    '''Installs CLASS to specified directory.'''
+    print("Installing CLASS, please wait up to 2 minutes.")
+    classdir = correct_path(classdir)
+    os.chdir(classdir)
+    os.system('git clone git@github.com:lesgourg/class_public.git')
+    #subprocess.check_output('git clone git@github.com:lesgourg/class_public.git', shell=True)
+    os.system('mv class_public class') 
+    os.chdir(os.path.join(classdir, 'class'))
+    os.system('make clean')
+    os.system('make -j class')
+    #subprocess.check_output('make -j class', shell=True) 
+    print("To check for proper installation, run: '$ ./class explanatory.ini'") 
 
 def generate_data(fiducial, classdir, datastore, **kwargs):
     '''Generates a CLASS dataset with specified parameters.'''
@@ -26,7 +40,6 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
         os.system('mkdir ' + newdatapath)
         os.system('cd ' + classdir)
         os.chdir(classdir)
-        print(os.getcwd())
         os.system('pwd')
         os.system('./class ' + end_ini)
         print("Dataset generated at: " + newdatapath)
@@ -37,7 +50,14 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
 
 def check_data(datastore, **kwargs):             
     '''Checks if CLASS spectrum exists with specified parameters.'''
-    return False        
+    datastore = correct_path(datastore)
+    check = False
+    for datapath in next(os.walk(datastore))[1]:
+        testfile = os.path.join(datastore, datapath, 'test_parameters.ini') 
+        if is_data2(testfile, **kwargs): 
+            print("Dataset already exists at: " + os.path.join(datastore, datapath))
+            check = True 
+    return check        
          
 def is_data2(path, **kwargs): 
     check = 0
@@ -45,11 +65,8 @@ def is_data2(path, **kwargs):
     for key, val in kwargs.items(): 
         test = key + ' = ' + str(val)
         if test not in text: 
-            print(test)
             check += 1
     if check > 0:
-        print("This file is not desired dataset.")  
-        print(check)
         return False
     else:
         return True
