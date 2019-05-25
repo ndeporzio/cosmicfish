@@ -19,92 +19,59 @@ class analysis:
         self.n_s_var = []
         self.T_ncdm_var = []
 
-    def generate_fiducials(self): 
-        generators = list(map(lambda z : {"h" : 0.70148, 
-                                            "omega_b" : 0.02226, 
-                                            "omega_cdm" : 0.11271, 
-                                            "N_ncdm" : 1, 
-                                            "tau_reio" : 0.059888, 
-                                            "A_s" : 2.2321e-9, 
-                                            "n_s" : 0.96659, 
-                                            "z_pk" : z}, self.z_table))
+    def generate_fiducials(self, fiducial={"A_s" : 2.2321e-9,
+                                            "n_s" : 0.96659,
+                                            "omega_b" : 0.02226,
+                                            "omega_cdm" : 0.11271,
+                                            "tau_reio" : 0.059888,
+                                            "h" : 0.70148,
+                                            "N_ncdm" : 0
+                                            }):
+        temp = dict(fiducial) 
+        generators = list(map(lambda z : dict(temp, **{"z_pk" : z}), self.z_table))
         for g in generators: 
             d = cf.io.generate_data(g, self.classdir, self.datastore).replace('/test_parameters.ini','')
             self.fid.append(cf.data.spectrum(d))
         for ps in self.fid : 
             ps.interpolate(self.k_table)
             ps.generate_power_spectrum(ps.omega_b, ps.omega_cdm, self.k_table, 
-                primordial_table_generator(self.k_table, ps.A_s, ps.n_s, 0.05 * ps.h))
+                primordial_table_generator(self.k_table, ps.A_s, ps.n_s, 0.05 * ps.h)) #CAUTION: Kp is hard-coded here!
     
-    def generate_non_fiducials(self, **kwargs): 
+    def generate_non_fiducials(self, 
+                                fiducial={"A_s" : 2.2321e-9,
+                                            "n_s" : 0.96659,
+                                            "omega_b" : 0.02226,
+                                            "omega_cdm" : 0.11271,
+                                            "tau_reio" : 0.059888,
+                                            "h" : 0.70148,
+                                            "N_ncdm" : 0}, 
+                                **kwargs): 
         for key, value in kwargs.items():          
-            if key[0:3]=='rel': 
+            if key[0:3]=='rel': #Doesn't seem to be working correctly. 
                 genlist = getattr(self.fid[0], key[8:]) * np.array(value)
             if key[0:3]=='abs': 
                 genlist = value
-            generators = list(map(lambda z : {"h" : 0.70148,
-                                            "omega_b" : 0.02226,
-                                            "omega_cdm" : 0.11271,
-                                            "N_ncdm" : 1,        
-                                            "tau_reio" : 0.059888,        
-                                            "A_s" : 2.2321e-9,        
-                                            "n_s" : 0.96659,        
-                                            "z_pk" : z}, self.z_table))
+            temp = dict(fiducial) 
+            generators = list(map(lambda z : dict(temp, **{"z_pk" : z}), self.z_table))
             for g in generators:
                 if key[8:]=="h":
-                    generators2 = list(map(lambda y : {"h" : y,
-                                            "omega_b" : 0.02226,
-                                            "omega_cdm" : 0.11271,
-                                            "N_ncdm" : 1,
-                                            "tau_reio" : 0.059888,
-                                            "A_s" : 2.2321e-9,
-                                            "n_s" : 0.96659,
-                                            "z_pk" : g['z_pk']}, genlist))
+                    generators2 = list(map(lambda y : dict(g, **{"h" : y}), genlist))
                     self.h_var.append(list(map(lambda x : cf.data.spectrum(
                         cf.io.generate_data(x, self.classdir, self.datastore).replace('/test_parameters.ini','')), generators2)))
                 if key[8:]=="omega_b":
-                    generators2 = list(map(lambda y : {"h" : 0.70148,
-                                            "omega_b" : y,
-                                            "omega_cdm" : 0.11271,
-                                            "N_ncdm" : 1,
-                                            "tau_reio" : 0.059888,
-                                            "A_s" : 2.2321e-9,
-                                            "n_s" : 0.96659,
-                                            "z_pk" : g['z_pk']}, genlist))
+                    generators2 = list(map(lambda y : dict(g, **{"omega_b" : y}), genlist))
                     self.omega_b_var.append(list(map(lambda x : cf.data.spectrum(
                         cf.io.generate_data(x, self.classdir, self.datastore).replace('/test_parameters.ini','')), generators2)))
                 if key[8:]=="omega_cdm":
-                    generators2 = list(map(lambda y : {"h" : 0.70148,
-                                            "omega_b" : 0.02226,
-                                            "omega_cdm" : y,
-                                            "N_ncdm" : 1,
-                                            "tau_reio" : 0.059888,
-                                            "A_s" : 2.2321e-9,
-                                            "n_s" : 0.96659,
-                                            "z_pk" : g['z_pk']}, genlist))
+                    generators2 = list(map(lambda y : dict(g, **{"omega_cdm" : y}), genlist))
                     self.omega_cdm_var.append(list(map(lambda x : cf.data.spectrum(
                         cf.io.generate_data(x, self.classdir, self.datastore).replace('/test_parameters.ini','')), generators2)))
                 if key[8:]=="tau_reio":
-                    generators2 = list(map(lambda y : {"h" : 0.70148,
-                                            "omega_b" : 0.02226,
-                                            "omega_cdm" : 0.11271,
-                                            "N_ncdm" : 1,
-                                            "tau_reio" : y,
-                                            "A_s" : 2.2321e-9,
-                                            "n_s" : 0.96659,
-                                            "z_pk" : g['z_pk']}, genlist))
+                    generators2 = list(map(lambda y : dict(g, **{"tau_reio" : y}), genlist))
                     self.tau_reio_var.append(list(map(lambda x : cf.data.spectrum(
                         cf.io.generate_data(x, self.classdir, self.datastore).replace('/test_parameters.ini','')), generators2)))
                 if key[8:]=="T_ncdm":
-                    generators2 = list(map(lambda y : {"h" : 0.70148,
-                                            "omega_b" : 0.02226,
-                                            "omega_cdm" : 0.11271,
-                                            "N_ncdm" : 1,
-                                            "tau_reio" : 0.059888,
-                                            "A_s" : 2.2321e-9,
-                                            "n_s" : 0.96659,
-                                            "z_pk" : g['z_pk'],
-                                            "T_ncdm" : y}, genlist))
+                    generators2 = list(map(lambda y : dict(g, **{"T_ncdm" : y, "N_ncdm" : 1}), genlist))
                     self.T_ncdm_var.append(list(map(lambda x : cf.data.spectrum(
                         cf.io.generate_data(x, self.classdir, self.datastore).replace('/test_parameters.ini','')), generators2)))
         for idx, el1 in enumerate(self.h_var): 
