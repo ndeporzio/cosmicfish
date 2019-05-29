@@ -22,4 +22,5 @@ setup(name='cosmicfish',
           'numpy',
           'matplotlib',
           'pandas',
+          'seaborn'
       ])

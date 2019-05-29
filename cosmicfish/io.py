@@ -68,16 +68,21 @@ def check_data(datastore, **kwargs):
          
 def is_data2(path, **kwargs): 
     check = 0
-    text = open(correct_path(path)).read()
-    for key, val in kwargs.items(): 
-        #print(key, str(val)) 
-        test = key + ' = ' + str(val)
-        if test not in text: 
-            check += 1
-    if check > 0:
+    try: 
+        correct_path(path)
+    except: 
         return False
-    else:
-        return True
+    else: 
+        text = open(correct_path(path)).read()
+        for key, val in kwargs.items(): 
+            #print(key, str(val)) 
+            test = key + ' = ' + str(val)
+            if test not in text: 
+                check += 1
+        if check > 0:
+            return False
+        else:
+            return True
 
 def is_data(path, 
             A_s, 
