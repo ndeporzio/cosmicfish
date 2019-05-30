@@ -101,9 +101,9 @@ class analysis:
                 primordial_table_generator(self.k_table, el2.A_s, el2.n_s, 0.05 * el2.h))               
 
 def v_effective_table_generator(z_table, omega_m_table, omega_lambda_table, c, h, H): 
-    table = list(map(lambda y, z: (4.*np.pi/3.)*np.power(c/H, 3.) 
-        * np.power(np.trapz(h/np.sqrt(y*(1+z_table)**3. + z), z_table), 3.), 
-        omega_m_table, omega_lambda_table))
+    table = np.stack(list(map(lambda y, z: (4.*np.pi/3.)*np.power(c/H, 3.) 
+        * np.power(np.trapz(h/np.sqrt(y[:, np.newaxis]*(1+z_table[np.newaxis, :])**3. + z[:, np.newaxis]), z_table, axis=1), 3.), 
+        omega_m_table, omega_lambda_table)))
     return table
 
 def k_table_generator(v_eff_table, h, k_max, k_steps): 
