@@ -117,9 +117,38 @@ class relic_convergence_analysis:
         ax2.set_title(r'$log(P_g)$ for $z={0:.2f}$'.format(self.z_table[z_index]))
         ax2.set_xlabel(r'k [Mpc$^{-1}$]')
         ax2.set_ylabel(r'[Mpc$^3$]')
-        ax2.legend()        
+        ax2.legend()
         
-        plt.show() 
+        plt.show()
+
+#        if self.param=='T_ncdm': 
+#            plt.figure(figsize=(15, 7.5))
+#
+#            ax1 = plt.subplot(1, 2, 1)
+#            for idx, ps in enumerate(self.spectra[z_index]):
+#                if self.param=='T_ncdm':
+#                    plotlabel = r'T_ncdm = {0:.2f}[K]'.format(self.variants[idx])
+#                else:
+#                    plotlabel = r'$\delta$' + self.param + ' = {0:.2f}%'.format((self.variants[idx]/self.fid[self.param]-1))
+#                ax1.plot(ps.k_table, ps.ps_table, label=plotlabel)
+#            ax1.set_title(r'$P_g$ for $z={0:.2f}$'.format(self.z_table[z_index]))
+#            ax1.set_xlabel(r'k [Mpc$^{-1}$]')
+#            ax1.set_ylabel(r'[Mpc$^3$]')
+#            ax1.legend()
+#
+#            ax2= plt.subplot(1, 2, 2)
+#            for idx, ps in enumerate(self.spectra[z_index]):
+#                if self.param=='T_ncdm':
+#                    plotlabel = r'T_ncdm = {0:.2f}[K]'.format(self.variants[idx])
+#                else:
+#                    plotlabel = r'$\delta$' + self.param + ' = {0:.2f}%'.format((self.variants[idx]/self.fid[self.param]-1))
+#                ax2.plot(ps.k_table, ps.log_ps_table, label=plotlabel)
+#            ax2.set_title(r'$log(P_g)$ for $z={0:.2f}$'.format(self.z_table[z_index]))
+#            ax2.set_xlabel(r'k [Mpc$^{-1}$]')
+#            ax2.set_ylabel(r'[Mpc$^3$]')
+#            ax2.legend()        
+#        
+#            plt.show() 
                   
     def plot_dps(self, z_index=0):
         sns.set()
@@ -151,6 +180,34 @@ class relic_convergence_analysis:
         ax2.legend()
 
         plt.show()
+
+        if self.m_ncdm is not 0: 
+            plt.figure(figsize=(15, 7.5))
+
+            ax1 = plt.subplot(1, 2, 1)
+            for idx, dps in enumerate(self.dps[z_index]):
+                
+                domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
+                plotlabel = r'!!omega_ncdm = {0:.2f}[K]'.format(self.variants[idx])
+                print(domega_chi_dT_chi)
+                ax1.plot(self.spectra[z_index][idx].k_table, dps/domega_chi_dT_chi, label=plotlabel)
+            ax1.set_title(r'$\partial P_g / \partial$ omega_ncdm' + ' for $z={0:.2f}$'.format(self.z_table[z_index]))
+            ax1.set_xlabel(r'k [Mpc$^{-1}$]')
+            ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
+            ax1.legend()
+
+            ax2= plt.subplot(1, 2, 2)
+            for idx, dlogps in enumerate(self.dlogps[z_index]):
+                plotlabel = r'!!omega_ncdm = {0:.2f}[K]'.format(self.variants[idx])
+                ax2.plot(self.spectra[z_index][idx].k_table, dlogps/domega_chi_dT_chi, label=plotlabel)
+            ax2.set_title(r'$\partial log(P_g) / \partial$ omega_ncdm'+' for $z={0:.2f}$'.format(self.z_table[z_index]))
+            ax2.set_xlabel(r'k [Mpc$^{-1}$]')
+            ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
+            ax2.legend()
+
+            plt.show()
+
+
 
     def plot_delta_dps(self, z_index=0): 
         sns.set()
@@ -195,6 +252,32 @@ class relic_convergence_analysis:
 
         plt.show()
 
+        if self.m_ncdm is not 0:
+            plt.figure(figsize=(15, 7.5))
+
+            ax1 = plt.subplot(1, 2, 1)
+            dps_comp = list(self.dps[z_index][:-1])
+            for idx, dps in enumerate(dps_comp):
+                domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
+                plotlabel = r'!!omega_ncdm = {0:.2f}[K]'.format(self.variants[idx])
+
+                ax1.plot(self.spectra[z_index][idx].k_table, dps/domega_chi_dT_chi, label=plotlabel)
+            ax1.set_title(r'$\partial P_g / \partial$ omega_ncdm' + ' for $z={0:.2f}$'.format(self.z_table[z_index]))
+            ax1.set_xlabel(r'k [Mpc$^{-1}$]')
+            ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
+            ax1.legend()
+
+            ax2= plt.subplot(1, 2, 2)
+            dlogps_comp = list(self.dlogps[z_index][:-1])
+            for idx, dlogps in enumerate(self.dlogps[z_index]):
+                plotlabel = r'!!omega_ncdm = {0:.2f}[K]'.format(self.variants[idx])
+                ax2.plot(self.spectra[z_index][idx].k_table, dlogps/domega_chi_dT_chi, label=plotlabel)
+            ax2.set_title(r'$\partial log(P_g) / \partial$ omega_ncdm'+' for $z={0:.2f}$'.format(self.z_table[z_index]))
+            ax2.set_xlabel(r'k [Mpc$^{-1}$]')
+            ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
+            ax2.legend()
+
+            plt.show()
 
 def dPs(fid_ps_table, var_ps_table, step):
     table = (var_ps_table - fid_ps_table) / step
