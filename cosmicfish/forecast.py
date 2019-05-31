@@ -1,117 +1,67 @@
 import numpy as np
 
-import cosmicfish as cf 
+import cosmicfish as cf
 
-class analysis: 
+#class lightrelicanalysis: 
+#  
+#    def __init__(self, 
+#                 name=None, 
+#                 fid=None,
+#                 nonfid=None, 
+#                 z_table=None, 
+#                 classdir=None, 
+#                 datastore=None, 
+#                 testconvergence=None, 
+#                 paramvary=None): 
+#        self.name=name
+#        self.fid=fid
+#        self.z_table=z_table
+#        self.classdir=classdir
+#        self.datastore=datastore
+#        self.testconvergence=testconvergence
+#        self.paramvary=paramvary
+#        self.spectra=[]
+#
+#    def generate(self): 
+#        if testconvergence==True: 
+#            print('Convergence package in development...') 
+#        else:   
+            
+            
+                 
 
-    def __init__(self, name=None, z_table=None, k_table=None, classdir=None, datastore=None): 
-        self.name = name
+class relic_convergence_analysis: 
+
+    def __init__(self, fid, param, varytype, varyvals, z_table, m_ncdm,
+                 classdir, datastore): 
+        self.name = param + "convergence analysis for light relic" 
+        self.z_table = z_table
+        self.m_ncdm = m_ncdm
         self.classdir = classdir
         self.datastore = datastore
-        self.z_table = z_table
-        self.k_table = k_table
-        self.fid = []
-        self.h_var = []
-        self.omega_b_var = []
-        self.omega_cdm_var = []
-        self.tau_reio_var = []
-        self.A_s_var = []
-        self.n_s_var = []
-        self.T_ncdm_var = []
+        self.fid = fid
 
-    def generate_fiducials(self, fiducial={"A_s" : 2.2321e-9,
-                                            "n_s" : 0.96659,
-                                            "omega_b" : 0.02226,
-                                            "omega_cdm" : 0.11271,
-                                            "tau_reio" : 0.059888,
-                                            "h" : 0.70148,
-                                            "N_ncdm" : 0
-                                            }):
-        temp = dict(fiducial) 
-        generators = list(map(lambda z : dict(temp, **{"z_pk" : z}), self.z_table))
-        for g in generators: 
-            d = cf.io.generate_data(g, self.classdir, self.datastore).replace('/test_parameters.ini','')
-            self.fid.append(cf.data.spectrum(d))
-        for ps in self.fid : 
-            ps.interpolate(self.k_table)
-            ps.generate_power_spectrum(ps.omega_b, ps.omega_cdm, self.k_table, 
-                primordial_table_generator(self.k_table, ps.A_s, ps.n_s, 0.05 * ps.h)) #CAUTION: Kp is hard-coded here!
-    
-    def generate_non_fiducials(self, 
-                                fiducial={"A_s" : 2.2321e-9,
-                                            "n_s" : 0.96659,
-                                            "omega_b" : 0.02226,
-                                            "omega_cdm" : 0.11271,
-                                            "tau_reio" : 0.059888,
-                                            "h" : 0.70148,
-                                            "N_ncdm" : 0}, 
-                                **kwargs): 
-        for key, value in kwargs.items():          
-            if key[0:3]=='rel': #Doesn't seem to be working correctly. 
-                genlist = getattr(self.fid[0], key[8:]) * np.array(value)
-            if key[0:3]=='abs': 
-                genlist = value
-            temp = dict(fiducial) 
-            generators = list(map(lambda z : dict(temp, **{"z_pk" : z}), self.z_table))
-            for g in generators:
-                if key[8:]=="h":
-                    generators2 = list(map(lambda y : dict(g, **{"h" : y}), genlist))
-                    self.h_var.append(list(map(lambda x : cf.data.spectrum(
-                        cf.io.generate_data(x, self.classdir, self.datastore).replace('/test_parameters.ini','')), generators2)))
-                if key[8:]=="omega_b":
-                    generators2 = list(map(lambda y : dict(g, **{"omega_b" : y}), genlist))
-                    self.omega_b_var.append(list(map(lambda x : cf.data.spectrum(
-                        cf.io.generate_data(x, self.classdir, self.datastore).replace('/test_parameters.ini','')), generators2)))
-                if key[8:]=="omega_cdm":
-                    generators2 = list(map(lambda y : dict(g, **{"omega_cdm" : y}), genlist))
-                    self.omega_cdm_var.append(list(map(lambda x : cf.data.spectrum(
-                        cf.io.generate_data(x, self.classdir, self.datastore).replace('/test_parameters.ini','')), generators2)))
-                if key[8:]=="tau_reio":
-                    generators2 = list(map(lambda y : dict(g, **{"tau_reio" : y}), genlist))
-                    self.tau_reio_var.append(list(map(lambda x : cf.data.spectrum(
-                        cf.io.generate_data(x, self.classdir, self.datastore).replace('/test_parameters.ini','')), generators2)))
-                if key[8:]=="T_ncdm":
-                    generators2 = list(map(lambda y : dict(g, **{"T_ncdm" : y, "N_ncdm" : 1}), genlist))
-                    self.T_ncdm_var.append(list(map(lambda x : cf.data.spectrum(
-                        cf.io.generate_data(x, self.classdir, self.datastore).replace('/test_parameters.ini','')), generators2)))
-        for idx, el1 in enumerate(self.h_var): 
-            for el2 in el1: 
-                el2.interpolate(self.k_table)
-                el2.generate_power_spectrum(el2.omega_b, el2.omega_cdm, self.k_table,
-                primordial_table_generator(self.k_table, el2.A_s, el2.n_s, 0.05 * el2.h))
-        for idx, el1 in enumerate(self.omega_b_var):
-            for el2 in el1:
-                el2.interpolate(self.k_table)
-                el2.generate_power_spectrum(el2.omega_b, el2.omega_cdm, self.k_table,
-                primordial_table_generator(self.k_table, el2.A_s, el2.n_s, 0.05 * el2.h))
-        for idx, el1 in enumerate(self.omega_cdm_var):
-            for el2 in el1:
-                el2.interpolate(self.k_table)
-                el2.generate_power_spectrum(el2.omega_b, el2.omega_cdm, self.k_table,
-                primordial_table_generator(self.k_table, el2.A_s, el2.n_s, 0.05 * el2.h))
-        for idx, el1 in enumerate(self.tau_reio_var):
-            for el2 in el1:
-                el2.interpolate(self.k_table)
-                el2.generate_power_spectrum(el2.omega_b, el2.omega_cdm, self.k_table,
-                primordial_table_generator(self.k_table, el2.A_s, el2.n_s, 0.05 * el2.h))
-        for idx, el1 in enumerate(self.T_ncdm_var):
-            for el2 in el1:
-                el2.interpolate(self.k_table)
-                el2.generate_power_spectrum(el2.omega_b, el2.omega_cdm, self.k_table,
-                primordial_table_generator(self.k_table, el2.A_s, el2.n_s, 0.05 * el2.h))               
+        if varytype=="abs":     
+            self.variants = varyvals
+        if varytype=="rel": 
+            self.variants = self.fid[param] * varyvals
 
-def v_effective_table_generator(z_table, omega_m_table, omega_lambda_table, c, h, H): 
-    table = np.stack(list(map(lambda y, z: (4.*np.pi/3.)*np.power(c/H, 3.) 
-        * np.power(np.trapz(h/np.sqrt(y[:, np.newaxis]*(1+z_table[np.newaxis, :])**3. + z[:, np.newaxis]), z_table, axis=1), 3.), 
-        omega_m_table, omega_lambda_table)))
-    return table
+        #First index is redshift, second index is variation 
+        if param=='T_ncdm':
+            self.spectra = [[cf.spectrum(cf.generate_data(dict(self.fid,
+                                                               **{param : i, 'N_ncdm' : 1, 'm_ncdm' : self.m_ncdm, 'z_pk' : j}),
+                                                          self.classdir,
+                                                          self.datastore).replace('/test_parameters.ini',''),
+                                         self.z_table) for i in self.variants] for j in self.z_table] 
 
-def k_table_generator(v_eff_table, h, k_max, k_steps): 
-    table = np.linspace((np.pi / h) * np.power(v_eff_table, -1./3.), k_max, k_steps)
-    return table 
+        else: 
+            self.spectra = [[cf.spectrum(cf.generate_data(dict(self.fid, 
+                                                               **{param : i, 'z_pk' : j}), 
+                                                          self.classdir, 
+                                                          self.datastore).replace('/test_parameters.ini',''), 
+                                         self.z_table) for i in self.variants] for j in self.z_table]
 
-def primordial_table_generator(k_table, A_s, n_s, k_p): 
-    table = A_s * 2. * np.power(np.pi, 2.) * np.power(k_table, -3.) * np.power(k_table / k_p, n_s - 1)
-    return table  
-
-
+def dPs(self, fid_ps_table, step, theta):
+    table = (self.ps_table - fid_ps_table) / step
+    self.dps_table[theta] = table
+    self.log_dps_table[theta] = np.log(table)
