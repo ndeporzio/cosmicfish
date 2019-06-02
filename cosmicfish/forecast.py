@@ -189,7 +189,6 @@ class relic_convergence_analysis:
                 
                 domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
                 plotlabel = r'!!omega_ncdm = {0:.2f}[K]'.format(self.variants[idx])
-                print(domega_chi_dT_chi)
                 ax1.plot(self.spectra[z_index][idx].k_table, dps/domega_chi_dT_chi, label=plotlabel)
             ax1.set_title(r'$\partial P_g / \partial$ omega_ncdm' + ' for $z={0:.2f}$'.format(self.z_table[z_index]))
             ax1.set_xlabel(r'k [Mpc$^{-1}$]')

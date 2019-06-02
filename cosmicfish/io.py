@@ -23,11 +23,11 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
     '''Generates a CLASS dataset with specified parameters.'''
     modify = {}
     for key, value in fiducial.items():
-        if key not in kwargs.items():
+        if key not in kwargs:
             modify[key] = value
     for key, value in kwargs.items():
         modify[key] = value
-    
+
     check, existingdata = check_data(datastore, **modify)
     if check==False:
         datastore = correct_path(datastore)
@@ -71,6 +71,7 @@ def is_data(path, **kwargs):
     try: 
         correct_path(path)
     except: 
+        print("Path not real!") 
         return False
     else: 
         text = open(correct_path(path)).read()
