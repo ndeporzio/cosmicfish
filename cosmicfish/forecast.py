@@ -90,7 +90,7 @@ class relic_convergence_analysis:
                                    self.variants[i]-self.fid[param]) for i in range(len(self.variants))] for j in range(len(self.z_table))]
 
 
-    def plot_ps(self, z_index=0):
+    def plot_ps(self, z_index=0, xscale='linear'):
         sns.set() 
         sns.set_palette("Blues_d", n_colors=len(self.variants))
         plt.figure(figsize=(15, 7.5))
@@ -106,6 +106,8 @@ class relic_convergence_analysis:
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
         ax1.set_ylabel(r'[Mpc$^3$]')
         ax1.legend()
+        if xscale=='log': 
+            ax1.set_xscale('log') 
 
         ax2= plt.subplot(1, 2, 2)
         for idx, ps in enumerate(self.spectra[z_index]):
@@ -118,6 +120,8 @@ class relic_convergence_analysis:
         ax2.set_xlabel(r'k [Mpc$^{-1}$]')
         ax2.set_ylabel(r'[Mpc$^3$]')
         ax2.legend()
+        if xscale=='log': 
+            ax2.set_xscale('log') 
         
         plt.show()
 
@@ -150,7 +154,7 @@ class relic_convergence_analysis:
 #        
 #            plt.show() 
                   
-    def plot_dps(self, z_index=0):
+    def plot_dps(self, z_index=0, xscale='linear'):
         sns.set()
         sns.set_palette("Blues_d", n_colors=len(self.variants))
         plt.figure(figsize=(15, 7.5))
@@ -166,6 +170,8 @@ class relic_convergence_analysis:
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
         ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
         ax1.legend()
+        if xscale=='log':  
+            ax1.set_xscale('log')
 
         ax2= plt.subplot(1, 2, 2)
         for idx, dlogps in enumerate(self.dlogps[z_index]):
@@ -178,44 +184,52 @@ class relic_convergence_analysis:
         ax2.set_xlabel(r'k [Mpc$^{-1}$]')
         ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
         ax2.legend()
+        if xscale=='log': 
+            ax2.set_xscale('log') 
 
         plt.show()
 
-        if self.m_ncdm is not 0: 
+        if self.m_ncdm is not None: 
             plt.figure(figsize=(15, 7.5))
 
             ax1 = plt.subplot(1, 2, 1)
             for idx, dps in enumerate(self.dps[z_index]):
                 
-                domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
-                plotlabel = r'!!omega_ncdm = {0:.2f}[K]'.format(self.variants[idx])
+                #domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
+                #domega_chi_dT_chi = np.power(self.spectra[z_index][idx].T_ncdm/1.95, 3.) * (self.m_ncdm/94.) / self.spectra[z_index][idx].T_ncdm #simplified approximation domega/dT =  omega/T
+                #domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm, 1.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
+                domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm, 0.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
+                plotlabel = r'T_ncdm = {0:.2f}[K]'.format(self.variants[idx])
                 ax1.plot(self.spectra[z_index][idx].k_table, dps/domega_chi_dT_chi, label=plotlabel)
             ax1.set_title(r'$\partial P_g / \partial$ omega_ncdm' + ' for $z={0:.2f}$'.format(self.z_table[z_index]))
             ax1.set_xlabel(r'k [Mpc$^{-1}$]')
             ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
             ax1.legend()
+            if xscale=='log': 
+                ax1.set_xscale('log') 
 
             ax2= plt.subplot(1, 2, 2)
             for idx, dlogps in enumerate(self.dlogps[z_index]):
-                plotlabel = r'!!omega_ncdm = {0:.2f}[K]'.format(self.variants[idx])
+                plotlabel = r'T_ncdm = {0:.2f}[K]'.format(self.variants[idx])
                 ax2.plot(self.spectra[z_index][idx].k_table, dlogps/domega_chi_dT_chi, label=plotlabel)
             ax2.set_title(r'$\partial log(P_g) / \partial$ omega_ncdm'+' for $z={0:.2f}$'.format(self.z_table[z_index]))
             ax2.set_xlabel(r'k [Mpc$^{-1}$]')
             ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
             ax2.legend()
+            if xscale=='log': 
+                ax2.set_xscale('log') 
 
             plt.show()
 
 
 
-    def plot_delta_dps(self, z_index=0): 
+    def plot_delta_dps(self, z_index=0, xscale='linear'): 
         sns.set()
         sns.set_palette("Blues_d", n_colors=len(self.variants))
         plt.figure(figsize=(15, 7.5))
 
         ax1 = plt.subplot(1, 2, 1)
-        dps_comp = list(self.dps[z_index][:-1])
-        for idx, dps in enumerate(dps_comp):
+        for idx, dps in enumerate(self.dps[z_index][:-1]):
             if self.param=='T_ncdm':
                 plotlabel = r'\Delta for T_ncdm @ {0:.2f}[K]'.format((self.variants[idx+1]+self.variants[idx])/2)
             else:
@@ -230,6 +244,8 @@ class relic_convergence_analysis:
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
         ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
         ax1.legend()
+        if xscale=='log': 
+            ax1.set_xscale('log') 
 
         ax2= plt.subplot(1, 2, 2)
         dlogps_comp = list(self.dlogps[z_index][:-1])
@@ -248,10 +264,12 @@ class relic_convergence_analysis:
         ax2.set_xlabel(r'k [Mpc$^{-1}$]')
         ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
         ax2.legend()
+        if xscale=='log': 
+            ax2.set_xscale('log') 
 
         plt.show()
 
-        if self.m_ncdm is not 0:
+        if self.m_ncdm is not None:
             plt.figure(figsize=(15, 7.5))
 
             ax1 = plt.subplot(1, 2, 1)
@@ -265,6 +283,8 @@ class relic_convergence_analysis:
             ax1.set_xlabel(r'k [Mpc$^{-1}$]')
             ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
             ax1.legend()
+            if xscale=='log': 
+                ax1.set_xscale('log') 
 
             ax2= plt.subplot(1, 2, 2)
             dlogps_comp = list(self.dlogps[z_index][:-1])
@@ -275,6 +295,8 @@ class relic_convergence_analysis:
             ax2.set_xlabel(r'k [Mpc$^{-1}$]')
             ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
             ax2.legend()
+            if xscale=='log': 
+                ax2.set_xscale('log') 
 
             plt.show()
 
