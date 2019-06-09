@@ -65,7 +65,7 @@ class relic_convergence_analysis:
                                    self.variants[i]-self.fid[param]) for i in range(len(self.variants))] for j in range(len(self.z_table))]
 
 
-    def plot_ps(self, z_index=0, xscale='linear'):
+    def plot_ps(self, z_index=0, xscale='linear', plotdata=False):
         sns.set() 
         sns.set_palette("Blues_d", n_colors=len(self.variants))
         plt.figure(figsize=(15, 7.5))
@@ -79,9 +79,15 @@ class relic_convergence_analysis:
                              + self.param \
                              + ' = {0:.2f}%'.format((self.variants[idx]/self.fid[self.param]-1)))
             ax1.plot(ps.k_table, ps.ps_table, label=plotlabel)
+            if plotdata==True and idx==0: #idx==0 is just to plot a single dataset 
+                ax1.plot(self.fid['h']*ps.class_pk['k (h/Mpc)'], 
+                         np.power(self.fid['h'], -3)*ps.class_pk['P (Mpc/h)^3'], 
+                         label='CLASS P(k) Data',
+                         linestyle='--')
         ax1.set_title(r'$P_g$ for $z={0:.2f}$'.format(self.z_table[z_index]))
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
-        ax1.set_ylabel(r'[Mpc$^3$]')
+        ax1.set_ylabel(r'$P_g$ [Mpc$^3$]')
+        ax1.set_xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))
         ax1.legend()
         ax1.set_xscale(xscale) 
 
@@ -94,9 +100,15 @@ class relic_convergence_analysis:
                              + self.param \
                              + ' = {0:.2f}%'.format((self.variants[idx]/self.fid[self.param]-1)))
             ax2.plot(ps.k_table, ps.log_ps_table, label=plotlabel)
+            if plotdata==True and idx==0: #idx==0 is just to plot a single dataset 
+                ax2.plot(self.fid['h']*ps.class_pk['k (h/Mpc)'], 
+                         np.log(np.power(self.fid['h'], -3)*ps.class_pk['P (Mpc/h)^3']), 
+                         label='CLASS Log(P(k)) Data', 
+                         linestyle='--')
         ax2.set_title(r'$log(P_g)$ for $z={0:.2f}$'.format(self.z_table[z_index]))
         ax2.set_xlabel(r'k [Mpc$^{-1}$]')
-        ax2.set_ylabel(r'[Mpc$^3$]')
+        ax2.set_ylabel(r'log($P_g$) [Mpc$^3$]')
+        ax2.set_xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))
         ax2.legend()
         ax2.set_xscale(xscale) 
         

@@ -26,6 +26,7 @@ class spectrum:
         self.prim_table = None
         self.ps_table = None
         self.log_ps_table = None
+        self.class_pk = None 
         self.dataconfig = correct_path(datadirectory + "/test_parameters.ini")
         self.datapath = correct_path(datadirectory + "/test_tk.dat")
 
@@ -75,6 +76,14 @@ class spectrum:
                                     header=None, 
                                     engine="python",
                                     names=["k (h/Mpc)", "d_b", "d_cdm"])
+        self.class_pk = pd.read_csv(self.datapath.replace("/test_tk.dat", "/test_pk.dat"), 
+                                    skiprows=4,
+                                    skipinitialspace=True,
+                                    #sep="     ", 
+                                    delim_whitespace=True,
+                                    header=None,
+                                    engine="python",
+                                    names=["k (h/Mpc)", "P (Mpc/h)^3"])
         
 
     def interpolate(self):

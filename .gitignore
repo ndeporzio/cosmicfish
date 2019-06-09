@@ -3,6 +3,7 @@ __pycache__
 
 #Ignore virtual environment files
 /env
+/env.nosync
 
 #Ignore files relevant to jupyter notebooks
 .ipynb_checkpoints/
