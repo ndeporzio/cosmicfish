@@ -4,34 +4,6 @@ import seaborn as sns
 
 import cosmicfish as cf
 
-#class lightrelicanalysis: 
-#  
-#    def __init__(self, 
-#                 name=None, 
-#                 fid=None,
-#                 nonfid=None, 
-#                 z_table=None, 
-#                 classdir=None, 
-#                 datastore=None, 
-#                 testconvergence=None, 
-#                 paramvary=None): 
-#        self.name=name
-#        self.fid=fid
-#        self.z_table=z_table
-#        self.classdir=classdir
-#        self.datastore=datastore
-#        self.testconvergence=testconvergence
-#        self.paramvary=paramvary
-#        self.spectra=[]
-#
-#    def generate(self): 
-#        if testconvergence==True: 
-#            print('Convergence package in development...') 
-#        else:   
-            
-            
-                 
-
 class relic_convergence_analysis: 
 
     def __init__(self, fid, param, varytype, varyvals, z_table, m_ncdm,
@@ -60,7 +32,10 @@ class relic_convergence_analysis:
         #First index is redshift, second index is variation 
         if param=='T_ncdm':
             self.spectra = [[cf.spectrum(cf.generate_data(dict(self.fid,
-                                                               **{param : i, 'N_ncdm' : 1, 'm_ncdm' : self.m_ncdm, 'z_pk' : j}),
+                                                               **{'T_ncdm' : i,
+                                                                  'N_ncdm' : 1,
+                                                                  'm_ncdm' : self.m_ncdm, 
+                                                                  'z_pk' : j}),
                                                           self.classdir,
                                                           self.datastore).replace('/test_parameters.ini',''),
                                          self.z_table) for i in self.variants] for j in self.z_table] 
@@ -100,60 +75,33 @@ class relic_convergence_analysis:
             if self.param=='T_ncdm':
                 plotlabel = r'T_ncdm = {0:.2f}[K]'.format(self.variants[idx])
             else:
-                plotlabel = r'$\delta$' + self.param + ' = {0:.2f}%'.format((self.variants[idx]/self.fid[self.param]-1))
+                plotlabel = (r'$\delta$' \
+                             + self.param \
+                             + ' = {0:.2f}%'.format((self.variants[idx]/self.fid[self.param]-1)))
             ax1.plot(ps.k_table, ps.ps_table, label=plotlabel)
         ax1.set_title(r'$P_g$ for $z={0:.2f}$'.format(self.z_table[z_index]))
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
         ax1.set_ylabel(r'[Mpc$^3$]')
         ax1.legend()
-        if xscale=='log': 
-            ax1.set_xscale('log') 
+        ax1.set_xscale(xscale) 
 
         ax2= plt.subplot(1, 2, 2)
         for idx, ps in enumerate(self.spectra[z_index]):
             if self.param=='T_ncdm':
                 plotlabel = r'T_ncdm = {0:.2f}[K]'.format(self.variants[idx])
             else:
-                plotlabel = r'$\delta$' + self.param + ' = {0:.2f}%'.format((self.variants[idx]/self.fid[self.param]-1))
+                plotlabel = (r'$\delta$' \
+                             + self.param \
+                             + ' = {0:.2f}%'.format((self.variants[idx]/self.fid[self.param]-1)))
             ax2.plot(ps.k_table, ps.log_ps_table, label=plotlabel)
         ax2.set_title(r'$log(P_g)$ for $z={0:.2f}$'.format(self.z_table[z_index]))
         ax2.set_xlabel(r'k [Mpc$^{-1}$]')
         ax2.set_ylabel(r'[Mpc$^3$]')
         ax2.legend()
-        if xscale=='log': 
-            ax2.set_xscale('log') 
+        ax2.set_xscale(xscale) 
         
         plt.show()
 
-#        if self.param=='T_ncdm': 
-#            plt.figure(figsize=(15, 7.5))
-#
-#            ax1 = plt.subplot(1, 2, 1)
-#            for idx, ps in enumerate(self.spectra[z_index]):
-#                if self.param=='T_ncdm':
-#                    plotlabel = r'T_ncdm = {0:.2f}[K]'.format(self.variants[idx])
-#                else:
-#                    plotlabel = r'$\delta$' + self.param + ' = {0:.2f}%'.format((self.variants[idx]/self.fid[self.param]-1))
-#                ax1.plot(ps.k_table, ps.ps_table, label=plotlabel)
-#            ax1.set_title(r'$P_g$ for $z={0:.2f}$'.format(self.z_table[z_index]))
-#            ax1.set_xlabel(r'k [Mpc$^{-1}$]')
-#            ax1.set_ylabel(r'[Mpc$^3$]')
-#            ax1.legend()
-#
-#            ax2= plt.subplot(1, 2, 2)
-#            for idx, ps in enumerate(self.spectra[z_index]):
-#                if self.param=='T_ncdm':
-#                    plotlabel = r'T_ncdm = {0:.2f}[K]'.format(self.variants[idx])
-#                else:
-#                    plotlabel = r'$\delta$' + self.param + ' = {0:.2f}%'.format((self.variants[idx]/self.fid[self.param]-1))
-#                ax2.plot(ps.k_table, ps.log_ps_table, label=plotlabel)
-#            ax2.set_title(r'$log(P_g)$ for $z={0:.2f}$'.format(self.z_table[z_index]))
-#            ax2.set_xlabel(r'k [Mpc$^{-1}$]')
-#            ax2.set_ylabel(r'[Mpc$^3$]')
-#            ax2.legend()        
-#        
-#            plt.show() 
-                  
     def plot_dps(self, z_index=0, xscale='linear'):
         sns.set()
         sns.set_palette("Blues_d", n_colors=len(self.variants))
@@ -170,8 +118,7 @@ class relic_convergence_analysis:
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
         ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
         ax1.legend()
-        if xscale=='log':  
-            ax1.set_xscale('log')
+        ax1.set_xscale(xscale)
 
         ax2= plt.subplot(1, 2, 2)
         for idx, dlogps in enumerate(self.dlogps[z_index]):
@@ -184,8 +131,7 @@ class relic_convergence_analysis:
         ax2.set_xlabel(r'k [Mpc$^{-1}$]')
         ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
         ax2.legend()
-        if xscale=='log': 
-            ax2.set_xscale('log') 
+        ax2.set_xscale(xscale) 
 
         plt.show()
 
