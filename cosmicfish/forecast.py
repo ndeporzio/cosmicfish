@@ -153,14 +153,15 @@ class relic_convergence_analysis:
             plt.figure(figsize=(15, 7.5))
 
             ax1 = plt.subplot(1, 2, 1)
-            for idx, dps2 in enumerate(self.dps[z_index]):
+            for idx, dps in enumerate(self.dps[z_index]):
                 
                 domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm*self.spectra[z_index][idx].T_cmb, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
                 #domega_chi_dT_chi = np.power(self.spectra[z_index][idx].T_ncdm/1.95, 3.) * (self.m_ncdm/94.) / self.spectra[z_index][idx].T_ncdm #simplified approximation domega/dT =  omega/T
                 #domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm, 1.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
                 #domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm*self.spectra[z_index][idx].T_cmb, 0.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
                 plotlabel = r'T_ncdm = {0:.3f}[K]'.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb)
-                ax1.plot(self.spectra[z_index][idx].k_table, np.array(dps2/domega_chi_dT_chi), label=plotlabel)
+                plotdata = np.array(dps) * (1/domega_chi_dT_chi)
+                ax1.plot(self.spectra[z_index][idx].k_table, plotdata, label=plotlabel)
                 print('dT/domega @ T_ncdm = {0:.3f}[K] is: '.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb) + str(1/domega_chi_dT_chi))
                 #print('Test val: ' + str(np.array(dps2/domega_chi_dT_chi)[-1] / dps2[-1]))
             ax1.set_title(r'$\partial P_g / \partial$ omega_ncdm' + ' for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
@@ -171,9 +172,11 @@ class relic_convergence_analysis:
                 ax1.set_xscale('log') 
 
             ax2= plt.subplot(1, 2, 2)
-            for idx, dlogps2 in enumerate(self.dlogps[z_index]):
+            for idx, dlogps in enumerate(self.dlogps[z_index]):
+                domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm*self.spectra[z_index][idx].T_cmb, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
                 plotlabel = r'T_ncdm = {0:.3f}[K]'.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb)
-                ax2.plot(self.spectra[z_index][idx].k_table, dlogps2/domega_chi_dT_chi, label=plotlabel)
+                plotdata = np.array(dlogps) * (1/domega_chi_dT_chi)
+                ax2.plot(self.spectra[z_index][idx].k_table, plotdata, label=plotlabel)
             ax2.set_title(r'$\partial log(P_g) / \partial$ omega_ncdm'+' for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
             ax2.set_xlabel(r'k [Mpc$^{-1}$]')
             ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
@@ -247,6 +250,7 @@ class relic_convergence_analysis:
             ax2= plt.subplot(1, 2, 2)
             dlogps_comp = list(self.dlogps[z_index][:-1])
             for idx, dlogps in enumerate(dlogps_comp):
+                domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm*self.spectra[z_index][idx].T_cmb, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
                 plotlabel = r'T_ncdm @ {0:.3f}[K]'.format(self.spectra[z_index][idx].T_cmb*(self.variants[idx+1]+self.variants[idx])/2)
                 ax2.plot(self.spectra[z_index][idx].k_table, (self.dlogps[z_index][idx+1]-self.dlogps[z_index][idx])/domega_chi_dT_chi, label=plotlabel)
             ax2.set_title(r'$\Delta(\partial log(P_g) / \partial$ omega_ncdm)'+' for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
