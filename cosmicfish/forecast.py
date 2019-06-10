@@ -85,7 +85,7 @@ class relic_convergence_analysis:
                          label='CLASS P(k) Data',
                          marker='x', 
                          linestyle=':')
-        ax1.set_title(r'$P_g$ for $z={0:.3f}$'.format(self.z_table[z_index]))
+        ax1.set_title(r'$P_g$ for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
         ax1.set_ylabel(r'$P_g$ [Mpc$^3$]')
         ax1.set_xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))
@@ -107,7 +107,7 @@ class relic_convergence_analysis:
                          label='CLASS Log(P(k)) Data', 
                          marker='x', 
                          linestyle=':')
-        ax2.set_title(r'$log(P_g)$ for $z={0:.3f}$'.format(self.z_table[z_index]))
+        ax2.set_title(r'$log(P_g)$ for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
         ax2.set_xlabel(r'k [Mpc$^{-1}$]')
         ax2.set_ylabel(r'log($P_g$) [Mpc$^3$]')
         ax2.set_xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))
@@ -128,7 +128,7 @@ class relic_convergence_analysis:
             else:
                 plotlabel = r'$\delta$' + self.param + ' = {0:.3f}%'.format(100*(self.variants[idx]/self.fid[self.param]-1))
             ax1.plot(self.spectra[z_index][idx].k_table, dps, label=plotlabel)
-        ax1.set_title(r'$\partial P_g / \partial$' + self.param + ' for $z={0:.3f}$'.format(self.z_table[z_index]))
+        ax1.set_title(r'$\partial P_g / \partial$' + self.param + ' for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
         ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
         ax1.legend()
@@ -141,7 +141,7 @@ class relic_convergence_analysis:
             else:
                 plotlabel = r'$\delta$' + self.param + ' = {0:.3f}%'.format(100*(self.variants[idx]/self.fid[self.param]-1))
             ax2.plot(self.spectra[z_index][idx].k_table, dlogps, label=plotlabel)
-        ax2.set_title(r'$\partial log(P_g) / \partial$'+self.param+' for $z={0:.3f}$'.format(self.z_table[z_index]))
+        ax2.set_title(r'$\partial log(P_g) / \partial$'+self.param+' for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
         ax2.set_xlabel(r'k [Mpc$^{-1}$]')
         ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
         ax2.legend()
@@ -163,7 +163,7 @@ class relic_convergence_analysis:
                 ax1.plot(self.spectra[z_index][idx].k_table, np.array(dps2/domega_chi_dT_chi), label=plotlabel)
                 print('dT/domega @ T_ncdm = {0:.3f}[K] is: '.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb) + str(1/domega_chi_dT_chi))
                 #print('Test val: ' + str(np.array(dps2/domega_chi_dT_chi)[-1] / dps2[-1]))
-            ax1.set_title(r'$\partial P_g / \partial$ omega_ncdm' + ' for $z={0:.3f}$'.format(self.z_table[z_index]))
+            ax1.set_title(r'$\partial P_g / \partial$ omega_ncdm' + ' for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
             ax1.set_xlabel(r'k [Mpc$^{-1}$]')
             ax1.set_ylabel(r'[Mpc$^3$ / (units of omega_ncdm)]')
             ax1.legend()
@@ -174,7 +174,7 @@ class relic_convergence_analysis:
             for idx, dlogps2 in enumerate(self.dlogps[z_index]):
                 plotlabel = r'T_ncdm = {0:.3f}[K]'.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb)
                 ax2.plot(self.spectra[z_index][idx].k_table, dlogps2/domega_chi_dT_chi, label=plotlabel)
-            ax2.set_title(r'$\partial log(P_g) / \partial$ omega_ncdm'+' for $z={0:.3f}$'.format(self.z_table[z_index]))
+            ax2.set_title(r'$\partial log(P_g) / \partial$ omega_ncdm'+' for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
             ax2.set_xlabel(r'k [Mpc$^{-1}$]')
             ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
             ax2.legend()
@@ -200,7 +200,7 @@ class relic_convergence_analysis:
                              + ' @ {0:.3f}%'.format((100*(self.variants[idx+1]/self.fid[self.param]-1)
                                                      + 100*(self.variants[idx]/self.fid[self.param]-1)) / 2.))
             ax1.plot(self.spectra[z_index][idx].k_table, self.dps[z_index][idx+1]-self.dps[z_index][idx], label=plotlabel)
-        ax1.set_title(r'$\Delta (\partial P_g / \partial$' + self.param + ') for $z={0:.3f}$'.format(self.z_table[z_index]))
+        ax1.set_title(r'$\Delta (\partial P_g / \partial$' + self.param + ') for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
         ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
         ax1.legend()
@@ -218,7 +218,7 @@ class relic_convergence_analysis:
                              + ' @ {0:.3f}%'.format((100*(self.variants[idx+1]/self.fid[self.param]-1)
                                                      + 100*(self.variants[idx]/self.fid[self.param]-1)) / 2.))
             ax2.plot(self.spectra[z_index][idx].k_table, self.dlogps[z_index][idx+1]-self.dlogps[z_index][idx], label=plotlabel)
-        ax2.set_title(r'$\Delta (\partial log(P_g) / \partial$'+self.param+') for $z={0:.3f}$'.format(self.z_table[z_index]))
+        ax2.set_title(r'$\Delta (\partial log(P_g) / \partial$'+self.param+') for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
         ax2.set_xlabel(r'k [Mpc$^{-1}$]')
         ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
         ax2.legend()
@@ -237,7 +237,7 @@ class relic_convergence_analysis:
                 plotlabel = r'T_ncdm @ {0:.3f}[K]'.format(self.spectra[z_index][idx].T_cmb*(self.variants[idx+1]+self.variants[idx])/2)
 
                 ax1.plot(self.spectra[z_index][idx].k_table, (self.dps[z_index][idx+1]-self.dps[z_index][idx])/domega_chi_dT_chi, label=plotlabel)
-            ax1.set_title(r'$\Delta(\partial P_g / \partial$ omega_ncdm)' + ' for $z={0:.3f}$'.format(self.z_table[z_index]))
+            ax1.set_title(r'$\Delta(\partial P_g / \partial$ omega_ncdm)' + ' for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
             ax1.set_xlabel(r'k [Mpc$^{-1}$]')
             ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
             ax1.legend()
@@ -249,7 +249,7 @@ class relic_convergence_analysis:
             for idx, dlogps in enumerate(dlogps_comp):
                 plotlabel = r'T_ncdm @ {0:.3f}[K]'.format(self.spectra[z_index][idx].T_cmb*(self.variants[idx+1]+self.variants[idx])/2)
                 ax2.plot(self.spectra[z_index][idx].k_table, (self.dlogps[z_index][idx+1]-self.dlogps[z_index][idx])/domega_chi_dT_chi, label=plotlabel)
-            ax2.set_title(r'$\Delta(\partial log(P_g) / \partial$ omega_ncdm)'+' for $z={0:.3f}$'.format(self.z_table[z_index]))
+            ax2.set_title(r'$\Delta(\partial log(P_g) / \partial$ omega_ncdm)'+' for $z={0:.3f}$, m_ncdm={0:.3f} [eV]'.format(self.z_table[z_index], self.m_ncdm))
             ax2.set_xlabel(r'k [Mpc$^{-1}$]')
             ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
             ax2.legend()
