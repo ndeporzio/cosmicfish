@@ -27,6 +27,9 @@ class relic_convergence_analysis:
                                                           self.classdir, 
                                                           self.datastore).replace('/test_parameters.ini',''), 
                                         self.z_table) for j in self.z_table]
+        for ps in self.fid_spectra: 
+            if ps.T_ncdm==None:
+                ps.T_ncdm = 0.
 
         #Calculate variation spectra 
         #First index is redshift, second index is variation 
@@ -49,13 +52,14 @@ class relic_convergence_analysis:
 
 
         #Calculate derivatives 
-        if param=='T_ncdm': 
+        if param=='T_ncdm':
+
             self.dps = [[dPs(self.fid_spectra[j].ps_table, 
                              self.spectra[j][i].ps_table, 
-                             self.variants[i]) for i in range(len(self.variants))] for j in range(len(self.z_table))]
+                             self.variants[i]-self.fid_spectra[j].T_ncdm) for i in range(len(self.variants))] for j in range(len(self.z_table))]
             self.dlogps = [[dlogPs(self.fid_spectra[j].ps_table,
                                    self.spectra[j][i].ps_table,
-                                   self.variants[i]) for i in range(len(self.variants))] for j in range(len(self.z_table))]
+                                   self.variants[i]-self.fid_spectra[j].T_ncdm) for i in range(len(self.variants))] for j in range(len(self.z_table))]
         else: 
             self.dps = [[dPs(self.fid_spectra[j].ps_table, 
                              self.spectra[j][i].ps_table, 
