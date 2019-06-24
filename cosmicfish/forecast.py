@@ -7,7 +7,7 @@ import cosmicfish as cf
 class relic_convergence_analysis: 
 
     def __init__(self, fid, param, varytype, varyvals, z_table, m_ncdm,
-                 classdir, datastore): 
+                 classdir, datastore, dstep=0.01): 
         self.name = param + "convergence analysis for light relic" 
         self.z_table = z_table
         self.m_ncdm = m_ncdm
@@ -15,6 +15,7 @@ class relic_convergence_analysis:
         self.datastore = datastore
         self.fid = fid
         self.param = param
+        self.dstep = dstep
 
         #Calculate parameter variations
         if varytype=="abs":     
@@ -39,30 +40,60 @@ class relic_convergence_analysis:
                                                           self.classdir,
                                                           self.datastore).replace('/test_parameters.ini',''),
                                          self.z_table) for i in self.variants] for j in self.z_table] 
-
+            self.spectra_high = [[cf.spectrum(cf.generate_data(dict(self.fid,
+                                                               **{'T_ncdm' : (1+self.dstep)*i,
+                                                                  'N_ncdm' : 1,
+                                                                  'm_ncdm' : self.m_ncdm,
+                                                                  'z_pk' : j}),
+                                                          self.classdir,
+                                                          self.datastore).replace('/test_parameters.ini',''),
+                                         self.z_table) for i in self.variants] for j in self.z_table]
+            self.spectra_low = [[cf.spectrum(cf.generate_data(dict(self.fid,
+                                                               **{'T_ncdm' : (1-self.dstep)*i,
+                                                                  'N_ncdm' : 1,
+                                                                  'm_ncdm' : self.m_ncdm,
+                                                                  'z_pk' : j}),
+                                                          self.classdir,
+                                                          self.datastore).replace('/test_parameters.ini',''),
+                                         self.z_table) for i in self.variants] for j in self.z_table]
         else: 
             self.spectra = [[cf.spectrum(cf.generate_data(dict(self.fid, 
                                                                **{param : i, 'z_pk' : j}), 
                                                           self.classdir, 
                                                           self.datastore).replace('/test_parameters.ini',''), 
                                          self.z_table) for i in self.variants] for j in self.z_table]
-
+            self.spectra_high = [[cf.spectrum(cf.generate_data(dict(self.fid,
+                                                               **{param : (1+self.dstep)*i,
+                                                                  'z_pk' : j}),
+                                                          self.classdir,
+                                                          self.datastore).replace('/test_parameters.ini',''),
+                                         self.z_table) for i in self.variants] for j in self.z_table]
+            self.spectra_low = [[cf.spectrum(cf.generate_data(dict(self.fid,
+                                                               **{param : (1-self.dstep)*i, 
+                                                                  'z_pk' : j}),
+                                                          self.classdir,
+                                                          self.datastore).replace('/test_parameters.ini',''),
+                                         self.z_table) for i in self.variants] for j in self.z_table]
 
         #Calculate derivatives 
         if param=='T_ncdm': 
-            self.dps = [[dPs(self.fid_spectra[j].ps_table, 
-                             self.spectra[j][i].ps_table, 
-                             self.variants[i]) for i in range(len(self.variants))] for j in range(len(self.z_table))]
-            self.dlogps = [[dlogPs(self.fid_spectra[j].ps_table,
-                                   self.spectra[j][i].ps_table,
-                                   self.variants[i]) for i in range(len(self.variants))] for j in range(len(self.z_table))]
+            self.dps = [[dPs(self.spectra_low[j][i].ps_table, 
+                             self.spectra_high[j][i].ps_table, 
+                             self.variants[i]*self.dstep,  
+                             centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
+            self.dlogps = [[dlogPs(self.spectra_low[j][i].ps_table,
+                                   self.spectra_high[j][i].ps_table,
+                                   self.variants[i]*self.dstep,
+                                   centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
         else: 
-            self.dps = [[dPs(self.fid_spectra[j].ps_table, 
-                             self.spectra[j][i].ps_table, 
-                             self.variants[i]-self.fid[param]) for i in range(len(self.variants))] for j in range(len(self.z_table))]
-            self.dlogps = [[dlogPs(self.fid_spectra[j].ps_table,
-                                   self.spectra[j][i].ps_table,
-                                   self.variants[i]-self.fid[param]) for i in range(len(self.variants))] for j in range(len(self.z_table))]
+            self.dps = [[dPs(self.spectra_low[j][i].ps_table, 
+                             self.spectra_high[j][i].ps_table, 
+                             self.variants[i]*self.dstep, 
+                             centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
+            self.dlogps = [[dlogPs(self.spectra_low[j][i].ps_table,
+                                   self.spectra_high[j][i].ps_table,
+                                   self.variants[i]*self.dstep, 
+                                   centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
 
 
     def plot_ps(self, z_index=0, xscale='linear', plotdata=False):
@@ -261,12 +292,20 @@ class relic_convergence_analysis:
 
             plt.show()
 
-def dPs(fid_ps_table, var_ps_table, step):
-    table = (var_ps_table - fid_ps_table) / step
-    dps_table = table
+def dPs(fid_ps_table, var_ps_table, step, centered=False):
+    if centered==False: 
+        dps_table = (var_ps_table - fid_ps_table) / step
+    elif centered==True: 
+        var_high = var_ps_table
+        var_low = fid_ps_table
+        dps_table = (var_high - var_low)/(2 * step) 
     return dps_table
 
-def dlogPs(fid_ps_table, var_ps_table, step):
-    table = (np.log(var_ps_table) - np.log(fid_ps_table)) / step
-    dlogps_table = table
+def dlogPs(fid_ps_table, var_ps_table, step, centered=False):
+    if centered==False: 
+        dlogps_table = (np.log(var_ps_table) - np.log(fid_ps_table)) / step
+    elif centered==True: 
+        var_high = np.log(var_ps_table)
+        var_low = np.log(fid_ps_table)
+        dlogps_table = (var_high - var_low)/(2 * step)
     return dlogps_table
