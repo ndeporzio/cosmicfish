@@ -7,7 +7,7 @@ import cosmicfish as cf
 class relic_convergence_analysis: 
 
     def __init__(self, fid, param, varytype, varyvals, z_table, m_ncdm,
-                 classdir, datastore, dstep=0.01): 
+                 classdir, datastore, dstep=[0.01]): 
         self.name = param + "convergence analysis for light relic" 
         self.z_table = z_table
         self.m_ncdm = m_ncdm
@@ -40,60 +40,68 @@ class relic_convergence_analysis:
                                                           self.classdir,
                                                           self.datastore).replace('/test_parameters.ini',''),
                                          self.z_table) for i in self.variants] for j in self.z_table] 
-            self.spectra_high = [[cf.spectrum(cf.generate_data(dict(self.fid,
-                                                               **{'T_ncdm' : (1+self.dstep)*i,
+            self.spectra_high = [[[cf.spectrum(cf.generate_data(dict(self.fid,
+                                                               **{'T_ncdm' : (1+k)*i,
                                                                   'N_ncdm' : 1,
                                                                   'm_ncdm' : self.m_ncdm,
                                                                   'z_pk' : j}),
                                                           self.classdir,
                                                           self.datastore).replace('/test_parameters.ini',''),
-                                         self.z_table) for i in self.variants] for j in self.z_table]
-            self.spectra_low = [[cf.spectrum(cf.generate_data(dict(self.fid,
-                                                               **{'T_ncdm' : (1-self.dstep)*i,
+                                         self.z_table) for k in self.dstep] for i in self.variants] for j in self.z_table] 
+            self.spectra_low = [[[cf.spectrum(cf.generate_data(dict(self.fid,
+                                                               **{'T_ncdm' : (1-k)*i,
                                                                   'N_ncdm' : 1,
                                                                   'm_ncdm' : self.m_ncdm,
                                                                   'z_pk' : j}),
                                                           self.classdir,
                                                           self.datastore).replace('/test_parameters.ini',''),
-                                         self.z_table) for i in self.variants] for j in self.z_table]
+                                         self.z_table) for k in self.dstep] for i in self.variants] for j in self.z_table]
         else: 
             self.spectra = [[cf.spectrum(cf.generate_data(dict(self.fid, 
                                                                **{param : i, 'z_pk' : j}), 
                                                           self.classdir, 
                                                           self.datastore).replace('/test_parameters.ini',''), 
                                          self.z_table) for i in self.variants] for j in self.z_table]
-            self.spectra_high = [[cf.spectrum(cf.generate_data(dict(self.fid,
-                                                               **{param : (1+self.dstep)*i,
+            self.spectra_high = [[[cf.spectrum(cf.generate_data(dict(self.fid,
+                                                               **{param : (1+k)*i,
                                                                   'z_pk' : j}),
                                                           self.classdir,
                                                           self.datastore).replace('/test_parameters.ini',''),
-                                         self.z_table) for i in self.variants] for j in self.z_table]
-            self.spectra_low = [[cf.spectrum(cf.generate_data(dict(self.fid,
-                                                               **{param : (1-self.dstep)*i, 
+                                         self.z_table) for k in self.dstep]for i in self.variants] for j in self.z_table]
+            self.spectra_low = [[[cf.spectrum(cf.generate_data(dict(self.fid,
+                                                               **{param : (1-k)*i, 
                                                                   'z_pk' : j}),
                                                           self.classdir,
                                                           self.datastore).replace('/test_parameters.ini',''),
-                                         self.z_table) for i in self.variants] for j in self.z_table]
+                                         self.z_table) for k in self.dstep] for i in self.variants] for j in self.z_table]
 
         #Calculate derivatives 
         if param=='T_ncdm': 
-            self.dps = [[dPs(self.spectra_low[j][i].ps_table, 
+            self.dps = [[[dPs(self.spectra_low[j][i].ps_table, 
                              self.spectra_high[j][i].ps_table, 
-                             self.variants[i]*self.dstep,  
-                             centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
-            self.dlogps = [[dlogPs(self.spectra_low[j][i].ps_table,
+                             self.variants[i]*k,  
+                             centered=True) for k in self.dstep] 
+                                for i in range(len(self.variants))] 
+                                    for j in range(len(self.z_table))]
+            self.dlogps = [[[dlogPs(self.spectra_low[j][i].ps_table,
                                    self.spectra_high[j][i].ps_table,
-                                   self.variants[i]*self.dstep,
-                                   centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
+                                   self.variants[i]*k,
+                                   centered=True) for k in self.dstep]
+                                    for i in range(len(self.variants))] 
+                                        for j in range(len(self.z_table))]
         else: 
-            self.dps = [[dPs(self.spectra_low[j][i].ps_table, 
+            self.dps = [[[dPs(self.spectra_low[j][i].ps_table, 
                              self.spectra_high[j][i].ps_table, 
-                             self.variants[i]*self.dstep, 
-                             centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
-            self.dlogps = [[dlogPs(self.spectra_low[j][i].ps_table,
+                             self.variants[i]*k, 
+                             centered=True) for k in self.dstep]
+                                for i in range(len(self.variants))] 
+                                    for j in range(len(self.z_table))]
+            self.dlogps = [[[dlogPs(self.spectra_low[j][i].ps_table,
                                    self.spectra_high[j][i].ps_table,
-                                   self.variants[i]*self.dstep, 
-                                   centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
+                                   self.variants[i]*k, 
+                                   centered=True) for k in self.dstep]
+                                    for i in range(len(self.variants))] 
+                                        for j in range(len(self.z_table))]
 
 
     def plot_ps(self, z_index=0, xscale='linear', plotdata=False):
@@ -147,9 +155,48 @@ class relic_convergence_analysis:
         
         plt.show()
 
-    def plot_dps(self, z_index=0, xscale='linear'):
+    def plot_dps(self, wrt='dsteps', z_index=None, var_index=None, dstep_index=None, xscale='linear'):
         sns.set()
-        sns.set_palette("Blues_d", n_colors=len(self.variants))
+
+
+        if wrt=='z': 
+            #requires var_index and dstep_index be set
+            sns.set_palette("Blues_d", n_colors=lend(self.z_table))
+            plt.figure(figsize=(15, 7.5))
+            ax1 = plt.subplot(1, 2, 1)
+            for idx, dps in enumerate(self.dps):
+                if self.param=='T_ncdm':
+                    plotlabel = r'T_ncdm = {:.3f}[K]'.format(self.variants[var_index]*self.spectra[idx][var_index].T_cmb)
+                else: 
+                    plotlabel = (r'$\delta$' + self.param 
+                                 + ' = {:.3f}%'.format(100*(self.variants[var_index]/self.fid[self.param]-1)))
+                ax1.plot(self.spectra[idx][var_index][dstep_index].k_table, dps, label=plotlabel)
+            ax1.set_title(r'$\partial P_g / \partial$' 
+                          + self.param 
+                          + ' for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
+            ax1.set_xlabel(r'k [Mpc$^{-1}$]')
+            ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
+            ax1.legend()
+            ax1.set_xscale(xscale)
+            ax2= plt.subplot(1, 2, 2)
+            for idx, dlogps in enumerate(self.dlogps):
+
+            #PICKUP REVISING AT THIS POINT
+                    
+
+        elif wrt=='var': 
+            #requires z_index and dstep_index be set
+            sns.set_palette("Blues_d", n_colors=lend(self.variants))
+            plt.figure(figsize=(15, 7.5))
+            ax1 = plt.subplot(1, 2, 1)
+        elif wrt=='dstep': 
+            #requires z_index and var_index be set 
+            sns.set_palette("Blues_d", n_colors=lend(self.dstep))
+            plt.figure(figsize=(15, 7.5))
+            ax1 = plt.subplot(1, 2, 1)
+
+
+        sns.set_palette("Blues_d", n_colors=lend(self.variants))
         plt.figure(figsize=(15, 7.5))
 
         ax1 = plt.subplot(1, 2, 1)
@@ -187,13 +234,9 @@ class relic_convergence_analysis:
             for idx, dps in enumerate(self.dps[z_index]):
                 
                 domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm*self.spectra[z_index][idx].T_cmb, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
-                #domega_chi_dT_chi = np.power(self.spectra[z_index][idx].T_ncdm/1.95, 3.) * (self.m_ncdm/94.) / self.spectra[z_index][idx].T_ncdm #simplified approximation domega/dT =  omega/T
-                #domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm, 1.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
-                #domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm*self.spectra[z_index][idx].T_cmb, 0.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
                 plotlabel = r'T_ncdm = {:.3f}[K]'.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb)
                 plotdata = np.array(dps) * (1/domega_chi_dT_chi)
                 ax1.plot(self.spectra[z_index][idx].k_table, plotdata, label=plotlabel)
-                #print('dT/domega @ T_ncdm = {:.3f}[K] is: '.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb) + str(1/domega_chi_dT_chi))
             ax1.set_title(r'$\partial P_g / \partial$ omega_ncdm' + ' for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
             ax1.set_xlabel(r'k [Mpc$^{-1}$]')
             ax1.set_ylabel(r'[Mpc$^3$ / (units of omega_ncdm)]')
