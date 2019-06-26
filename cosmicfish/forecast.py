@@ -2,310 +2,223 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-import cosmicfish as cf
+import cosmicfish as cf 
 
-class relic_convergence_analysis: 
-
-    def __init__(self, fid, param, varytype, varyvals, z_table, m_ncdm,
-                 classdir, datastore, dstep=0.01): 
-        self.name = param + "convergence analysis for light relic" 
-        self.z_table = z_table
-        self.m_ncdm = m_ncdm
+class relic_forecast: 
+    """Given fiducial cosmology, generates forecasted Fisher and Covariance matrices."""
+    
+    def __init__(self, fiducialcosmo, z_steps, n_densities, dstep, classdir, datastore): 
+        self.fid = fiducialcosmo
+        self.z_steps = z_steps
+        self.n_densities = n_densities
+        self.A_s_fid = fiducialcosmo['A_s']
+        self.n_s_fid = fiducialcosmo['n_s']
+        self.omega_b_fid = fiducialcosmo['omega_b']
+        self.omega_cdm_fid = fiducialcosmo['omega_cdm']
+        self.h_fid = fiducialcosmo['h']
+        self.tau_reio_fid = fiducialcosmo['tau_reio']
+        self.T_ncdm_fid = fiducialcosmo['T_ncdm'] #Units [T_cmb]
+        self.m_ncdm_fid = fiducialcosmo['m_ncdm'] #Unit [eV] 
+        self.omega_ncdm_fid = cf.omega_ncdm(self.T_ncdm_fid, self.m_ncdm_fid)
+        self.dstep = dstep 
         self.classdir = classdir
         self.datastore = datastore
-        self.fid = fid
-        self.param = param
-        self.dstep = dstep
+        self.c = 2.9979e8 
 
-        #Calculate parameter variations
-        if varytype=="abs":     
-            self.variants = varyvals
-        if varytype=="rel": 
-            self.variants = self.fid[param] * varyvals
+        #Generate spectra at each z for fid cosmo
+        self.spectra_mid = [cf.spectrum(cf.generate_data(dict(self.fid,      
+                                                              **{'z_pk' : j}),
+                                                         self.classdir,       
+                                                         self.datastore).replace('/test_parameters.ini',''),
+                                        self.z_steps) for j in self.z_steps]
+        self.k_table = spectra_mid[0].k_table #All spectra should have same k_table
 
-        #Calculate fiducial spectra
-        self.fid_spectra = [cf.spectrum(cf.generate_data(dict(self.fid, **{'z_pk' : j}),
-                                                          self.classdir, 
-                                                          self.datastore).replace('/test_parameters.ini',''), 
-                                        self.z_table) for j in self.z_table]
+        #Generate variation spectra at each z    
+        self.A_s_high, self.A_s_low = self.generate_spectra('A_s') 
+        self.n_s_high, self.n_s_low = self.generate_spectra('n_s')
+        self.omega_b_high, self.omega_b_low = self.generate_spectra('omega_b')
+        self.omega_cdm_high, self.omega_cdm_low = self.generate_spectra('omega_cdm')
+        self.h_high, self.h_low = self.generate_spectra('h')
+        self.tau_reio_high, self.tau_reio_low = self.generate_spectra('tau_reio')
+        self.T_ncdm_high, self.T_ncdm_low = self.generate_spectra('T_ncdm')
 
-        #Calculate variation spectra 
-        #First index is redshift, second index is variation 
-        if param=='T_ncdm':
-            self.spectra = [[cf.spectrum(cf.generate_data(dict(self.fid,
-                                                               **{'T_ncdm' : i,
-                                                                  'N_ncdm' : 1,
-                                                                  'm_ncdm' : self.m_ncdm, 
-                                                                  'z_pk' : j}),
-                                                          self.classdir,
-                                                          self.datastore).replace('/test_parameters.ini',''),
-                                         self.z_table) for i in self.variants] for j in self.z_table] 
-            self.spectra_high = [[cf.spectrum(cf.generate_data(dict(self.fid,
-                                                               **{'T_ncdm' : (1+self.dstep)*i,
-                                                                  'N_ncdm' : 1,
-                                                                  'm_ncdm' : self.m_ncdm,
-                                                                  'z_pk' : j}),
-                                                          self.classdir,
-                                                          self.datastore).replace('/test_parameters.ini',''),
-                                         self.z_table) for i in self.variants] for j in self.z_table]
-            self.spectra_low = [[cf.spectrum(cf.generate_data(dict(self.fid,
-                                                               **{'T_ncdm' : (1-self.dstep)*i,
-                                                                  'N_ncdm' : 1,
-                                                                  'm_ncdm' : self.m_ncdm,
-                                                                  'z_pk' : j}),
-                                                          self.classdir,
-                                                          self.datastore).replace('/test_parameters.ini',''),
-                                         self.z_table) for i in self.variants] for j in self.z_table]
-        else: 
-            self.spectra = [[cf.spectrum(cf.generate_data(dict(self.fid, 
-                                                               **{param : i, 'z_pk' : j}), 
-                                                          self.classdir, 
-                                                          self.datastore).replace('/test_parameters.ini',''), 
-                                         self.z_table) for i in self.variants] for j in self.z_table]
-            self.spectra_high = [[cf.spectrum(cf.generate_data(dict(self.fid,
-                                                               **{param : (1+self.dstep)*i,
-                                                                  'z_pk' : j}),
-                                                          self.classdir,
-                                                          self.datastore).replace('/test_parameters.ini',''),
-                                         self.z_table) for i in self.variants] for j in self.z_table]
-            self.spectra_low = [[cf.spectrum(cf.generate_data(dict(self.fid,
-                                                               **{param : (1-self.dstep)*i, 
-                                                                  'z_pk' : j}),
-                                                          self.classdir,
-                                                          self.datastore).replace('/test_parameters.ini',''),
-                                         self.z_table) for i in self.variants] for j in self.z_table]
+        #Calculate centered derivatives about fiducial cosmo at each z 
+        self.dPdA_s, self.dlogPdA_s = dPs_array(self.A_s_low, self.A_s_high, self.fid['A_s']*self.dstep) #Replace w/ analytic result 
+        self.dPdn_s, self.dlogPdn_s = dPs_array(self.n_s_low, self.n_s_high, self.fid['n_s']*self.dstep) #Replace w/ analytic result
+        self.dPdomega_b, self.dlogPdomega_b = dPs_array(self.omega_b_low, self.omega_b_high, self.fid['omega_b']*self.dstep)
+        self.dPdomega_cdm, self.dlogPdomega_cdm = dPs_array(self.omega_cdm_low, self.omega_cdm_high, self.fid['omega_cdm']*self.dstep)
+        self.dPdh, self.dlogPdh = dPs_array(self.h_low, self.h_high, self.fid['h']*self.dstep)
+        self.dPdtau_reio, self.dlogPdtau_reio = dPs_array(self.tau_reio_low, self.tau_reio_high, self.fid['tau_reio']*self.dstep)
+        self.dPdT_ncdm, self.dlogPdT_ncdm = dPs_array(self.T_ncdm_low, self.T_ncdm_high, self.fid['T_ncdm']*self.dstep)    
+    
+        self.dPdomega_ncdm = [np.array(self.dPdT_ncdm[k]) / domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.m_ncdm_fid)
+                              for k in range(len(self.z_steps))]
+        self.dlogPdomega_ncdm = [np.array(self.dlogPdT_ncdm[k]) / domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.m_ncdm_fid) 
+                              for k in range(len(self.z_steps))]
+ 
+    def generate_spectra(self, param): 
+        spectra_high = [cf.spectrum(cf.generate_data(dict(self.fid, 
+                                                          **{'z_pk' : j,
+                                                             param : (1.+self.dstep)*self.fid[param]}),
+                                                     self.classdir,
+                                                     self.datastore).replace('/test_parameters.ini',''),
+                                    self.z_steps) for j in self.z_steps] 
+        spectra_low = [cf.spectrum(cf.generate_data(dict(self.fid,
+                                                          **{'z_pk' : j,
+                                                             param : (1.-self.dstep)*self.fid[param]}),
+                                                    self.classdir,
+                                                    self.datastore).replace('/test_parameters.ini',''),
+                                   self.z_steps) for j in self.z_steps] 
+        return spectra_high, spectra_low
 
-        #Calculate derivatives 
-        if param=='T_ncdm': 
-            self.dps = [[dPs(self.spectra_low[j][i].ps_table, 
-                             self.spectra_high[j][i].ps_table, 
-                             self.variants[i]*self.dstep,  
-                             centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
-            self.dlogps = [[dlogPs(self.spectra_low[j][i].ps_table,
-                                   self.spectra_high[j][i].ps_table,
-                                   self.variants[i]*self.dstep,
-                                   centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
-        else: 
-            self.dps = [[dPs(self.spectra_low[j][i].ps_table, 
-                             self.spectra_high[j][i].ps_table, 
-                             self.variants[i]*self.dstep, 
-                             centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
-            self.dlogps = [[dlogPs(self.spectra_low[j][i].ps_table,
-                                   self.spectra_high[j][i].ps_table,
-                                   self.variants[i]*self.dstep, 
-                                   centered=True) for i in range(len(self.variants))] for j in range(len(self.z_table))]
+    def gen_rsd(self, mu): 
+        """For given val of mu, generates array w/ len(z_steps) elems. Each elem is len(k_table)."""
+        kfs_table = kfs(self.omega_ncdm_fid, self.h_fid, np.array(self.z_steps))
+        self.RSD = [[rsd(self.omega_b_fid, 
+                     self.omega_cdm_fid, 
+                     self.omega_ncdm_fid, 
+                     self.h_fid, 
+                     kfs_table[zidx], 
+                     zval, 
+                     mu, 
+                     kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)]   
+        self.dlogRSDdomega_b = (np.log([[rsd((1.+self.dstep)*self.omega_b_fid, self.omega_cdm_fid, self.omega_ncdm_fid, self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)]) - np.log([[rsd((1.-self.dstep)*self.omega_b_fid, self.omega_cdm_fid, self.omega_ncdm_fid, self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)])) / (2.*self.dstep*self.omega_b_fid)
+        self.dlogRSDdomega_cdm = (np.log([[rsd(self.omega_b_fid, (1.+self.dstep)*self.omega_cdm_fid, self.omega_ncdm_fid, self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)]) - np.log([[rsd(self.omega_b_fid, (1.-self.dstep)*self.omega_cdm_fid, self.omega_ncdm_fid, self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)])) / (2.*self.dstep*self.omega_cdm_fid)
+        self.dlogRSDdomega_ncdm = (np.log([[rsd(self.omega_b_fid, self.omega_cdm_fid, (1.+self.dstep)*self.omega_ncdm_fid, self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)]) - np.log([[rsd(self.omega_b_fid, self.omega_cdm_fid, (1.-self.dstep)*self.omega_ncdm_fid, self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)])) / (2.*self.dstep*self.omega_ncdm_fid)
+        self.dlogRSDdh = (np.log([[rsd(self.omega_b_fid, self.omega_cdm_fid, self.omega_ncdm_fid, (1.+self.dstep)*self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)]) - np.log([[rsd(self.omega_b_fid, self.omega_cdm_fid, self.omega_ncdm_fid, (1.-self.dstep)*self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)])) / (2.*self.dstep*self.h_fid)
+            
 
+    def gen_fog(self, mu):
+        self.FOG = [[fog(self.h_fid, self.c, zval, kval, mu) for kval in self.k_table] for zval in self.z_steps]
+        self.dlogFOGdh = ((np.log([[fog((1.+self.dstep)*self.h_fid, self.c, zval, kval, mu) for kval in self.k_table] for zval in self.z_steps]) 
+                    - np.log([[fog((1.-self.dstep)*self.h_fid, self.c, zval, kval, mu) for kval in self.k_table] for zval in self.z_steps]))
+                    / (2.*self.dstep*self.h_fid)) 
 
-    def plot_ps(self, z_index=0, xscale='linear', plotdata=False):
-        sns.set() 
-        sns.set_palette("Blues_d", n_colors=len(self.variants)+1)
-        plt.figure(figsize=(15, 7.5))
+    def gen_fisher(self, mu_step): #Really messy and inefficient
+        fisher = np.zeros((7, 7))
+        mu_vals = np.arange(-1., 1., mu_step)
+        Pm = np.zeros((len(self.z_steps), len(self.k_table, len(mu_vals))))
+        dlogPdA_s = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
+        dlogPdn_s = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
+        dlogPdomega_b = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
+        dlogPdomega_cdm = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
+        dlogPdh = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
+        dlogPdtau_reio = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
+        dlogPdomega_ncdm = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
 
-        ax1 = plt.subplot(1, 2, 1)
-        for idx, ps in enumerate(self.spectra[z_index]):
-            if self.param=='T_ncdm':
-                plotlabel = r'T_ncdm = {:.3f}[K]'.format(self.variants[idx]*ps.T_cmb)
-            else:
-                plotlabel = (r'$\delta$' \
-                             + self.param \
-                             + ' = {:.3f}%'.format(100*(self.variants[idx]/self.fid[self.param]-1)))
-            ax1.plot(ps.k_table, ps.ps_table, label=plotlabel)
-            if plotdata==True and idx==0: #idx==0 is just to plot a single dataset 
-                ax1.plot(ps.class_pk['k (h/Mpc)']*ps.h, 
-                         ps.class_pk['P (Mpc/h)^3']*np.power(ps.h, -3), 
-                         label='CLASS P(k) Data',
-                         marker='x', 
-                         linestyle=':')
-        ax1.set_title(r'$P_g$ for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
-        ax1.set_xlabel(r'k [Mpc$^{-1}$]')
-        ax1.set_ylabel(r'$P_g$ [Mpc$^3$]')
-        ax1.set_xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))
-        ax1.legend()
-        ax1.set_xscale(xscale) 
-
-        ax2= plt.subplot(1, 2, 2)
-        for idx, ps in enumerate(self.spectra[z_index]):
-            if self.param=='T_ncdm':
-                plotlabel = r'T_ncdm = {:.3f}[K]'.format(self.variants[idx]*ps.T_cmb)
-            else:
-                plotlabel = (r'$\delta$' \
-                             + self.param \
-                             + ' = {:.3f}%'.format(100*(self.variants[idx]/self.fid[self.param]-1)))
-            ax2.plot(ps.k_table, ps.log_ps_table, label=plotlabel)
-            if plotdata==True and idx==0: #idx==0 is just to plot a single dataset 
-                ax2.plot(ps.class_pk['k (h/Mpc)']*ps.h, 
-                         np.log(ps.class_pk['P (Mpc/h)^3']*np.power(ps.h, -3)), 
-                         label='CLASS Log(P(k)) Data', 
-                         marker='x', 
-                         linestyle=':')
-        ax2.set_title(r'log($P_g$) for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
-        ax2.set_xlabel(r'k [Mpc$^{-1}$]')
-        ax2.set_ylabel(r'log($P_g$) [Mpc$^3$]')
-        ax2.set_xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))
-        ax2.legend()
-        ax2.set_xscale(xscale) 
         
-        plt.show()
+        for muidx, muval in mu_vals: 
+            gen_rsd(muval)
+            gen_fog(muval)
+            for zidx, zval in enumerate(self.z_steps): 
+                for kidx, kval in enumerate(self.k_table):
+                    Pm[zidx][kidx][muidx] = self.spectra_mid[zidx].ps_table[k_idx] * self.RSD[zidx][kidx] * self.FOG[zidx][kidx]
+                    dlogPdA_s[zidx][kidx][muidx] = self.dlogPdA_s[zidx][kidx]
+                    dlogPdn_s[zidx][kidx][muidx] = self.dlogPdn_s[zidx][kidx]
+                    dlogPdomega_b[zidx][kidx][muidx] = self.dlogPdomega_b[zidx][kidx] + self.dlogRSDdomega_b[zidx][kidx]
+                    dlogPdomega_cdm[zidx][kidx][muidx] = self.dlogPdomega_cdm[zidx][kidx] + self.dlogRSDdomega_cdm[zidx][kidx]
+                    dlogPdh[zidx][kidx][muidx] = self.dlogPdh[zidx][kidx] + self.dlogRSDdh[zidx][kidx] + self.dlogFOGdh[zidx][kidx]
+                    dlogPdtau_reio[zidx][kidx][muidx] = self.dlogPdtau_reio[zidx][kidx]
+                    dlogPdomega_ncdm[zidx][kidx][muidx] = self.dlogPdomega_ncdm[zidx][kidx] + self.dlogRSDdomega_ncdm[zidx][kidx]
 
-    def plot_dps(self, z_index=0, xscale='linear'):
-        sns.set()
-        sns.set_palette("Blues_d", n_colors=len(self.variants))
-        plt.figure(figsize=(15, 7.5))
+        for zidx, zval in enumerate(self.z_steps): 
+            fisher_z = np.zeros((7, 7))
+               #TEST 
 
-        ax1 = plt.subplot(1, 2, 1)
-        for idx, dps in enumerate(self.dps[z_index]):
-            if self.param=='T_ncdm':
-                plotlabel = r'T_ncdm = {:.3f}[K]'.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb)
-            else:
-                plotlabel = r'$\delta$' + self.param + ' = {:.3f}%'.format(100*(self.variants[idx]/self.fid[self.param]-1))
-            ax1.plot(self.spectra[z_index][idx].k_table, dps, label=plotlabel)
-        ax1.set_title(r'$\partial P_g / \partial$' + self.param + ' for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
-        ax1.set_xlabel(r'k [Mpc$^{-1}$]')
-        ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
-        ax1.legend()
-        ax1.set_xscale(xscale)
-
-        ax2= plt.subplot(1, 2, 2)
-        for idx, dlogps in enumerate(self.dlogps[z_index]):
-            if self.param=='T_ncdm':
-                plotlabel = r'T_ncdm = {:.3f}[K]'.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb)
-            else:
-                plotlabel = r'$\delta$' + self.param + ' = {:.3f}%'.format(100*(self.variants[idx]/self.fid[self.param]-1))
-            ax2.plot(self.spectra[z_index][idx].k_table, dlogps, label=plotlabel)
-        ax2.set_title(r'$\partial log(P_g) / \partial$'+self.param+' for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
-        ax2.set_xlabel(r'k [Mpc$^{-1}$]')
-        ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
-        ax2.legend()
-        ax2.set_xscale(xscale) 
-
-        plt.show()
-
-        if self.m_ncdm is not None: 
-            plt.figure(figsize=(15, 7.5))
-
-            ax1 = plt.subplot(1, 2, 1)
-            for idx, dps in enumerate(self.dps[z_index]):
-                
-                domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm*self.spectra[z_index][idx].T_cmb, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
-                #domega_chi_dT_chi = np.power(self.spectra[z_index][idx].T_ncdm/1.95, 3.) * (self.m_ncdm/94.) / self.spectra[z_index][idx].T_ncdm #simplified approximation domega/dT =  omega/T
-                #domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm, 1.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
-                #domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm*self.spectra[z_index][idx].T_cmb, 0.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
-                plotlabel = r'T_ncdm = {:.3f}[K]'.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb)
-                plotdata = np.array(dps) * (1/domega_chi_dT_chi)
-                ax1.plot(self.spectra[z_index][idx].k_table, plotdata, label=plotlabel)
-                #print('dT/domega @ T_ncdm = {:.3f}[K] is: '.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb) + str(1/domega_chi_dT_chi))
-            ax1.set_title(r'$\partial P_g / \partial$ omega_ncdm' + ' for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
-            ax1.set_xlabel(r'k [Mpc$^{-1}$]')
-            ax1.set_ylabel(r'[Mpc$^3$ / (units of omega_ncdm)]')
-            ax1.legend()
-            if xscale=='log': 
-                ax1.set_xscale('log') 
-
-            ax2= plt.subplot(1, 2, 2)
-            for idx, dlogps in enumerate(self.dlogps[z_index]):
-                domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm*self.spectra[z_index][idx].T_cmb, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
-                plotlabel = r'T_ncdm = {:.3f}[K]'.format(self.variants[idx]*self.spectra[z_index][idx].T_cmb)
-                plotdata = np.array(dlogps) * (1/domega_chi_dT_chi)
-                ax2.plot(self.spectra[z_index][idx].k_table, plotdata, label=plotlabel)
-            ax2.set_title(r'$\partial log(P_g) / \partial$ omega_ncdm'+' for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
-            ax2.set_xlabel(r'k [Mpc$^{-1}$]')
-            ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
-            ax2.legend()
-            if xscale=='log': 
-                ax2.set_xscale('log') 
-
-            plt.show()
+        def veff(self, zidx): 
+            omega_m = self.omega_b_fid + self.omega_cdm_fid + self.omega_ncdm_fid
+            omega_lambda = np.power(self.h_fid, 2.) - omega_m
+            return ((4. * np.pi / 3.) * np.power(self.c / (100* self.h_fid), 3.) 
+                    * np.power((self.h_fid*(self.z_steps[1] - self.z_steps[0])) 
+                                / np.sqrt(omega_m * np.power(1.+self.z_steps[zidx], 3.) + omega_lambda), 3.)) 
+                    
 
 
+     
+def neff(ndens, Pm): 
+    #ndens at specific z, Pm at specific k and z 
+    n = np.power((ndens * Pm) / (ndens*Pm + 1.), 2.)
+    return n 
+def fog(h, c, z, k, mu): 
+    sigma_fog_0 = 250 #Units [km*s^-1] 
+    sigma_z = 0.001
+    sigma_fog = sigma_fog_0 * np.sqrt(1.+z)
+    sigma_v = (1. + z) * np.sqrt((np.power(sigma_fog, 2.)/2.) + np.power(c*sigma_z, 2.))
+    F = np.exp(-1. * np.power((k*mu*sigma_v) / (100.*h), 2.))
+    return F 
+        
 
-    def plot_delta_dps(self, z_index=0, xscale='linear'): 
-        sns.set()
-        sns.set_palette("Blues_d", n_colors=len(self.variants))
-        plt.figure(figsize=(15, 7.5))
+def kfs(omega_ncdm, h, z): 
+    k_fs = (940. * 0.08 * omega_ncdm * h) / np.sqrt(1. + z)
+    return k_fs
 
-        ax1 = plt.subplot(1, 2, 1)
-        for idx, dps in enumerate(self.dps[z_index][:-1]):
-            if self.param=='T_ncdm':
-                plotlabel = r'T_ncdm @ {:.3f}[K]'.format(self.spectra[z_index][idx].T_cmb*(self.variants[idx+1]+self.variants[idx])/2)
-            else:
-                plotlabel = (r'$\delta$' 
-                             + self.param
-                             + ' @ {:.3f}%'.format((100*(self.variants[idx+1]/self.fid[self.param]-1)
-                                                     + 100*(self.variants[idx]/self.fid[self.param]-1)) / 2.))
-            ax1.plot(self.spectra[z_index][idx].k_table, self.dps[z_index][idx+1]-self.dps[z_index][idx], label=plotlabel)
-        ax1.set_title(r'$\Delta (\partial P_g / \partial$' + self.param + ') for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
-        ax1.set_xlabel(r'k [Mpc$^{-1}$]')
-        ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
-        ax1.legend()
-        if xscale=='log': 
-            ax1.set_xscale('log') 
+def rsd(omega_b, omega_cdm, omega_ncdm, h, k_fs, z, mu, k):
+    gamma = 0.55
+    b1L = 0.5 
+    Deltaq = 1.6
+    q = (5. * k) / k_fs
+    epsilon = (omega_b + omega_cdm) / np.power(h, 2.) 
+    f = np.power((epsilon * np.power(1.+z, 3.)) / ( epsilon * np.power(1.+z, 3.) - epsilon + 1.), gamma)
+    DeltaL = (0.6 * omega_ncdm) / (omega_b + omega_cdm) 
+    g = 1. + (DeltaL / 2.) * np.tanh(1. + (np.log(q) / Deltaq))
+    b1tilde = 1. + b1L * g 
 
-        ax2= plt.subplot(1, 2, 2)
-        dlogps_comp = list(self.dlogps[z_index][:-1])
-        for idx, dlogps in enumerate(dlogps_comp):
-            if self.param=='T_ncdm':
-                plotlabel = r'T_ncdm @ {:.3f}[K]'.format(self.spectra[z_index][idx].T_cmb*(self.variants[idx+1]+self.variants[idx])/2)
-            else:
-                plotlabel = (r'$\delta$'  
-                             + self.param
-                             + ' @ {:.3f}%'.format((100*(self.variants[idx+1]/self.fid[self.param]-1)
-                                                     + 100*(self.variants[idx]/self.fid[self.param]-1)) / 2.))
-            ax2.plot(self.spectra[z_index][idx].k_table, self.dlogps[z_index][idx+1]-self.dlogps[z_index][idx], label=plotlabel)
-        ax2.set_title(r'$\Delta (\partial log(P_g) / \partial$'+self.param+') for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
-        ax2.set_xlabel(r'k [Mpc$^{-1}$]')
-        ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
-        ax2.legend()
-        if xscale=='log': 
-            ax2.set_xscale('log') 
+    R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)  
+    return R  
 
-        plt.show()
 
-        if self.m_ncdm is not None:
-            plt.figure(figsize=(15, 7.5))
+def dPs_array(low, high, step): 
+    dPs = [(high[k].ps_table - low[k].ps_table)/(2.*step) for k in range(len(high))]
+    dlogPs = [(high[k].log_ps_table - low[k].log_ps_table)/(2.*step) for k in range(len(high))] 
+    return dPs, dlogPs 
 
-            ax1 = plt.subplot(1, 2, 1)
-            for idx, dps in enumerate(self.dps[z_index][:-1]):
-                domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm*self.spectra[z_index][idx].T_cmb, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
-                #domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
-                plotlabel = r'T_ncdm @ {:.3f}[K]'.format(self.spectra[z_index][idx].T_cmb*(self.variants[idx+1]+self.variants[idx])/2)
+def omega_ncdm(T_ncdm, m_ncdm): 
+    """Returns omega_ncdm as a function of T_ncdm, m_ncdm.
 
-                ax1.plot(self.spectra[z_index][idx].k_table, (self.dps[z_index][idx+1]-self.dps[z_index][idx])/domega_chi_dT_chi, label=plotlabel)
-            ax1.set_title(r'$\Delta(\partial P_g / \partial$ omega_ncdm)' + ' for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
-            ax1.set_xlabel(r'k [Mpc$^{-1}$]')
-            ax1.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
-            ax1.legend()
-            if xscale=='log': 
-                ax1.set_xscale('log') 
+    T_ncdm : relic temperature in units [K]
+    m_ncdm : relic mass in units [eV]
+    
+    omega_ncdm : relative relic abundance. Unitless. 
+    """
 
-            ax2= plt.subplot(1, 2, 2)
-            dlogps_comp = list(self.dlogps[z_index][:-1])
-            for idx, dlogps in enumerate(dlogps_comp):
-                domega_chi_dT_chi = (3. * np.power(self.spectra[z_index][idx].T_ncdm*self.spectra[z_index][idx].T_cmb, 2.) * self.m_ncdm) / (np.power(1.95, 3.) * 94.)
-                plotlabel = r'T_ncdm @ {:.3f}[K]'.format(self.spectra[z_index][idx].T_cmb*(self.variants[idx+1]+self.variants[idx])/2)
-                ax2.plot(self.spectra[z_index][idx].k_table, (self.dlogps[z_index][idx+1]-self.dlogps[z_index][idx])/domega_chi_dT_chi, label=plotlabel)
-            ax2.set_title(r'$\Delta(\partial log(P_g) / \partial$ omega_ncdm)'+' for z={:.3f}, m_ncdm={} [eV]'.format(self.z_table[z_index], self.m_ncdm))
-            ax2.set_xlabel(r'k [Mpc$^{-1}$]')
-            ax2.set_ylabel(r'[Mpc$^3$ / (units of '+self.param+')]')
-            ax2.legend()
-            if xscale=='log': 
-                ax2.set_xscale('log') 
+    omega_ncdm = np.power(T_ncdm / 1.95, 3.) * (m_ncdm / 94)
+    return omega_ncdm 
 
-            plt.show()
 
-def dPs(fid_ps_table, var_ps_table, step, centered=False):
-    if centered==False: 
-        dps_table = (var_ps_table - fid_ps_table) / step
-    elif centered==True: 
-        var_high = var_ps_table
-        var_low = fid_ps_table
-        dps_table = (var_high - var_low)/(2 * step) 
-    return dps_table
+def T_ncdm(omega_ncdm, m_ncdm): 
+    """Returns T_ncdm as a function of omega_ncdm, m_ncdm. 
 
-def dlogPs(fid_ps_table, var_ps_table, step, centered=False):
-    if centered==False: 
-        dlogps_table = (np.log(var_ps_table) - np.log(fid_ps_table)) / step
-    elif centered==True: 
-        var_high = np.log(var_ps_table)
-        var_low = np.log(fid_ps_table)
-        dlogps_table = (var_high - var_low)/(2 * step)
-    return dlogps_table
+    omega_ncdm : relative relic abundance. Unitless. 
+    m_ncdm : relic mass in units [eV]. 
+    
+    T_ncdm : relic temperature in units [K]
+    """
+
+    T_ncdm = np.power( 94. * omega_ncdm / m_ncdm, 1./3.) * 1.95
+    return T_ncdm 
+
+
+def domega_ncdm_dT_ncdm(T_ncdm, m_ncdm): 
+    """Returns derivative of omega_ncdm wrt T_ncdm. 
+
+    T_ncdm : relic temperature in units [K]
+    m_ncdm : relic mass in units [eV]
+    
+    deriv : derivative of relic abundance wrt relic temp in units [K]^(-1)  
+    """
+
+    deriv = (3. * m_ncdm / 94.) * np.power(T_ncdm, 2.) * np.power(1.95, -3.) 
+    return deriv
+
+def dT_ncdm_domega_ncdm(omega_ncdm, m_ncdm): 
+    """Returns derivative of T_ncdm wrt  omega_ncdm.
+
+    omega_ncdm : relative relic abundance. Unitless. 
+    m_ncdm : relic mass in units [eV]. 
+    
+    deriv : derivative of relic temp wrt relic abundance in units [K] 
+    """
+
+    deriv = (1.95 / 3) * np.power(94. / m_ncdm, 1./3.) * np.power(omega_ncdm, -2./3.)
+    return deriv 
+        
