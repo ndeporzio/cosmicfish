@@ -31,7 +31,7 @@ class relic_forecast:
                                                          self.classdir,       
                                                          self.datastore).replace('/test_parameters.ini',''),
                                         self.z_steps) for j in self.z_steps]
-        self.k_table = spectra_mid[0].k_table #All spectra should have same k_table
+        self.k_table = self.spectra_mid[0].k_table #All spectra should have same k_table
 
         #Generate variation spectra at each z    
         self.A_s_high, self.A_s_low = self.generate_spectra('A_s') 
@@ -86,18 +86,28 @@ class relic_forecast:
         self.dlogRSDdomega_cdm = (np.log([[rsd(self.omega_b_fid, (1.+self.dstep)*self.omega_cdm_fid, self.omega_ncdm_fid, self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)]) - np.log([[rsd(self.omega_b_fid, (1.-self.dstep)*self.omega_cdm_fid, self.omega_ncdm_fid, self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)])) / (2.*self.dstep*self.omega_cdm_fid)
         self.dlogRSDdomega_ncdm = (np.log([[rsd(self.omega_b_fid, self.omega_cdm_fid, (1.+self.dstep)*self.omega_ncdm_fid, self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)]) - np.log([[rsd(self.omega_b_fid, self.omega_cdm_fid, (1.-self.dstep)*self.omega_ncdm_fid, self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)])) / (2.*self.dstep*self.omega_ncdm_fid)
         self.dlogRSDdh = (np.log([[rsd(self.omega_b_fid, self.omega_cdm_fid, self.omega_ncdm_fid, (1.+self.dstep)*self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)]) - np.log([[rsd(self.omega_b_fid, self.omega_cdm_fid, self.omega_ncdm_fid, (1.-self.dstep)*self.h_fid, kfs_table[zidx], zval, mu, kval) for kval in self.k_table] for zidx, zval in enumerate(self.z_steps)])) / (2.*self.dstep*self.h_fid)
-            
 
     def gen_fog(self, mu):
         self.FOG = [[fog(self.h_fid, self.c, zval, kval, mu) for kval in self.k_table] for zval in self.z_steps]
-        self.dlogFOGdh = ((np.log([[fog((1.+self.dstep)*self.h_fid, self.c, zval, kval, mu) for kval in self.k_table] for zval in self.z_steps]) 
-                    - np.log([[fog((1.-self.dstep)*self.h_fid, self.c, zval, kval, mu) for kval in self.k_table] for zval in self.z_steps]))
-                    / (2.*self.dstep*self.h_fid)) 
+        high = np.log([[fog((1.+self.dstep)*self.h_fid, self.c, zval, kval, mu) for kval in self.k_table] for zval in self.z_steps])
+        low = np.log([[fog((1.-self.dstep)*self.h_fid, self.c, zval, kval, mu) for kval in self.k_table] for zval in self.z_steps])
+        diff = high - low
+        np.nan_to_num(diff)
+        denom = 2.*self.dstep*self.h_fid
+        self.dlogFOGdh = diff / denom 
 
+    def veff(self, zidx):
+        omega_m = self.omega_b_fid + self.omega_cdm_fid + self.omega_ncdm_fid
+        omega_lambda = np.power(self.h_fid, 2.) - omega_m
+        v = ((4. * np.pi / 3.) * np.power(self.c / (100* self.h_fid), 3.)
+                * np.power((self.h_fid*(self.z_steps[1] - self.z_steps[0])) / np.sqrt(omega_m * np.power(1.+self.z_steps[zidx], 3.) + omega_lambda), 3.))
+        return v  
+        
     def gen_fisher(self, mu_step): #Really messy and inefficient
         fisher = np.zeros((7, 7))
+
         mu_vals = np.arange(-1., 1., mu_step)
-        Pm = np.zeros((len(self.z_steps), len(self.k_table, len(mu_vals))))
+        Pm = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
         dlogPdA_s = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
         dlogPdn_s = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
         dlogPdomega_b = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
@@ -107,12 +117,12 @@ class relic_forecast:
         dlogPdomega_ncdm = np.zeros((len(self.z_steps), len(self.k_table), len(mu_vals)))
 
         
-        for muidx, muval in mu_vals: 
-            gen_rsd(muval)
-            gen_fog(muval)
+        for muidx, muval in enumerate(mu_vals): 
+            self.gen_rsd(muval)
+            self.gen_fog(muval)
             for zidx, zval in enumerate(self.z_steps): 
                 for kidx, kval in enumerate(self.k_table):
-                    Pm[zidx][kidx][muidx] = self.spectra_mid[zidx].ps_table[k_idx] * self.RSD[zidx][kidx] * self.FOG[zidx][kidx]
+                    Pm[zidx][kidx][muidx] = self.spectra_mid[zidx].ps_table[kidx] * self.RSD[zidx][kidx] * self.FOG[zidx][kidx]
                     dlogPdA_s[zidx][kidx][muidx] = self.dlogPdA_s[zidx][kidx]
                     dlogPdn_s[zidx][kidx][muidx] = self.dlogPdn_s[zidx][kidx]
                     dlogPdomega_b[zidx][kidx][muidx] = self.dlogPdomega_b[zidx][kidx] + self.dlogRSDdomega_b[zidx][kidx]
@@ -121,20 +131,56 @@ class relic_forecast:
                     dlogPdtau_reio[zidx][kidx][muidx] = self.dlogPdtau_reio[zidx][kidx]
                     dlogPdomega_ncdm[zidx][kidx][muidx] = self.dlogPdomega_ncdm[zidx][kidx] + self.dlogRSDdomega_ncdm[zidx][kidx]
 
-        for zidx, zval in enumerate(self.z_steps): 
-            fisher_z = np.zeros((7, 7))
-               #TEST 
+        Pm = np.nan_to_num(Pm)
+        dlogPdA_s = np.nan_to_num(dlogPdA_s)
+        dlogPdn_s = np.nan_to_num(dlogPdn_s)
+        dlogPdomega_b = np.nan_to_num(dlogPdomega_b)
+        dlogPdomega_cdm = np.nan_to_num(dlogPdomega_cdm)
+        dlogPdh = np.nan_to_num(dlogPdh)
+        dlogPdtau_reio = np.nan_to_num(dlogPdtau_reio)
+        dlogPdomega_ncdm = np.nan_to_num(dlogPdomega_ncdm)
+        paramvec = [dlogPdA_s, dlogPdn_s, dlogPdomega_b, dlogPdomega_cdm, dlogPdh, dlogPdtau_reio, dlogPdomega_ncdm] 
 
-        def veff(self, zidx): 
-            omega_m = self.omega_b_fid + self.omega_cdm_fid + self.omega_ncdm_fid
-            omega_lambda = np.power(self.h_fid, 2.) - omega_m
-            return ((4. * np.pi / 3.) * np.power(self.c / (100* self.h_fid), 3.) 
-                    * np.power((self.h_fid*(self.z_steps[1] - self.z_steps[0])) 
-                                / np.sqrt(omega_m * np.power(1.+self.z_steps[zidx], 3.) + omega_lambda), 3.)) 
-                    
+        #Highly inefficient set of loops 
+        for pidx1, p1 in enumerate(paramvec): 
+            for pidx2, p2 in enumerate(paramvec):
+                integrand = np.zeros((len(self.z_steps), len(self.k_table)))
+                integrand = np.array(integrand, dtype=np.float128)
+                integral = np.zeros(len(self.z_steps))
+                for zidx, zval in enumerate(self.z_steps):
+                    V = self.veff(zidx) 
+                    for kidx, kval in enumerate(self.k_table): 
+                        integrand[zidx][kidx] = np.sum(mu_step *2. *np.pi
+                                                        * paramvec[pidx1][zidx][kidx]
+                                                        * paramvec[pidx2][zidx][kidx]
+                                                        * np.power(self.k_table[kidx]/(2.*np.pi), 3.)
+                                                        * np.power((self.n_densities[zidx] * Pm[zidx][kidx])/(self.n_densities[zidx] * Pm[zidx][kidx] + 1.), 2.) * V * (1. / self.k_table[kidx]))
+#                        if np.isnan(integrand[zidx][kidx]): 
+#                            print("Is nan encountered, printing all components of multiply...")
+#                            print("Param 1 index: ", pidx1)
+#                            print("Param 2 index: ", pidx2) 
+#                            print("Z index: ", zidx)
+#                            print("k index: ", kidx)
+#                            print(mu_step)
+#                            print(np.pi)
+#                            print(paramvec[pidx1][zidx][kidx])
+#                            print(paramvec[pidx2][zidx][kidx])
+#                            print(self.k_table[kidx])
+#                            print(self.n_densities[zidx])
+#                            print(Pm[zidx][kidx])
+#                            print(V)
+            
+                for zidx, zval in enumerate(self.z_steps): 
+                    val = 0 
+                    for kidx, kval in enumerate(self.k_table[:-1]):
+                        val += integrand[zidx][kidx]  * (self.k_table[kidx+1]-self.k_table[kidx])
+                    integral[zidx] = val  
+                fisher[pidx1][pidx2] = np.sum(integral)
+                print("Fisher element (", pidx1, ", ", pidx2,") calculated...") 
+        self.fisher=fisher
+                
 
 
-     
 def neff(ndens, Pm): 
     #ndens at specific z, Pm at specific k and z 
     n = np.power((ndens * Pm) / (ndens*Pm + 1.), 2.)
