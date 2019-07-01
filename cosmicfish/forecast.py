@@ -179,19 +179,105 @@ class relic_forecast:
                           / (2.*self.dstep*self.h_fid))
 
     def gen_fog(self, mu):
-        self.FOG = [[fog(self.h_fid, self.c, zval, kval, mu) 
+        self.FOG = [[fog(self.h_fid, 
+                         self.c, 
+                         self.omega_b_fid, 
+                         self.omega_cdm_fid, 
+                         self.omega_ncdm_fid, 
+                         zval, 
+                         kval, 
+                         mu) 
                      for kval in self.k_table] 
                      for zval in self.z_steps]
-        high = np.log([[fog((1.+self.dstep)*self.h_fid, self.c, zval, kval, mu) 
-                        for kval in self.k_table] 
-                        for zval in self.z_steps])
-        low = np.log([[fog((1.-self.dstep)*self.h_fid, self.c, zval, kval, mu) 
-                       for kval in self.k_table] 
-                       for zval in self.z_steps])
-        diff = high - low
-        np.nan_to_num(diff)
-        denom = 2.*self.dstep*self.h_fid
-        self.dlogFOGdh = diff / denom
+        h_high = np.log([[fog((1. + self.dstep) * self.h_fid, 
+                              self.c, 
+                              self.omega_b_fid,   
+                              self.omega_cdm_fid, 
+                              self.omega_ncdm_fid,    
+                              zval, 
+                              kval, 
+                              mu)
+                     for kval in self.k_table]
+                     for zval in self.z_steps])
+        h_low = np.log([[fog((1. - self.dstep) * self.h_fid,
+                             self.c,
+                             self.omega_b_fid,
+                             self.omega_cdm_fid,
+                             self.omega_ncdm_fid,
+                             zval,
+                             kval,
+                             mu)
+                     for kval in self.k_table]
+                     for zval in self.z_steps])
+        omega_b_high = np.log([[fog(self.h_fid,
+                                    self.c,
+                                    (1. + self.dstep) * self.omega_b_fid,
+                                    self.omega_cdm_fid,
+                                    self.omega_ncdm_fid,
+                                    zval,
+                                    kval,
+                                    mu)
+                     for kval in self.k_table]
+                     for zval in self.z_steps])
+        omega_b_low = np.log([[fog(self.h_fid,
+                                   self.c,
+                                   (1. - self.dstep) * self.omega_b_fid,
+                                   self.omega_cdm_fid,
+                                   self.omega_ncdm_fid,
+                                   zval,
+                                   kval,
+                                   mu)
+                     for kval in self.k_table]
+                     for zval in self.z_steps])
+        omega_cdm_high = np.log([[fog(self.h_fid,
+                                      self.c,
+                                      self.omega_b_fid,
+                                      (1. + self.dstep) * self.omega_cdm_fid,
+                                      self.omega_ncdm_fid,
+                                      zval,
+                                      kval,
+                                      mu)
+                     for kval in self.k_table]
+                     for zval in self.z_steps])
+        omega_cdm_low = np.log([[fog(self.h_fid,
+                                     self.c,
+                                     self.omega_b_fid,
+                                     (1. - self.dstep) * self.omega_cdm_fid,
+                                     self.omega_ncdm_fid,
+                                     zval,
+                                     kval,
+                                     mu)
+                     for kval in self.k_table]
+                     for zval in self.z_steps])
+        omega_ncdm_high = np.log([[fog(self.h_fid,
+                                        self.c,
+                                        self.omega_b_fid,
+                                        self.omega_cdm_fid,
+                                        (1. + self.dstep) * self.omega_ncdm_fid,
+                                        zval, 
+                                        kval,
+                                        mu)
+                     for kval in self.k_table]
+                     for zval in self.z_steps])
+        omega_ncdm_low = np.log([[fog(self.h_fid,
+                                      self.c,
+                                      self.omega_b_fid,
+                                      self.omega_cdm_fid,
+                                      (1. - self.dstep) * self.omega_ncdm_fid,
+                                      zval, 
+                                      kval,
+                                      mu)
+                     for kval in self.k_table]
+                     for zval in self.z_steps])
+
+
+        self.dlogFOGdh = (h_high - h_low) / (2. * self.dstep * self.h_fid)
+        self.dlogFOGdomega_b = ((omega_b_high - omega_b_low)
+                                / (2. * self.dstep * self.omega_b_fid))
+        self.dlogFOGdomega_cdm = ((omega_cdm_high - omega_cdm_low)
+                                  / (2. * self.dstep * self.omega_cdm_fid))
+        self.dlogFOGdomega_ncdm = ((omega_ncdm_high - omega_ncdm_low)
+                                   / (2. * self.dstep * self.omega_ncdm_fid))
 
     def gen_ap(self): 
         h_high_omega_b = np.log([[H((1.+self.dstep)*self.omega_b_fid, 
@@ -597,7 +683,7 @@ class relic_forecast:
         omega_m = self.omega_b_fid + self.omega_cdm_fid + self.omega_ncdm_fid
         omega_lambda = np.power(self.h_fid, 2.) - omega_m
         V = ((4. * np.pi / 3.) 
-             * np.power(self.c / (100* self.h_fid), 3.)
+             * np.power(self.c / (1000. * 100. * self.h_fid), 3.)
              * np.power((self.h_fid*(self.z_steps[1] - self.z_steps[0])) 
                         / np.sqrt(omega_m 
                                   * np.power(1.+self.z_steps[zidx], 3.) 
@@ -638,7 +724,7 @@ class relic_forecast:
             self.gen_rsd(muval)
             self.gen_fog(muval)
             self.gen_ap()
-            self.gen_cov(muval)
+            #self.gen_cov(muval)
             for zidx, zval in enumerate(self.z_steps): 
                 for kidx, kval in enumerate(self.k_table):
                     Pm[zidx][kidx][muidx] = (self.spectra_mid[zidx].ps_table[kidx] 
@@ -647,33 +733,36 @@ class relic_forecast:
                                              #* self.COV[zidx][kidx]) #Need to make this term
                     dlogPdA_s[zidx][kidx][muidx] = self.dlogPdA_s[zidx][kidx]
                     dlogPdn_s[zidx][kidx][muidx] = self.dlogPdn_s[zidx][kidx]
-                    dlogPdomega_b[zidx][kidx][muidx] = (self.dlogPdomega_b[zidx][kidx] 
+                    dlogPdomega_b[zidx][kidx][muidx] = (self.dlogPdomega_b[zidx][kidx]
                                                         + self.dlogRSDdomega_b[zidx][kidx]
-                                                        + self.dlogAPdomega_b[zidx][kidx]
-                                                        + self.dlogCOVdomega_b[zidx][kidx])
+                                                        + self.dlogFOGdomega_b[zidx][kidx]
+                                                        + self.dlogAPdomega_b[zidx][kidx])
+                                                        #+ self.dlogCOVdomega_b[zidx][kidx])
                     dlogPdomega_cdm[zidx][kidx][muidx] = (self.dlogPdomega_cdm[zidx][kidx] 
                                                           + self.dlogRSDdomega_cdm[zidx][kidx]
-                                                          + self.dlogAPdomega_cdm[zidx][kidx]
-                                                          + self.dlogCOVdomega_cdm[zidx][kidx])
-                    dlogPdh[zidx][kidx][muidx] = (self.dlogPdh[zidx][kidx] 
+                                                          + self.dlogFOGdomega_cdm[zidx][kidx]
+                                                          + self.dlogAPdomega_cdm[zidx][kidx])
+                                                          #+ self.dlogCOVdomega_cdm[zidx][kidx])
+                    dlogPdh[zidx][kidx][muidx] = (self.dlogPdh[zidx][kidx]
                                                   + self.dlogRSDdh[zidx][kidx] 
                                                   + self.dlogFOGdh[zidx][kidx]
-                                                  + self.dlogAPdh[zidx][kidx]
-                                                  + self.dlogCOVdh[zidx][kidx])
+                                                  + self.dlogAPdh[zidx][kidx])
+                                                  #+ self.dlogCOVdh[zidx][kidx])
                     dlogPdtau_reio[zidx][kidx][muidx] = self.dlogPdtau_reio[zidx][kidx]
                     dlogPdomega_ncdm[zidx][kidx][muidx] = (self.dlogPdomega_ncdm[zidx][kidx] 
                                                            + self.dlogRSDdomega_ncdm[zidx][kidx]
-                                                           + self.dlogAPdomega_ncdm[zidx][kidx]
-                                                           + self.dlogCOVdomega_ncdm[zidx][kidx])
+                                                           + self.dlogFOGdomega_ncdm[zidx][kidx]
+                                                           + self.dlogAPdomega_ncdm[zidx][kidx])
+                                                           #+ self.dlogCOVdomega_ncdm[zidx][kidx])
 
-        Pm = np.nan_to_num(Pm)
-        dlogPdA_s = np.nan_to_num(dlogPdA_s)
-        dlogPdn_s = np.nan_to_num(dlogPdn_s)
-        dlogPdomega_b = np.nan_to_num(dlogPdomega_b)
-        dlogPdomega_cdm = np.nan_to_num(dlogPdomega_cdm)
-        dlogPdh = np.nan_to_num(dlogPdh)
-        dlogPdtau_reio = np.nan_to_num(dlogPdtau_reio)
-        dlogPdomega_ncdm = np.nan_to_num(dlogPdomega_ncdm)
+        #Pm = np.nan_to_num(Pm)
+        #dlogPdA_s = np.nan_to_num(dlogPdA_s)
+        #dlogPdn_s = np.nan_to_num(dlogPdn_s)
+        #dlogPdomega_b = np.nan_to_num(dlogPdomega_b)
+        #dlogPdomega_cdm = np.nan_to_num(dlogPdomega_cdm)
+        #dlogPdh = np.nan_to_num(dlogPdh)
+        #dlogPdtau_reio = np.nan_to_num(dlogPdtau_reio)
+        #dlogPdomega_ncdm = np.nan_to_num(dlogPdomega_ncdm)
 
         paramvec = [dlogPdA_s, dlogPdn_s, dlogPdomega_b, dlogPdomega_cdm, 
                     dlogPdh, dlogPdtau_reio, dlogPdomega_ncdm] 
@@ -745,12 +834,12 @@ def neff(ndens, Pg):
     n = np.power((ndens * Pg) / (ndens*Pg + 1.), 2.)
     return n 
 
-def fog(h, c, z, k, mu): 
-    sigma_fog_0 = 250 #Units [km*s^-1] 
+def fog(h, c, omega_b, omega_cdm, omega_ncdm, z, k, mu): 
+    sigma_fog_0 = 250000. #Units [m*s^-1] 
     sigma_z = 0.001
     sigma_fog = sigma_fog_0 * np.sqrt(1.+z)
     sigma_v = (1. + z) * np.sqrt((np.power(sigma_fog, 2.)/2.) + np.power(c*sigma_z, 2.))
-    F = np.exp(-1. * np.power((k*mu*sigma_v) / (100.*h), 2.))
+    F = np.exp(-1. * np.power((k*mu*sigma_v) / H(omega_b, omega_cdm, omega_ncdm, h, z), 2.))
     return F 
         
 
