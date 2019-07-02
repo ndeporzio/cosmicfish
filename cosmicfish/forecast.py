@@ -715,7 +715,7 @@ class relic_forecast:
             self.gen_rsd(muval)
             self.gen_fog(muval)
             self.gen_ap()
-            #self.gen_cov(muval)
+            self.gen_cov(muval)
             for zidx, zval in enumerate(self.z_steps): 
                 for kidx, kval in enumerate(self.k_table):
                     Pm[zidx][kidx][muidx] = (self.spectra_mid[zidx].ps_table[kidx] 
@@ -727,24 +727,24 @@ class relic_forecast:
                     dlogPdomega_b[zidx][kidx][muidx] = (self.dlogPdomega_b[zidx][kidx]
                                                         + self.dlogRSDdomega_b[zidx][kidx]
                                                         + self.dlogFOGdomega_b[zidx][kidx]
-                                                        + self.dlogAPdomega_b[zidx][kidx])
-                                                        #+ self.dlogCOVdomega_b[zidx][kidx])
+                                                        + self.dlogAPdomega_b[zidx][kidx]
+                                                        + self.dlogCOVdomega_b[zidx][kidx])
                     dlogPdomega_cdm[zidx][kidx][muidx] = (self.dlogPdomega_cdm[zidx][kidx] 
                                                           + self.dlogRSDdomega_cdm[zidx][kidx]
                                                           + self.dlogFOGdomega_cdm[zidx][kidx]
-                                                          + self.dlogAPdomega_cdm[zidx][kidx])
-                                                          #+ self.dlogCOVdomega_cdm[zidx][kidx])
+                                                          + self.dlogAPdomega_cdm[zidx][kidx]
+                                                          + self.dlogCOVdomega_cdm[zidx][kidx])
                     dlogPdh[zidx][kidx][muidx] = (self.dlogPdh[zidx][kidx]
                                                   + self.dlogRSDdh[zidx][kidx] 
                                                   + self.dlogFOGdh[zidx][kidx]
-                                                  + self.dlogAPdh[zidx][kidx])
-                                                  #+ self.dlogCOVdh[zidx][kidx])
+                                                  + self.dlogAPdh[zidx][kidx]
+                                                  + self.dlogCOVdh[zidx][kidx])
                     dlogPdtau_reio[zidx][kidx][muidx] = self.dlogPdtau_reio[zidx][kidx]
                     dlogPdomega_ncdm[zidx][kidx][muidx] = (self.dlogPdomega_ncdm[zidx][kidx] 
                                                            + self.dlogRSDdomega_ncdm[zidx][kidx]
                                                            + self.dlogFOGdomega_ncdm[zidx][kidx]
-                                                           + self.dlogAPdomega_ncdm[zidx][kidx])
-                                                           #+ self.dlogCOVdomega_ncdm[zidx][kidx])
+                                                           + self.dlogAPdomega_ncdm[zidx][kidx]
+                                                           + self.dlogCOVdomega_ncdm[zidx][kidx])
 
         #Pm = np.nan_to_num(Pm)
         #dlogPdA_s = np.nan_to_num(dlogPdA_s)
