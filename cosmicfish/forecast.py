@@ -420,63 +420,63 @@ class relic_forecast:
                                   / (self.dstep * self.h_fid)))
                             
     def gen_cov(self, mu): 
-        h_high_omega_b = np.array([[H((1.+self.dstep)*self.omega_b_fid,
+        H_high_omega_b = np.array([[H((1.+self.dstep)*self.omega_b_fid,
                              self.omega_cdm_fid,
                              self.omega_ncdm_fid,
                              self.h_fid,
                              zval)
                            for kval in self.k_table]
                            for zval in self.z_steps])
-        h_low_omega_b = np.array([[H((1.-self.dstep)*self.omega_b_fid,
+        H_low_omega_b = np.array([[H((1.-self.dstep)*self.omega_b_fid,
                              self.omega_cdm_fid,
                              self.omega_ncdm_fid,
                              self.h_fid,
                              zval)
                            for kval in self.k_table]
                            for zval in self.z_steps])
-        h_high_omega_cdm = np.array([[H(self.omega_b_fid,
+        H_high_omega_cdm = np.array([[H(self.omega_b_fid,
                                (1.+self.dstep)*self.omega_cdm_fid,
                                self.omega_ncdm_fid,
                                self.h_fid,
                                zval)
                              for kval in self.k_table]
                              for zval in self.z_steps])
-        h_low_omega_cdm = np.array([[H(self.omega_b_fid,
+        H_low_omega_cdm = np.array([[H(self.omega_b_fid,
                               (1.-self.dstep)*self.omega_cdm_fid,
                               self.omega_ncdm_fid,
                               self.h_fid,
                               zval)
                             for kval in self.k_table]
                             for zval in self.z_steps])
-        h_high_omega_ncdm = np.array([[H(self.omega_b_fid,
+        H_high_omega_ncdm = np.array([[H(self.omega_b_fid,
                                 self.omega_cdm_fid,
                                 (1.+self.dstep)*self.omega_ncdm_fid,
                                 self.h_fid,
                                 zval)
                               for kval in self.k_table]
                               for zval in self.z_steps])
-        h_low_omega_ncdm = np.array([[H(self.omega_b_fid,
+        H_low_omega_ncdm = np.array([[H(self.omega_b_fid,
                                self.omega_cdm_fid,
                                (1.-self.dstep)*self.omega_ncdm_fid,
                                self.h_fid,
                                zval)
                              for kval in self.k_table]
                              for zval in self.z_steps])
-        h_high_h = np.array([[H(self.omega_b_fid,
+        H_high_h = np.array([[H(self.omega_b_fid,
                        self.omega_cdm_fid,
                        self.omega_ncdm_fid,
                        (1.+self.dstep)*self.h_fid,
                        zval)
                      for kval in self.k_table]
                      for zval in self.z_steps])
-        h_low_h = np.array([[H(self.omega_b_fid,
+        H_low_h = np.array([[H(self.omega_b_fid,
                       self.omega_cdm_fid,
                       self.omega_ncdm_fid,
                       (1.-self.dstep)*self.h_fid,
                       zval)
                     for kval in self.k_table]
                     for zval in self.z_steps])
-        da_high_omega_b = np.array([[Da((1.+self.dstep)*self.omega_b_fid,
+        Da_high_omega_b = np.array([[Da((1.+self.dstep)*self.omega_b_fid,
                              self.omega_cdm_fid,
                              self.omega_ncdm_fid,
                              self.h_fid,
@@ -484,7 +484,7 @@ class relic_forecast:
                              self.c)
                            for kval in self.k_table]
                            for zval in self.z_steps])
-        da_low_omega_b = np.array([[Da((1.-self.dstep)*self.omega_b_fid,
+        Da_low_omega_b = np.array([[Da((1.-self.dstep)*self.omega_b_fid,
                              self.omega_cdm_fid,
                              self.omega_ncdm_fid,
                              self.h_fid,
@@ -492,7 +492,7 @@ class relic_forecast:
                              self.c)
                            for kval in self.k_table]
                            for zval in self.z_steps])
-        da_high_omega_cdm = np.array([[Da(self.omega_b_fid,
+        Da_high_omega_cdm = np.array([[Da(self.omega_b_fid,
                                (1.+self.dstep)*self.omega_cdm_fid,
                                self.omega_ncdm_fid,
                                self.h_fid,
@@ -500,7 +500,7 @@ class relic_forecast:
                                self.c)
                              for kval in self.k_table]
                              for zval in self.z_steps])
-        da_low_omega_cdm = np.array([[Da(self.omega_b_fid,
+        Da_low_omega_cdm = np.array([[Da(self.omega_b_fid,
                               (1.-self.dstep)*self.omega_cdm_fid,
                               self.omega_ncdm_fid,
                               self.h_fid,
@@ -508,7 +508,7 @@ class relic_forecast:
                               self.c)
                             for kval in self.k_table]
                             for zval in self.z_steps])
-        da_high_omega_ncdm = np.array([[Da(self.omega_b_fid,
+        Da_high_omega_ncdm = np.array([[Da(self.omega_b_fid,
                                 self.omega_cdm_fid,
                                 (1.+self.dstep)*self.omega_ncdm_fid,
                                 self.h_fid,
@@ -516,7 +516,7 @@ class relic_forecast:
                                 self.c)
                               for kval in self.k_table]
                               for zval in self.z_steps])
-        da_low_omega_ncdm = np.array([[Da(self.omega_b_fid,
+        Da_low_omega_ncdm = np.array([[Da(self.omega_b_fid,
                                self.omega_cdm_fid,
                                (1.-self.dstep)*self.omega_ncdm_fid,
                                self.h_fid,
@@ -524,7 +524,7 @@ class relic_forecast:
                                self.c)
                              for kval in self.k_table]
                              for zval in self.z_steps])
-        da_high_h = np.array([[Da(self.omega_b_fid,
+        Da_high_h = np.array([[Da(self.omega_b_fid,
                        self.omega_cdm_fid,
                        self.omega_ncdm_fid,
                        (1.+self.dstep)*self.h_fid,
@@ -532,7 +532,7 @@ class relic_forecast:
                        self.c)
                      for kval in self.k_table]
                      for zval in self.z_steps])
-        da_low_h = np.array([[Da(self.omega_b_fid,
+        Da_low_h = np.array([[Da(self.omega_b_fid,
                       self.omega_cdm_fid,
                       self.omega_ncdm_fid,
                       (1.-self.dstep)*self.h_fid,
@@ -547,27 +547,27 @@ class relic_forecast:
                       for kval in self.k_table]
                       for zval in self.z_steps]
 
-        dkdDa = [[(2. * kval * (1. - np.power(mu, 2.)))
+        dkdDa = [[(-2. * kval * (1. - np.power(mu, 2.)))
                        / Da(self.omega_b_fid, self.omega_cdm_fid,
                             self.omega_ncdm_fid, self.h_fid, zval, self.c)
                        for kval in self.k_table]
                        for zval in self.z_steps]
 
-        dHdomega_b = ((h_high_omega_b - h_low_omega_b) 
+        dHdomega_b = ((H_high_omega_b - H_low_omega_b) 
                       / (2. * self.dstep * self.omega_b_fid))
-        dHdomega_cdm = ((h_high_omega_cdm - h_low_omega_cdm)
+        dHdomega_cdm = ((H_high_omega_cdm - H_low_omega_cdm)
                         / (2. * self.dstep * self.omega_cdm_fid))
-        dHdomega_ncdm = ((h_high_omega_ncdm - h_low_omega_ncdm)
+        dHdomega_ncdm = ((H_high_omega_ncdm - H_low_omega_ncdm)
                          / (2. * self.dstep * self.omega_ncdm_fid))
-        dHdh = (h_high_h - h_low_h) / (2. * self.dstep * self.h_fid)
+        dHdh = (H_high_h - H_low_h) / (2. * self.dstep * self.h_fid)
 
-        dDdomega_b = ((da_high_omega_b - da_low_omega_b)
+        dDdomega_b = ((Da_high_omega_b - Da_low_omega_b)
                       / (2. * self.dstep * self.omega_b_fid))
-        dDdomega_cdm = ((da_high_omega_cdm - da_low_omega_cdm)
+        dDdomega_cdm = ((Da_high_omega_cdm - Da_low_omega_cdm)
                         / (2. * self.dstep * self.omega_cdm_fid))
-        dDdomega_ncdm = ((da_high_omega_ncdm - da_low_omega_ncdm)
+        dDdomega_ncdm = ((Da_high_omega_ncdm - Da_low_omega_ncdm)
                          / (2. * self.dstep * self.omega_ncdm_fid))
-        dDdh = (da_high_h - da_low_h) / (2. * self.dstep * self.h_fid)
+        dDdh = (Da_high_h - Da_low_h) / (2. * self.dstep * self.h_fid)
 
         dkdomega_b = dkdH * dHdomega_b + dkdDa * dDdomega_b
         dkdomega_cdm = dkdH * dHdomega_cdm + dkdDa * dDdomega_cdm
@@ -619,17 +619,17 @@ class relic_forecast:
         self.gen_rsd(1.01 * mu)
         self.gen_fog(1.01 * mu)
         logP_mu_high = np.log(self.Pg) + np.log(self.RSD) + np.log(self.FOG) 
-        P_mu_high = np.array(self.Pg) + np.array(self.RSD) + np.array(self.FOG)       
+        P_mu_high = np.array(self.Pg) * np.array(self.RSD) * np.array(self.FOG)       
  
         self.gen_rsd(0.99 * mu)
         self.gen_fog(0.99 * mu)
         logP_mu_low = np.log(self.Pg) + np.log(self.RSD) + np.log(self.FOG)
-        P_mu_low = np.array(self.Pg) + np.array(self.RSD) + np.array(self.FOG)
+        P_mu_low = np.array(self.Pg) * np.array(self.RSD) * np.array(self.FOG)
         
         self.gen_rsd(mu)
         self.gen_rsd(mu)
         logP_mid = np.log(self.Pg) + np.log(self.RSD) + np.log(self.FOG)
-        P_mid = np.array(self.Pg) + np.array(self.RSD) + np.array(self.FOG)
+        P_mid = np.array(self.Pg) * np.array(self.RSD) * np.array(self.FOG)
 
         dlogPdmu = (logP_mu_high - logP_mu_low) / (2. * 0.01 * mu) 
         dPdmu = (P_mu_high - P_mu_low) / (2. * 0.01 * mu)
@@ -655,11 +655,6 @@ class relic_forecast:
             dPdk[zidx][0] = dPdk[zidx][1]
             dPdk[zidx][-1] = dPdk[zidx][-2]
 
-        #print(np.shape(dlogPdk))
-        #print(np.shape(dkdomega_b))
-        #print(np.shape(dlogPdmu))
-        #print(np.shape(dmudomega_b))
-
         dlogPdomega_b = dlogPdk * dkdomega_b + dlogPdmu * dmudomega_b
         dlogPdomega_cdm = dlogPdk * dkdomega_cdm + dlogPdmu * dmudomega_cdm
         dlogPdomega_ncdm = dlogPdk * dkdomega_ncdm + dlogPdmu * dmudomega_ncdm
@@ -675,10 +670,6 @@ class relic_forecast:
         self.dlogCOVdomega_ncdm = np.array(dlogPdomega_ncdm)
         self.dlogCOVdh = np.array(dlogPdh)
     
-        #print(np.shape(self.dlogCOVdomega_b))
-        #self.COV = 
-
-
     def veff(self, zidx):
         omega_m = self.omega_b_fid + self.omega_cdm_fid + self.omega_ncdm_fid
         omega_lambda = np.power(self.h_fid, 2.) - omega_m
@@ -774,7 +765,8 @@ class relic_forecast:
                 #integrand = np.array(integrand, dtype=np.float128) #Necessary? 
                 integral = np.zeros(len(self.z_steps))
                 for zidx, zval in enumerate(self.z_steps):
-                    V = self.veff(zidx) 
+                    V = self.veff(zidx)
+                    print("For z = ", zval, ", V_eff = ", (V*self.h_fid)/(1.e9), " [h^{-1} Gpc^{3}]") 
                     for kidx, kval in enumerate(self.k_table): #Center this integral? 
                         integrand[zidx][kidx] = np.sum(mu_step *2. *np.pi
                                                        * paramvec[pidx1][zidx][kidx]
