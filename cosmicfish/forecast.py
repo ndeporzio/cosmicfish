@@ -19,9 +19,9 @@ class relic_forecast:
         self.omega_cdm_fid = fiducialcosmo['omega_cdm']
         self.h_fid = fiducialcosmo['h']
         self.tau_reio_fid = fiducialcosmo['tau_reio']
-        self.T_ncdm_fid = fiducialcosmo['T_ncdm'] #Units [T_cmb]
-        self.m_ncdm_fid = fiducialcosmo['m_ncdm'] #Unit [eV] 
-        self.omega_ncdm_fid = cf.omega_ncdm(self.T_ncdm_fid, self.m_ncdm_fid)
+        #self.T_ncdm_fid = fiducialcosmo['T_ncdm'] #Units [T_cmb]
+        self.M_ncdm_fid = 3.*fiducialcosmo['m_ncdm'] #Unit [eV] 
+        self.omega_ncdm_fid = omega_ncdm(self.M_ncdm_fid / 3.)
         self.dstep = dstep 
         self.classdir = classdir
         self.datastore = datastore
@@ -44,7 +44,7 @@ class relic_forecast:
         self.omega_cdm_high, self.omega_cdm_low = self.generate_spectra('omega_cdm')
         self.h_high, self.h_low = self.generate_spectra('h')
         self.tau_reio_high, self.tau_reio_low = self.generate_spectra('tau_reio')
-        self.T_ncdm_high, self.T_ncdm_low = self.generate_spectra('T_ncdm')
+        self.M_ncdm_high, self.M_ncdm_low = self.generate_spectra('m_ncdm')
 
         #Calculate centered derivatives about fiducial cosmo at each z 
         self.dPdA_s, self.dlogPdA_s = dPs_array(self.A_s_low, self.A_s_high, self.fid['A_s']*self.dstep) #Replace w/ analytic result 
@@ -57,11 +57,11 @@ class relic_forecast:
         self.dPdomega_cdm, self.dlogPdomega_cdm = dPs_array(self.omega_cdm_low, self.omega_cdm_high, self.fid['omega_cdm']*self.dstep)
         self.dPdh, self.dlogPdh = dPs_array(self.h_low, self.h_high, self.fid['h']*self.dstep)
         self.dPdtau_reio, self.dlogPdtau_reio = dPs_array(self.tau_reio_low, self.tau_reio_high, self.fid['tau_reio']*self.dstep)
-        self.dPdT_ncdm, self.dlogPdT_ncdm = dPs_array(self.T_ncdm_low, self.T_ncdm_high, self.fid['T_ncdm']*self.dstep)    
+        self.dPdM_ncdm, self.dlogPdM_ncdm = dPs_array(self.M_ncdm_low, self.M_ncdm_high, self.fid['m_ncdm']*self.dstep)    
     
-        self.dPdomega_ncdm = [np.array(self.dPdT_ncdm[k]) / domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.m_ncdm_fid)
+        self.dPdomega_ncdm = [np.array(self.dPdM_ncdm[k]) * 93.14
                               for k in range(len(self.z_steps))]
-        self.dlogPdomega_ncdm = [np.array(self.dlogPdT_ncdm[k]) / domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.m_ncdm_fid) 
+        self.dlogPdomega_ncdm = [np.array(self.dlogPdM_ncdm[k]) * 93.14
                               for k in range(len(self.z_steps))]
  
     def generate_spectra(self, param): 
@@ -156,6 +156,7 @@ class relic_forecast:
                                                for kval in self.k_table] 
                                                for zidx, zval in enumerate(self.z_steps)])) 
                                    / (2.*self.dstep*self.omega_ncdm_fid))
+        self.dlogRSDdM_ncdm = self.dlogRSDdomega_ncdm * (1. / 93.14) 
         self.dlogRSDdh = ((np.log([[rsd(self.omega_b_fid, 
                                         self.omega_cdm_fid, 
                                         self.omega_ncdm_fid, 
@@ -278,6 +279,7 @@ class relic_forecast:
                                   / (2. * self.dstep * self.omega_cdm_fid))
         self.dlogFOGdomega_ncdm = ((omega_ncdm_high - omega_ncdm_low)
                                    / (2. * self.dstep * self.omega_ncdm_fid))
+        self.dlogFOGdM_ncdm = self.dlogFOGdomega_ncdm * (1. / 93.14) 
 
     def gen_ap(self): 
         h_high_omega_b = np.log([[H((1.+self.dstep)*self.omega_b_fid, 
@@ -414,6 +416,7 @@ class relic_forecast:
                                 / (2. * self.dstep * self.omega_ncdm_fid))
                                - ((da_high_omega_ncdm - da_low_omega_ncdm)
                                   / (self.dstep * self.omega_ncdm_fid)))
+        self.dlogAPdM_ncdm = self.dlogAPdomega_ncdm * (1. / 93.14) 
         self.dlogAPdh = (((h_high_h - h_low_h)
                                 / (2. * self.dstep * self.h_fid))
                                - ((da_high_h - da_low_h)
@@ -668,6 +671,7 @@ class relic_forecast:
         self.dlogCOVdomega_b = np.array(dlogPdomega_b)
         self.dlogCOVdomega_cdm = np.array(dlogPdomega_cdm)
         self.dlogCOVdomega_ncdm = np.array(dlogPdomega_ncdm)
+        self.dlogCOVdM_ncdm = self.dlogCOVdomega_ncdm * (1. / 93.14) 
         self.dlogCOVdh = np.array(dlogPdh)
     
     def veff(self, zidx):
@@ -764,6 +768,7 @@ class relic_forecast:
                                                            + self.dlogFOGdomega_ncdm[zidx][kidx]
                                                            + self.dlogAPdomega_ncdm[zidx][kidx]
                                                            + self.dlogCOVdomega_ncdm[zidx][kidx])
+                    dlogPdM_ncdm = dlogPdomega_ncdm * (1. / 93.14) 
 
         self.Pm = Pm 
         #Pm = np.nan_to_num(Pm)
@@ -776,7 +781,7 @@ class relic_forecast:
         #dlogPdomega_ncdm = np.nan_to_num(dlogPdomega_ncdm)
 
         paramvec = [dlogPdA_s, dlogPdn_s, dlogPdomega_b, dlogPdomega_cdm, 
-                    dlogPdh, dlogPdtau_reio, dlogPdomega_ncdm] 
+                    dlogPdh, dlogPdtau_reio, dlogPdM_ncdm] 
 
         #Highly inefficient set of loops 
         for pidx1, p1 in enumerate(paramvec): 
@@ -879,7 +884,7 @@ def dPs_array(low, high, step):
     dlogPs = [(high[zval].log_ps_table - low[zval].log_ps_table)/(2.*step) for zval in range(len(high))] 
     return dPs, dlogPs 
 
-def omega_ncdm(T_ncdm, m_ncdm): 
+def omega_ncdm(m_ncdm): 
     """Returns omega_ncdm as a function of T_ncdm, m_ncdm.
 
     T_ncdm : relic temperature in units [K]
@@ -888,44 +893,44 @@ def omega_ncdm(T_ncdm, m_ncdm):
     omega_ncdm : relative relic abundance. Unitless. 
     """
 
-    omega_ncdm = np.power(T_ncdm / 1.95, 3.) * (m_ncdm / 94)
+    omega_ncdm = 3. * (m_ncdm / 93.14)
     return omega_ncdm 
 
 
-def T_ncdm(omega_ncdm, m_ncdm): 
-    """Returns T_ncdm as a function of omega_ncdm, m_ncdm. 
+#def T_ncdm(omega_ncdm, m_ncdm): 
+#    """Returns T_ncdm as a function of omega_ncdm, m_ncdm. 
+#
+#    omega_ncdm : relative relic abundance. Unitless. 
+#    m_ncdm : relic mass in units [eV]. 
+#    
+#    T_ncdm : relic temperature in units [K]
+#    """
+#
+#    T_ncdm = np.power( 94. * omega_ncdm / m_ncdm, 1./3.) * 1.95
+#    return T_ncdm 
 
-    omega_ncdm : relative relic abundance. Unitless. 
-    m_ncdm : relic mass in units [eV]. 
-    
-    T_ncdm : relic temperature in units [K]
-    """
 
-    T_ncdm = np.power( 94. * omega_ncdm / m_ncdm, 1./3.) * 1.95
-    return T_ncdm 
+#def domega_ncdm_dT_ncdm(T_ncdm, m_ncdm): 
+#    """Returns derivative of omega_ncdm wrt T_ncdm. 
+#
+#    T_ncdm : relic temperature in units [K]
+#    m_ncdm : relic mass in units [eV]
+#    
+#    deriv : derivative of relic abundance wrt relic temp in units [K]^(-1)  
+#    """
+#
+#    deriv = (3. * m_ncdm / 94.) * np.power(T_ncdm, 2.) * np.power(1.95, -3.) 
+#    return deriv
 
-
-def domega_ncdm_dT_ncdm(T_ncdm, m_ncdm): 
-    """Returns derivative of omega_ncdm wrt T_ncdm. 
-
-    T_ncdm : relic temperature in units [K]
-    m_ncdm : relic mass in units [eV]
-    
-    deriv : derivative of relic abundance wrt relic temp in units [K]^(-1)  
-    """
-
-    deriv = (3. * m_ncdm / 94.) * np.power(T_ncdm, 2.) * np.power(1.95, -3.) 
-    return deriv
-
-def dT_ncdm_domega_ncdm(omega_ncdm, m_ncdm): 
-    """Returns derivative of T_ncdm wrt  omega_ncdm.
-
-    omega_ncdm : relative relic abundance. Unitless. 
-    m_ncdm : relic mass in units [eV]. 
-    
-    deriv : derivative of relic temp wrt relic abundance in units [K] 
-    """
-
-    deriv = (1.95 / 3) * np.power(94. / m_ncdm, 1./3.) * np.power(omega_ncdm, -2./3.)
-    return deriv 
+#def dT_ncdm_domega_ncdm(omega_ncdm, m_ncdm): 
+#    """Returns derivative of T_ncdm wrt  omega_ncdm.
+#
+#    omega_ncdm : relative relic abundance. Unitless. 
+#    m_ncdm : relic mass in units [eV]. 
+#    
+#    deriv : derivative of relic temp wrt relic abundance in units [K] 
+#    """
+#
+#    deriv = (1.95 / 3) * np.power(94. / m_ncdm, 1./3.) * np.power(omega_ncdm, -2./3.)
+#    return deriv 
         

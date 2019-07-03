@@ -36,8 +36,12 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
         end_ini = os.path.join(config_directory(),"in.ini")
         os.system('cp ' + start_ini + ' ' + end_ini)
         for key, value in modify.items():
-            print('#'+key+'-->'+ key + ' = ' + str(value))
-            replace_text(end_ini, '#'+key, key + ' = ' + str(value))
+            if key=='m_ncdm': 
+                print('#'+key+'-->'+ key + ' = ' + str(value) + ", " + str(value) + ", " + str(value))
+                replace_text(end_ini, '#'+key, key + ' = ' + str(value) + ", " + str(value) + ", " + str(value))                
+            else: 
+                print('#'+key+'-->'+ key + ' = ' + str(value))
+                replace_text(end_ini, '#'+key, key + ' = ' + str(value))
         newdatapath = os.path.join(datastore, str(time.time())+"{0:.6f}".format(random.random()))
         os.system('mkdir ' + newdatapath)
         os.system('cd ' + classdir)

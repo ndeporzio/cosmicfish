@@ -63,7 +63,7 @@ class spectrum:
                 if line.startswith("h"):
                     self.h = float(line.split(' = ')[1])
                 if line.startswith("m_ncdm"):
-                    self.m_ncdm = float(line.split(' = ')[1])
+                    self.m_ncdm = float(line.split(' = ')[1][0:4])
                 if line.startswith("T_ncdm"):
                     self.T_ncdm = float(line.split(' = ')[1])
                 if line.startswith("T_cmb"):
@@ -123,8 +123,8 @@ def gen_v_eff(h, omega_b, omega_cdm, z_table, T_ncdm=None, m_ncdm=0, c=2.9979e8)
     # c in units of [m*s^-1] 
     # returns v_eff in units [Mpc^3]
     H = 1000. * 100. * h #H has units of [m*s^-1*Mpc^-1]
-    if T_ncdm is not None:
-        omega_chi = np.power(T_ncdm/1.95, 3.) * (m_ncdm/94.)
+    if m_ncdm is not None:
+        omega_chi = 3. * (m_ncdm/93.14)
     else: 
         omega_chi = 0
     omega_m = omega_b + omega_cdm + omega_chi #Unitless
