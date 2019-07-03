@@ -129,9 +129,26 @@ def gen_v_eff(h, omega_b, omega_cdm, z_table, T_ncdm=None, m_ncdm=0, c=2.9979e8)
         omega_chi = 0
     omega_m = omega_b + omega_cdm + omega_chi #Unitless
     omega_lambda = np.power(h, 2.) - omega_m #Unitless
-    v_eff = ((4.*np.pi/3.)*np.power(c/H, 3.) 
-              * np.power(np.trapz(h/np.sqrt(omega_m*(1+z_table)**3. + omega_lambda), z_table), 3.))
-    return v_eff #Units [Mpc^3]
+
+    zmax = z_table[-1]
+    zmin = z_table[-2]
+    zsteps = 100.
+    dz = zmin / zsteps
+    z_table_max = np.arange(0., zmax, dz)
+    z_table_min = np.arange(0., zmin, dz)
+    z_integrand_max = (h * dz) /  np.sqrt(omega_m * np.power(1. + z_table_max, 3.) + omega_lambda)
+    z_integrand_min = (h * dz) /  np.sqrt(omega_m * np.power(1. + z_table_min, 3.) + omega_lambda)
+    z_integral_max = np.sum(z_integrand_max)
+    z_integral_min = np.sum(z_integrand_min)
+    v_max = ((4. * np.pi / 3.)
+         * np.power(c / (1000. * 100. * h), 3.)
+         * np.power(z_integral_max, 3.))
+    v_min = ((4. * np.pi / 3.)
+         * np.power(c / (1000. * 100. * h), 3.)
+         * np.power(z_integral_min, 3.))
+    v = v_max - v_min
+    #print(v * np.power(h, 3.) / 1e9)
+    return v #Units [Mpc^3]
 
 def gen_k_table(v_eff, h, k_max, k_steps):
     # v_eff in units of [Mpc^3]

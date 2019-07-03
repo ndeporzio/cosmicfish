@@ -671,15 +671,34 @@ class relic_forecast:
         self.dlogCOVdh = np.array(dlogPdh)
     
     def veff(self, zidx):
+        print(zidx)
+        if zidx==(len(self.z_steps)-1): 
+            zidx -=1
         omega_m = self.omega_b_fid + self.omega_cdm_fid + self.omega_ncdm_fid
         omega_lambda = np.power(self.h_fid, 2.) - omega_m
-        V = ((4. * np.pi / 3.) 
-             * np.power(self.c / (1000. * 100. * self.h_fid), 3.)
-             * np.power((self.h_fid*(self.z_steps[1] - self.z_steps[0])) 
-                        / np.sqrt(omega_m 
-                                  * np.power(1.+self.z_steps[zidx], 3.) 
-                                  + omega_lambda), 3.))
-        return V  
+        zmax = self.z_steps[zidx+1]
+        zmin = self.z_steps[zidx]
+        zsteps = 100.
+        dz = zmin / zsteps 
+        z_table_max = np.arange(0., zmax, dz)
+        z_table_min = np.arange(0., zmin, dz)
+        z_integrand_max = (self.h_fid * dz) /  np.sqrt(omega_m * np.power(1. + z_table_max, 3.) + omega_lambda)
+        z_integrand_min = (self.h_fid * dz) /  np.sqrt(omega_m * np.power(1. + z_table_min, 3.) + omega_lambda)
+        z_integral_max = np.sum(z_integrand_max)
+        z_integral_min = np.sum(z_integrand_min) 
+        V_max = ((4. * np.pi / 3.) 
+                   * np.power(self.c / (1000. * 100. * self.h_fid), 3.)
+                   * np.power(z_integral_max, 3.))
+        V_min = ((4. * np.pi / 3.)
+                   * np.power(self.c / (1000. * 100. * self.h_fid), 3.)
+                   * np.power(z_integral_min, 3.))
+        V = V_max - V_min
+        return V 
+    def print_veff_table(self): 
+        for zidx, zval in enumerate(self.z_steps): 
+            V = self.veff(zidx)
+            print("For z = ", zval, ", V_eff = ", (V*np.power(self.h_fid, 3.))/(1.e9), " [h^{-3} Gpc^{3}]")
+        return 
         
     def gen_fisher(self, mu_step): #Really messy and inefficient
         fisher = np.zeros((7, 7))
@@ -746,6 +765,7 @@ class relic_forecast:
                                                            + self.dlogAPdomega_ncdm[zidx][kidx]
                                                            + self.dlogCOVdomega_ncdm[zidx][kidx])
 
+        self.Pm = Pm 
         #Pm = np.nan_to_num(Pm)
         #dlogPdA_s = np.nan_to_num(dlogPdA_s)
         #dlogPdn_s = np.nan_to_num(dlogPdn_s)
