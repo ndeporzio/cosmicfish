@@ -9,7 +9,15 @@ import cosmicfish as cf
 class relic_forecast: 
     """Given fiducial cosmology, generates forecasted Fisher and Covariance matrices."""
     
-    def __init__(self, fiducialcosmo, z_steps, n_densities, dstep, classdir, datastore): 
+    def __init__(self, 
+                 fiducialcosmo, 
+                 z_steps, 
+                 n_densities, 
+                 dstep, 
+                 classdir, 
+                 datastore, 
+                 fsky=None, 
+                 fcoverage_deg=None): 
         self.fid = fiducialcosmo
         self.z_steps = z_steps
         self.n_densities = n_densities
@@ -27,6 +35,21 @@ class relic_forecast:
         self.datastore = datastore
         self.c = 2.9979e8 
         self.kp = 0.05 * self.h_fid #Units [Mpc^-1]
+
+        if (fsky is None) and (fcoverage_deg is not None):
+            self.fcoverage_deg = fcoverage_deg
+            self.fsky = fcoverage_deg / 41253. #http://www.badastronomy.com/bitesize/bigsky.html
+        elif (fsky is not None) and (fcoverage_deg is None):
+            self.fcoverage_deg =  41253. * fsky
+            self.fsky = fsky
+        elif (fsky is not None) and (fcoverage_deg is not None):
+            print("Both f_sky and sky coverage specified, using value for f_sky.")
+            self.fcoverage_deg = 41253. * fsky
+            self.fsky = fsky
+        else:
+            print("Assuming full sky survey.")
+            self.fsky = 1.
+            self.fcoverage_deg = 41253.
 
         #Generate spectra at each z for fid cosmo
         self.spectra_mid = [cf.spectrum(cf.generate_data(dict(self.fid,      
@@ -674,8 +697,7 @@ class relic_forecast:
         self.dlogCOVdM_ncdm = self.dlogCOVdomega_ncdm * (1. / 93.14) 
         self.dlogCOVdh = np.array(dlogPdh)
     
-    def veff(self, zidx):
-        print(zidx)
+    def V(self, zidx):
         if zidx==(len(self.z_steps)-1): 
             zidx -=1
         omega_m = self.omega_b_fid + self.omega_cdm_fid + self.omega_ncdm_fid
@@ -696,12 +718,13 @@ class relic_forecast:
         V_min = ((4. * np.pi / 3.)
                    * np.power(self.c / (1000. * 100. * self.h_fid), 3.)
                    * np.power(z_integral_min, 3.))
-        V = V_max - V_min
-        return V 
-    def print_veff_table(self): 
+        Volume = (V_max - V_min) * self.fsky 
+        return Volume 
+
+    def print_v_table(self): 
         for zidx, zval in enumerate(self.z_steps): 
-            V = self.veff(zidx)
-            print("For z = ", zval, ", V_eff = ", (V*np.power(self.h_fid, 3.))/(1.e9), " [h^{-3} Gpc^{3}]")
+            V = self.V(zidx)
+            print("For z = ", zval, ", V = ", (V*np.power(self.h_fid, 3.)) /(1.e9), " [h^{-3} Gpc^{3}]")
         return 
         
     def gen_fisher(self, mu_step): #Really messy and inefficient
@@ -790,8 +813,9 @@ class relic_forecast:
                 #integrand = np.array(integrand, dtype=np.float128) #Necessary? 
                 integral = np.zeros(len(self.z_steps))
                 for zidx, zval in enumerate(self.z_steps):
-                    V = self.veff(zidx)
-                    print("For z = ", zval, ", V_eff = ", (V*self.h_fid)/(1.e9), " [h^{-1} Gpc^{3}]") 
+                    Volume = self.V(zidx)
+                    print("For z = ", zval, ", V_eff = ", 
+                          (Volume*self.h_fid)/(1.e9), " [h^{-1} Gpc^{3}]") 
                     for kidx, kval in enumerate(self.k_table): #Center this integral? 
                         integrand[zidx][kidx] = np.sum(mu_step *2. *np.pi
                                                        * paramvec[pidx1][zidx][kidx]
@@ -803,7 +827,7 @@ class relic_forecast:
                                                                      * self.Pg[zidx][kidx] 
                                                                      + 1.), 
                                                                   2.) 
-                                                       * V 
+                                                       * Volume
                                                        * (1. / self.k_table[kidx]))
 #                        if np.isnan(integrand[zidx][kidx]): 
 #                            print("Is nan encountered, printing all components of multiply...")
