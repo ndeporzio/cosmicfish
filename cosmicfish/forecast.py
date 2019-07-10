@@ -12,7 +12,7 @@ class relic_forecast:
     def __init__(self, 
                  fiducialcosmo, 
                  z_steps, 
-                 n_densities, 
+                 dNdz, 
                  dstep, 
                  classdir, 
                  datastore, 
@@ -20,7 +20,8 @@ class relic_forecast:
                  fcoverage_deg=None): 
         self.fid = fiducialcosmo
         self.z_steps = z_steps
-        self.n_densities = n_densities
+        self.n_densities = np.zeros(len(dNdz))
+        self.dNdz = dNdz
         self.A_s_fid = fiducialcosmo['A_s']
         self.n_s_fid = fiducialcosmo['n_s']
         self.omega_b_fid = fiducialcosmo['omega_b']
@@ -718,13 +719,16 @@ class relic_forecast:
         V_min = ((4. * np.pi / 3.)
                    * np.power(self.c / (1000. * 100. * self.h_fid), 3.)
                    * np.power(z_integral_min, 3.))
-        Volume = (V_max - V_min) * self.fsky 
+        Volume = (V_max - V_min) * self.fsky
+        self.n_densities[zidx] = self.fcoverage_deg * self.dNdz[zidx] * (zmax - zmin) / Volume  
         return Volume 
 
     def print_v_table(self): 
         for zidx, zval in enumerate(self.z_steps): 
             V = self.V(zidx)
-            print("For z = ", zval, ", V = ", (V*np.power(self.h_fid, 3.)) /(1.e9), " [h^{-3} Gpc^{3}]")
+            n = self.n_densities[zidx]
+            n2 = (1.e9 / np.power(self.h_fid, 3.)) * n
+            print("For z = {0:.2f}, \tV = {1:.2f} [h^-3 Gpc^3], \tnbar = {2:.2f} [h^3 Gpc^-3], \tnbar = {3:.2e} [Mpc^-3]".format(zval, (V*np.power(self.h_fid, 3.))/(1.e9), n2, n))
         return 
         
     def gen_fisher(self, mu_step): #Really messy and inefficient
@@ -758,59 +762,50 @@ class relic_forecast:
 
         
         for muidx, muval in enumerate(mu_vals): 
-            self.gen_rsd(muval)
-            self.gen_fog(muval)
-            self.gen_ap()
-            self.gen_cov(muval)
+            #self.gen_rsd(muval)
+            #self.gen_fog(muval)
+            #self.gen_ap()
+            #self.gen_cov(muval)
             for zidx, zval in enumerate(self.z_steps): 
                 for kidx, kval in enumerate(self.k_table):
-                    Pm[zidx][kidx][muidx] = (self.spectra_mid[zidx].ps_table[kidx] 
-                                             * self.RSD[zidx][kidx] 
-                                             * self.FOG[zidx][kidx])
+                    Pm[zidx][kidx][muidx] = (self.spectra_mid[zidx].ps_table[kidx]) 
+                                             #* self.RSD[zidx][kidx] 
+                                             #* self.FOG[zidx][kidx])
                                              #* self.COV[zidx][kidx]) #Need to make this term
                     dlogPdA_s[zidx][kidx][muidx] = self.dlogPdA_s[zidx][kidx]
                     dlogPdn_s[zidx][kidx][muidx] = self.dlogPdn_s[zidx][kidx]
-                    dlogPdomega_b[zidx][kidx][muidx] = (self.dlogPdomega_b[zidx][kidx]
-                                                        + self.dlogRSDdomega_b[zidx][kidx]
-                                                        + self.dlogFOGdomega_b[zidx][kidx]
-                                                        + self.dlogAPdomega_b[zidx][kidx]
-                                                        + self.dlogCOVdomega_b[zidx][kidx])
-                    dlogPdomega_cdm[zidx][kidx][muidx] = (self.dlogPdomega_cdm[zidx][kidx] 
-                                                          + self.dlogRSDdomega_cdm[zidx][kidx]
-                                                          + self.dlogFOGdomega_cdm[zidx][kidx]
-                                                          + self.dlogAPdomega_cdm[zidx][kidx]
-                                                          + self.dlogCOVdomega_cdm[zidx][kidx])
-                    dlogPdh[zidx][kidx][muidx] = (self.dlogPdh[zidx][kidx]
-                                                  + self.dlogRSDdh[zidx][kidx] 
-                                                  + self.dlogFOGdh[zidx][kidx]
-                                                  + self.dlogAPdh[zidx][kidx]
-                                                  + self.dlogCOVdh[zidx][kidx])
+                    dlogPdomega_b[zidx][kidx][muidx] = (self.dlogPdomega_b[zidx][kidx])
+                                                        #+ self.dlogRSDdomega_b[zidx][kidx]
+                                                        #+ self.dlogFOGdomega_b[zidx][kidx]
+                                                        #+ self.dlogAPdomega_b[zidx][kidx]
+                                                        #+ self.dlogCOVdomega_b[zidx][kidx])
+                    dlogPdomega_cdm[zidx][kidx][muidx] = (self.dlogPdomega_cdm[zidx][kidx]) 
+                                                          #+ self.dlogRSDdomega_cdm[zidx][kidx]
+                                                          #+ self.dlogFOGdomega_cdm[zidx][kidx]
+                                                          #+ self.dlogAPdomega_cdm[zidx][kidx]
+                                                          #+ self.dlogCOVdomega_cdm[zidx][kidx])
+                    dlogPdh[zidx][kidx][muidx] = (self.dlogPdh[zidx][kidx])
+                                                  #+ self.dlogRSDdh[zidx][kidx] 
+                                                  #+ self.dlogFOGdh[zidx][kidx]
+                                                  #+ self.dlogAPdh[zidx][kidx]
+                                                  #+ self.dlogCOVdh[zidx][kidx])
                     dlogPdtau_reio[zidx][kidx][muidx] = self.dlogPdtau_reio[zidx][kidx]
-                    dlogPdomega_ncdm[zidx][kidx][muidx] = (self.dlogPdomega_ncdm[zidx][kidx] 
-                                                           + self.dlogRSDdomega_ncdm[zidx][kidx]
-                                                           + self.dlogFOGdomega_ncdm[zidx][kidx]
-                                                           + self.dlogAPdomega_ncdm[zidx][kidx]
-                                                           + self.dlogCOVdomega_ncdm[zidx][kidx])
+                    dlogPdomega_ncdm[zidx][kidx][muidx] = (self.dlogPdomega_ncdm[zidx][kidx]) 
+                                                           #+ self.dlogRSDdomega_ncdm[zidx][kidx]
+                                                           #+ self.dlogFOGdomega_ncdm[zidx][kidx]
+                                                           #+ self.dlogAPdomega_ncdm[zidx][kidx]
+                                                           #+ self.dlogCOVdomega_ncdm[zidx][kidx])
                     dlogPdM_ncdm = dlogPdomega_ncdm * (1. / 93.14) 
 
         self.Pm = Pm 
-        #Pm = np.nan_to_num(Pm)
-        #dlogPdA_s = np.nan_to_num(dlogPdA_s)
-        #dlogPdn_s = np.nan_to_num(dlogPdn_s)
-        #dlogPdomega_b = np.nan_to_num(dlogPdomega_b)
-        #dlogPdomega_cdm = np.nan_to_num(dlogPdomega_cdm)
-        #dlogPdh = np.nan_to_num(dlogPdh)
-        #dlogPdtau_reio = np.nan_to_num(dlogPdtau_reio)
-        #dlogPdomega_ncdm = np.nan_to_num(dlogPdomega_ncdm)
 
-        paramvec = [dlogPdA_s, dlogPdn_s, dlogPdomega_b, dlogPdomega_cdm, 
-                    dlogPdh, dlogPdtau_reio, dlogPdM_ncdm] 
+        paramvec = [dlogPdomega_b, dlogPdomega_cdm,  dlogPdn_s, dlogPdA_s,
+                    dlogPdtau_reio, dlogPdh, dlogPdM_ncdm] 
 
         #Highly inefficient set of loops 
         for pidx1, p1 in enumerate(paramvec): 
             for pidx2, p2 in enumerate(paramvec):
                 integrand = np.zeros((len(self.z_steps), len(self.k_table)))
-                #integrand = np.array(integrand, dtype=np.float128) #Necessary? 
                 integral = np.zeros(len(self.z_steps))
                 for zidx, zval in enumerate(self.z_steps):
                     Volume = self.V(zidx)
@@ -829,20 +824,6 @@ class relic_forecast:
                                                                   2.) 
                                                        * Volume
                                                        * (1. / self.k_table[kidx]))
-#                        if np.isnan(integrand[zidx][kidx]): 
-#                            print("Is nan encountered, printing all components of multiply...")
-#                            print("Param 1 index: ", pidx1)
-#                            print("Param 2 index: ", pidx2) 
-#                            print("Z index: ", zidx)
-#                            print("k index: ", kidx)
-#                            print(mu_step)
-#                            print(np.pi)
-#                            print(paramvec[pidx1][zidx][kidx])
-#                            print(paramvec[pidx2][zidx][kidx])
-#                            print(self.k_table[kidx])
-#                            print(self.n_densities[zidx])
-#                            print(Pm[zidx][kidx])
-#                            print(V)
                             
                 for zidx, zval in enumerate(self.z_steps): 
                     val = 0 

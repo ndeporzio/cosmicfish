@@ -35,10 +35,10 @@ class spectrum:
         self.input()
 
         #Derive k_table 
-        self.v_eff = gen_v_eff(self.h, self.omega_b, 
-                               self.omega_cdm, self.z_table, 
-                               self.T_ncdm, self.m_ncdm, c=2.9979e8) #Units [Mpc^3]
-        self.k_table = gen_k_table(self.v_eff, self.h, k_max=0.1, k_steps=100) #Units [Mpc^-1]
+        self.V = gen_V(self.h, self.omega_b, 
+                       self.omega_cdm, self.z_table, 
+                       self.T_ncdm, self.m_ncdm, c=2.9979e8) #Units [Mpc^3]
+        self.k_table = gen_k_table(self.V, self.h, k_max=0.2, k_steps=100) #Units [Mpc^-1]
 
         #Derive power spectrum 
         self.interpolate()
@@ -115,13 +115,13 @@ class spectrum:
         print('m_ncdm = ', self.m_ncdm)
         print('T_ncdm = ', self.T_ncdm)
         print('k_pivot = ', self.k_pivot)
-        print('v_eff = ', self.v_eff)
+        print('volume = ', self.V)
 
-def gen_v_eff(h, omega_b, omega_cdm, z_table, T_ncdm=None, m_ncdm=0, c=2.9979e8):
+def gen_V(h, omega_b, omega_cdm, z_table, T_ncdm=None, m_ncdm=0, c=2.9979e8, fsky=None):
     # T_ncdm in units of [K]
     # m_ncdm in units of [eV]
     # c in units of [m*s^-1] 
-    # returns v_eff in units [Mpc^3]
+    # returns V in units [Mpc^3]
     H = 1000. * 100. * h #H has units of [m*s^-1*Mpc^-1]
     if m_ncdm is not None:
         omega_chi = 3. * (m_ncdm/93.14)
@@ -147,11 +147,11 @@ def gen_v_eff(h, omega_b, omega_cdm, z_table, T_ncdm=None, m_ncdm=0, c=2.9979e8)
          * np.power(c / (1000. * 100. * h), 3.)
          * np.power(z_integral_min, 3.))
     v = v_max - v_min
-    #print(v * np.power(h, 3.) / 1e9)
+    #Incorporate fsky into volume calculation.
     return v #Units [Mpc^3]
 
-def gen_k_table(v_eff, h, k_max, k_steps):
-    # v_eff in units of [Mpc^3]
+def gen_k_table(volume, h, k_max, k_steps):
+    # volume in units of [Mpc^3]
     # returns k_table in units [Mpc^-1]
-    k_table = np.linspace((np.pi / h) * np.power(v_eff, -1./3.), k_max, k_steps)
+    k_table = np.linspace((np.pi / h) * np.power(volume, -1./3.), k_max, k_steps)
     return k_table #Units [Mpc^-1]        
