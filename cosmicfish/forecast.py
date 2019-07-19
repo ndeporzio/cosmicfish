@@ -15,9 +15,11 @@ class relic_forecast:
                  dNdz, 
                  dstep, 
                  classdir, 
-                 datastore, 
+                 datastore,
+                 forecast_type,  
                  fsky=None, 
                  fcoverage_deg=None): 
+        self.forecast = forecast_type
         self.fid = fiducialcosmo
         self.z_steps = z_steps
         self.n_densities = np.zeros(len(dNdz))
@@ -28,12 +30,18 @@ class relic_forecast:
         self.omega_cdm_fid = fiducialcosmo['omega_cdm']
         self.h_fid = fiducialcosmo['h']
         self.tau_reio_fid = fiducialcosmo['tau_reio']
-        #self.T_ncdm_fid = fiducialcosmo['T_ncdm'] #Units [T_cmb]
+        if forecast_type=="relic": 
+            self.T_ncdm_fid = fiducialcosmo['T_ncdm'] #Units [T_cmb]
+        self.m_ncdm_fid = fiducialcosmo['m_ncdm'] #Unit [eV] 
         self.M_ncdm_fid = 3.*fiducialcosmo['m_ncdm'] #Unit [eV] 
-        self.omega_ncdm_fid = omega_ncdm(self.M_ncdm_fid / 3.)
+        if forecast_type=="relic": 
+            self.omega_ncdm_fid = omega_ncdm(self.T_ncdm_fid, self.m_ncdm_fid, "relic")
+        elif forecast_type=="neutrino": 
+            self.omega_ncdm_fid = omega_ncdm(None, self.M_ncdm_fid / 3., "neutrino")
         self.dstep = dstep 
         self.classdir = classdir
         self.datastore = datastore
+        self.forecast_type = forecast_type
         self.c = 2.9979e8 
         self.kp = 0.05 * self.h_fid #Units [Mpc^-1]
 
@@ -68,7 +76,10 @@ class relic_forecast:
         self.omega_cdm_high, self.omega_cdm_low = self.generate_spectra('omega_cdm')
         self.h_high, self.h_low = self.generate_spectra('h')
         self.tau_reio_high, self.tau_reio_low = self.generate_spectra('tau_reio')
-        self.M_ncdm_high, self.M_ncdm_low = self.generate_spectra('m_ncdm')
+        if forecast_type=="neutrino": 
+            self.M_ncdm_high, self.M_ncdm_low = self.generate_spectra('m_ncdm')
+        elif forecast_type=="relic": 
+            self.T_ncdm_high, self.T_ncdm_low = self.generate_spectra('T_ncdm')
 
         #Calculate centered derivatives about fiducial cosmo at each z 
         self.dPdA_s, self.dlogPdA_s = dPs_array(self.A_s_low, self.A_s_high, self.fid['A_s']*self.dstep) #Replace w/ analytic result 
@@ -81,12 +92,24 @@ class relic_forecast:
         self.dPdomega_cdm, self.dlogPdomega_cdm = dPs_array(self.omega_cdm_low, self.omega_cdm_high, self.fid['omega_cdm']*self.dstep)
         self.dPdh, self.dlogPdh = dPs_array(self.h_low, self.h_high, self.fid['h']*self.dstep)
         self.dPdtau_reio, self.dlogPdtau_reio = dPs_array(self.tau_reio_low, self.tau_reio_high, self.fid['tau_reio']*self.dstep)
-        self.dPdM_ncdm, self.dlogPdM_ncdm = dPs_array(self.M_ncdm_low, self.M_ncdm_high, self.fid['m_ncdm']*self.dstep)    
-    
-        self.dPdomega_ncdm = [np.array(self.dPdM_ncdm[k]) * 93.14
-                              for k in range(len(self.z_steps))]
-        self.dlogPdomega_ncdm = [np.array(self.dlogPdM_ncdm[k]) * 93.14
-                              for k in range(len(self.z_steps))]
+        if forecast_type=="neutrino": 
+            self.dPdM_ncdm, self.dlogPdM_ncdm = dPs_array(self.M_ncdm_low, 
+                                                          self.M_ncdm_high, 
+                                                          self.fid['m_ncdm']*self.dstep)    
+            self.dPdomega_ncdm = [np.array(self.dPdM_ncdm[k]) * 93.14
+                                  for k in range(len(self.z_steps))]
+            self.dlogPdomega_ncdm = [np.array(self.dlogPdM_ncdm[k]) * 93.14
+                                     for k in range(len(self.z_steps))]
+        elif forecast_type=="relic": 
+            self.dPdT_ncdm, self.dlogPdT_ncdm = dPs_array(self.T_ncdm_low, 
+                                                          self.T_ncdm_high, 
+                                                          self.fid['T_ncdm']*self.dstep)
+            self.dPdomega_ncdm = [np.array(self.dPdT_ncdm[k]) / domega_ncdm_dT_ncdm(self.T_ncdm_fid, 
+                                                                                    self.m_ncdm_fid)
+                                  for k in range(len(self.z_steps))]
+            self.dlogPdomega_ncdm = [np.array(self.dlogPdT_ncdm[k]) / domega_ncdm_dT_ncdm(self.T_ncdm_fid, 
+                                                                                          self.m_ncdm_fid)
+                                     for k in range(len(self.z_steps))]
  
     def generate_spectra(self, param): 
         spectra_high = [cf.spectrum(cf.generate_data(dict(self.fid, 
@@ -728,7 +751,21 @@ class relic_forecast:
             V = self.V(zidx)
             n = self.n_densities[zidx]
             n2 = (1.e9 / np.power(self.h_fid, 3.)) * n
-            print("For z = {0:.2f}, \tV = {1:.2f} [h^-3 Gpc^3], \tnbar = {2:.2f} [h^3 Gpc^-3], \tnbar = {3:.2e} [Mpc^-3]".format(zval, (V*np.power(self.h_fid, 3.))/(1.e9), n2, n))
+            print((("For z = {0:.2f} \n\t") +   
+                   ("V = {1:.6f} [h^-3 Gpc^3] \n\t") + 
+                   ("nbar = {2:.6f} [h^3 Gpc^-3] \n\t") + 
+                   ("nbar = {3:.6e} [Mpc^-3] \n\t") + 
+                   ("nbar/deg^2 = {4:.6e} [h^3 Gpc^-3 deg^-2] \n\t") + 
+                   ("nbar/deg^2 = {5:.6e} [Mpc^-3 deg^-2] \n\t") +
+                   ("D = {6:.6f} \n\t") +
+                   ("b_ELG = {7:.6f} \n\t")).format(zval, 
+                                                 (V*np.power(self.h_fid, 3.))/(1.e9), 
+                                                 n2, 
+                                                 n, 
+                                                 n2 / self.fcoverage_deg,
+                                                 n / self.fcoverage_deg,
+                                                 self.spectra_mid[zidx].D_table[zidx],
+                                                 0.84 / self.spectra_mid[zidx].D_table[zidx]))
         return 
         
     def gen_fisher(self, mu_step): #Really messy and inefficient
@@ -763,44 +800,63 @@ class relic_forecast:
         
         for muidx, muval in enumerate(mu_vals): 
             #self.gen_rsd(muval)
-            #self.gen_fog(muval)
-            #self.gen_ap()
+            self.gen_fog(muval)
+            self.gen_ap()
             #self.gen_cov(muval)
             for zidx, zval in enumerate(self.z_steps): 
                 for kidx, kval in enumerate(self.k_table):
-                    Pm[zidx][kidx][muidx] = (self.spectra_mid[zidx].ps_table[kidx]) 
+                    Pm[zidx][kidx][muidx] = (self.spectra_mid[zidx].ps_table[kidx] 
                                              #* self.RSD[zidx][kidx] 
-                                             #* self.FOG[zidx][kidx])
-                                             #* self.COV[zidx][kidx]) #Need to make this term
+                                             * self.FOG[zidx][kidx]
+                                             #* self.COV[zidx][kidx] #Need to make this term
+                                            )
                     dlogPdA_s[zidx][kidx][muidx] = self.dlogPdA_s[zidx][kidx]
                     dlogPdn_s[zidx][kidx][muidx] = self.dlogPdn_s[zidx][kidx]
-                    dlogPdomega_b[zidx][kidx][muidx] = (self.dlogPdomega_b[zidx][kidx])
+                    dlogPdomega_b[zidx][kidx][muidx] = (self.dlogPdomega_b[zidx][kidx]
                                                         #+ self.dlogRSDdomega_b[zidx][kidx]
-                                                        #+ self.dlogFOGdomega_b[zidx][kidx]
-                                                        #+ self.dlogAPdomega_b[zidx][kidx]
-                                                        #+ self.dlogCOVdomega_b[zidx][kidx])
-                    dlogPdomega_cdm[zidx][kidx][muidx] = (self.dlogPdomega_cdm[zidx][kidx]) 
+                                                        + self.dlogFOGdomega_b[zidx][kidx]
+                                                        + self.dlogAPdomega_b[zidx][kidx]
+                                                        #+ self.dlogCOVdomega_b[zidx][kidx]
+                                                        )
+                    dlogPdomega_cdm[zidx][kidx][muidx] = (self.dlogPdomega_cdm[zidx][kidx]
                                                           #+ self.dlogRSDdomega_cdm[zidx][kidx]
-                                                          #+ self.dlogFOGdomega_cdm[zidx][kidx]
-                                                          #+ self.dlogAPdomega_cdm[zidx][kidx]
-                                                          #+ self.dlogCOVdomega_cdm[zidx][kidx])
-                    dlogPdh[zidx][kidx][muidx] = (self.dlogPdh[zidx][kidx])
+                                                          + self.dlogFOGdomega_cdm[zidx][kidx]
+                                                          + self.dlogAPdomega_cdm[zidx][kidx]
+                                                          #+ self.dlogCOVdomega_cdm[zidx][kidx]
+                                                         )
+                    dlogPdh[zidx][kidx][muidx] = (self.dlogPdh[zidx][kidx]
                                                   #+ self.dlogRSDdh[zidx][kidx] 
-                                                  #+ self.dlogFOGdh[zidx][kidx]
-                                                  #+ self.dlogAPdh[zidx][kidx]
-                                                  #+ self.dlogCOVdh[zidx][kidx])
+                                                  + self.dlogFOGdh[zidx][kidx]
+                                                  + self.dlogAPdh[zidx][kidx]
+                                                  #+ self.dlogCOVdh[zidx][kidx]
+                                                 )
                     dlogPdtau_reio[zidx][kidx][muidx] = self.dlogPdtau_reio[zidx][kidx]
-                    dlogPdomega_ncdm[zidx][kidx][muidx] = (self.dlogPdomega_ncdm[zidx][kidx]) 
+                    dlogPdomega_ncdm[zidx][kidx][muidx] = (self.dlogPdomega_ncdm[zidx][kidx]
                                                            #+ self.dlogRSDdomega_ncdm[zidx][kidx]
-                                                           #+ self.dlogFOGdomega_ncdm[zidx][kidx]
-                                                           #+ self.dlogAPdomega_ncdm[zidx][kidx]
-                                                           #+ self.dlogCOVdomega_ncdm[zidx][kidx])
+                                                           + self.dlogFOGdomega_ncdm[zidx][kidx]
+                                                           + self.dlogAPdomega_ncdm[zidx][kidx]
+                                                           #+ self.dlogCOVdomega_ncdm[zidx][kidx]
+                                                          )
                     dlogPdM_ncdm = dlogPdomega_ncdm * (1. / 93.14) 
 
         self.Pm = Pm 
 
-        paramvec = [dlogPdomega_b, dlogPdomega_cdm,  dlogPdn_s, dlogPdA_s,
-                    dlogPdtau_reio, dlogPdh, dlogPdM_ncdm] 
+        if self.forecast=="neutrino": 
+            paramvec = [dlogPdomega_b, 
+                        dlogPdomega_cdm,  
+                        dlogPdn_s, 
+                        dlogPdA_s,
+                        dlogPdtau_reio, 
+                        dlogPdh, 
+                        dlogPdM_ncdm]
+        elif self.forecast=="relic": 
+            paramvec = [dlogPdomega_b, 
+                        dlogPdomega_cdm,  
+                        dlogPdn_s, 
+                        dlogPdA_s,
+                        dlogPdtau_reio, 
+                        dlogPdh, 
+                        dlogPdomega_ncdm] 
 
         #Highly inefficient set of loops 
         for pidx1, p1 in enumerate(paramvec): 
@@ -809,8 +865,8 @@ class relic_forecast:
                 integral = np.zeros(len(self.z_steps))
                 for zidx, zval in enumerate(self.z_steps):
                     Volume = self.V(zidx)
-                    print("For z = ", zval, ", V_eff = ", 
-                          (Volume*self.h_fid)/(1.e9), " [h^{-1} Gpc^{3}]") 
+                    #print("For z = ", zval, ", V_eff = ", 
+                    #      (Volume*self.h_fid)/(1.e9), " [h^{-1} Gpc^{3}]") 
                     for kidx, kval in enumerate(self.k_table): #Center this integral? 
                         integrand[zidx][kidx] = np.sum(mu_step *2. *np.pi
                                                        * paramvec[pidx1][zidx][kidx]
@@ -835,7 +891,11 @@ class relic_forecast:
                 print("Fisher element (", pidx1, ", ", pidx2,") calculated...") 
         self.fisher=fisher
                 
-
+    def print_P_table(self): 
+        for zidx, zval in enumerate(self.z_steps): 
+            print((("For z = {0:.2f},\t") + 
+                   (" P(0.2h, 0) = {1:.2f}\n")).format(zval, 
+                                                        self.Pm[zidx][69][20]))
 
 def H(omega_b, omega_cdm, omega_ncdm, h, z):
     #Returns H in units of m/s/Mpc
@@ -889,7 +949,7 @@ def dPs_array(low, high, step):
     dlogPs = [(high[zval].log_ps_table - low[zval].log_ps_table)/(2.*step) for zval in range(len(high))] 
     return dPs, dlogPs 
 
-def omega_ncdm(m_ncdm): 
+def omega_ncdm(T_ncdm, m_ncdm, forecast_type): 
     """Returns omega_ncdm as a function of T_ncdm, m_ncdm.
 
     T_ncdm : relic temperature in units [K]
@@ -897,45 +957,50 @@ def omega_ncdm(m_ncdm):
     
     omega_ncdm : relative relic abundance. Unitless. 
     """
-
-    omega_ncdm = 3. * (m_ncdm / 93.14)
+    if forecast_type=="neutrino": 
+        omega_ncdm = 3. * (m_ncdm / 93.14)
+    if forecast_type=="relic": 
+        omega_ncdm = np.power(T_ncdm / 1.95, 3.) * (m_ncdm / 94.) 
     return omega_ncdm 
 
 
-#def T_ncdm(omega_ncdm, m_ncdm): 
-#    """Returns T_ncdm as a function of omega_ncdm, m_ncdm. 
-#
-#    omega_ncdm : relative relic abundance. Unitless. 
-#    m_ncdm : relic mass in units [eV]. 
-#    
-#    T_ncdm : relic temperature in units [K]
-#    """
-#
-#    T_ncdm = np.power( 94. * omega_ncdm / m_ncdm, 1./3.) * 1.95
-#    return T_ncdm 
+def T_ncdm(omega_ncdm, m_ncdm): 
+    #RELICS ONLY? 
+    """Returns T_ncdm as a function of omega_ncdm, m_ncdm. 
+
+    omega_ncdm : relative relic abundance. Unitless. 
+    m_ncdm : relic mass in units [eV]. 
+    
+    T_ncdm : relic temperature in units [K]
+    """
+
+    T_ncdm = np.power( 94. * omega_ncdm / m_ncdm, 1./3.) * 1.95
+    return T_ncdm 
 
 
-#def domega_ncdm_dT_ncdm(T_ncdm, m_ncdm): 
-#    """Returns derivative of omega_ncdm wrt T_ncdm. 
-#
-#    T_ncdm : relic temperature in units [K]
-#    m_ncdm : relic mass in units [eV]
-#    
-#    deriv : derivative of relic abundance wrt relic temp in units [K]^(-1)  
-#    """
-#
-#    deriv = (3. * m_ncdm / 94.) * np.power(T_ncdm, 2.) * np.power(1.95, -3.) 
-#    return deriv
+def domega_ncdm_dT_ncdm(T_ncdm, m_ncdm): 
+    #RELICS ONLY? 
+    """Returns derivative of omega_ncdm wrt T_ncdm. 
 
-#def dT_ncdm_domega_ncdm(omega_ncdm, m_ncdm): 
-#    """Returns derivative of T_ncdm wrt  omega_ncdm.
-#
-#    omega_ncdm : relative relic abundance. Unitless. 
-#    m_ncdm : relic mass in units [eV]. 
-#    
-#    deriv : derivative of relic temp wrt relic abundance in units [K] 
-#    """
-#
-#    deriv = (1.95 / 3) * np.power(94. / m_ncdm, 1./3.) * np.power(omega_ncdm, -2./3.)
-#    return deriv 
+    T_ncdm : relic temperature in units [K]
+    m_ncdm : relic mass in units [eV]
+    
+    deriv : derivative of relic abundance wrt relic temp in units [K]^(-1)  
+    """
+
+    deriv = (3. * m_ncdm / 94.) * np.power(T_ncdm, 2.) * np.power(1.95, -3.) 
+    return deriv
+
+def dT_ncdm_domega_ncdm(omega_ncdm, m_ncdm): 
+    #RELICS ONLY? 
+    """Returns derivative of T_ncdm wrt  omega_ncdm.
+
+    omega_ncdm : relative relic abundance. Unitless. 
+    m_ncdm : relic mass in units [eV]. 
+    
+    deriv : derivative of relic temp wrt relic abundance in units [K] 
+    """
+
+    deriv = (1.95 / 3) * np.power(94. / m_ncdm, 1./3.) * np.power(omega_ncdm, -2./3.)
+    return deriv 
         

@@ -7,7 +7,7 @@ import cosmicfish as cf
 class relic_convergence_analysis: 
 
     def __init__(self, fid, param, varytype, varyvals, z_table, m_ncdm,
-                 classdir, datastore, dstep=0.01): 
+                 classdir, datastore, dstep=0.01, fsky=None): 
         self.name = param + "convergence analysis for light relic" 
         self.z_table = z_table
         self.m_ncdm = m_ncdm
@@ -16,6 +16,10 @@ class relic_convergence_analysis:
         self.fid = fid
         self.param = param
         self.dstep = dstep
+        if fsky==None: 
+            self.fsky = 1. 
+        else: 
+            self.fsky = fsky 
 
         #Calculate parameter variations
         if varytype=="abs":     
@@ -27,7 +31,8 @@ class relic_convergence_analysis:
         self.fid_spectra = [cf.spectrum(cf.generate_data(dict(self.fid, **{'z_pk' : j}),
                                                           self.classdir, 
                                                           self.datastore).replace('/test_parameters.ini',''), 
-                                        self.z_table) for j in self.z_table]
+                                        self.z_table,
+                                        self.fsky) for j in self.z_table]
 
         #Calculate variation spectra 
         #First index is redshift, second index is variation 
