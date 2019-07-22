@@ -8,45 +8,67 @@ class spectrum:
    
     def __init__(self, datadirectory, z_table, fsky=None): 
 
-        #While this spectrum is for a specific z value, how we bin z
-        #in analysis determines range of k table
-        self.z_table = z_table 
-        self.A_s = None #Unitless ?? 
-        self.n_s = None #Unitless
-        self.omega_b = None #Unitless ??
-        self.omega_cdm = None #Unitless ??
-        self.tau_reio = None
-        self.h = None #Unitless
-        self.m_ncdm = None #Units ov [eV]
-        self.N_ncdm = None  
-        self.T_ncdm = None #Units of [T_cmb]
-        self.T_cmb = None #Units of [K] 
-        self.z_pk = None #Unitless
-        self.k_pivot = None #Units [Mpc^-1]
-        self.rawdata = None
-        self.b_interp_table = None #Unitless ??
-        self.cdm_interp_table = None #Unitless ??
-        self.prim_table = None #Units of [Mpc^3]
-        self.ps_table = None #Units of [Mpc^3]
-        self.log_ps_table = None
-        self.class_pk = None 
+        # While this spectrum is for a specific z value, how we bin z
+        # in analysis determines V and thus range of k table. 
+        # 
+        # Instantiation variables
+        #
         self.dataconfig = correct_path(datadirectory + "/test_parameters.ini")
         self.datapath = correct_path(datadirectory + "/test_tk.dat")
-        self.background_data = correct_path(datadirectory + "/test_background.dat") 
-        self.fsky = fsky
-        self.D_table = None 
-
-        #Import data 
+        self.background_data = correct_path(datadirectory 
+                                            + "/test_background.dat")
+        self.z_table = z_table # Unitless 
+        self.fsky = fsky # Unitless  
+        #
+        # Values read from CLASS output. 
+        #
+        self.z_pk = None # Unitless
+        self.A_s = None # Unitless  
+        self.n_s = None # Unitless
+        self.omega_b = None # Unitless 
+        self.omega_cdm = None # Unitless
+        self.tau_reio = None
+        self.h = None # Unitless
+        self.m_ncdm = None # Units ov [eV]
+        self.T_ncdm = None # Units of [T_cmb]
+        self.N_ncdm = None # Unitless
+        self.T_cmb = None # Units of [K] 
+        self.k_pivot = None # Units [Mpc^-1]
+        #
+        # Values interptreted from CLASS output.
+        #
+        self.rawdata = None
+        self.b_interp_table = None # Unitless 
+        self.cdm_interp_table = None # Unitless 
+        self.prim_table = None # Units of [Mpc^3]
+        self.ps_table = None # Units of [Mpc^3]
+        self.log_ps_table = None # Units of log([Mpc^3])
+        self.class_pk = None # Units of [Mpc^3]
+        self.D_table = None # Unitless 
+        # 
+        # Import data 
+        # 
         self.input()
         self.growthfactor()
-
+        #
         #Derive k_table 
-        self.V = gen_V(self.h, self.omega_b, 
-                       self.omega_cdm, self.z_table, self.N_ncdm, 
-                       self.T_ncdm, self.m_ncdm, c=2.9979e8, fsky=self.fsky) #Units [Mpc^3]
-        self.k_table = gen_k_table(self.V, self.h, k_max=0.2, k_steps=100) #Units [Mpc^-1]
-
+        #
+        self.V = gen_V(self.h, 
+                       self.omega_b, 
+                       self.omega_cdm, 
+                       self.z_table, 
+                       self.N_ncdm, 
+                       self.T_ncdm, 
+                       self.m_ncdm, 
+                       c=2.9979e8, 
+                       fsky=self.fsky) #Units [Mpc^3]
+        self.k_table = gen_k_table(self.V, 
+                                   self.h, 
+                                   k_max=0.2, 
+                                   k_steps=100) #Units [Mpc^-1]
+        #
         #Derive power spectrum 
+        #
         self.interpolate()
         self.gen_primordial_table()
         self.gen_power_spectrum()
@@ -84,12 +106,12 @@ class spectrum:
                     self.m_ncdm = float(line.split(' = ')[1][0:4])
                 if line.startswith("T_ncdm"):
                     self.T_ncdm = float(line.split(' = ')[1])
+                if line.startswith("N_ncdm"):
+                    self.N_ncdm = float(line.split(' = ')[1])
                 if line.startswith("T_cmb"):
                     self.T_cmb = float(line.split(' = ')[1])
                 if line.startswith("k_pivot"): 
                     self.k_pivot = float(line.split(' = ')[1])
-                if line.startswith("N_ncdm"): 
-                    self.N_ncdm = float(line.split(' = ')[1]) 
         self.rawdata = pd.read_csv(self.datapath, 
                                     skiprows=11, 
                                     skipinitialspace=True, 
@@ -99,7 +121,8 @@ class spectrum:
                                     header=None, 
                                     engine="python",
                                     names=["k (h/Mpc)", "d_b", "d_cdm"])
-        self.class_pk = pd.read_csv(self.datapath.replace("/test_tk.dat", "/test_pk.dat"), 
+        self.class_pk = pd.read_csv(self.datapath.replace("/test_tk.dat", 
+                                                          "/test_pk.dat"), 
                                     skiprows=4,
                                     skipinitialspace=True,
                                     #sep="     ", 
@@ -110,21 +133,31 @@ class spectrum:
         
 
     def interpolate(self):
-        b_interpolator = scipy.interpolate.interp1d(self.h*self.rawdata['k (h/Mpc)'], self.rawdata['d_b'])
-        cdm_interpolator = scipy.interpolate.interp1d(self.h*self.rawdata['k (h/Mpc)'], self.rawdata['d_cdm'])
+        b_interpolator = scipy.interpolate.interp1d(
+                             self.h * self.rawdata['k (h/Mpc)'], 
+                             self.rawdata['d_b'])
+        cdm_interpolator = scipy.interpolate.interp1d(
+                               self.h*self.rawdata['k (h/Mpc)'], 
+                               self.rawdata['d_cdm'])
         self.b_interp_table = b_interpolator(self.k_table)
         self.cdm_interp_table = cdm_interpolator(self.k_table) 
 
     def gen_primordial_table(self):
-        table = self.A_s * 2. * np.power(np.pi, 2.) * np.power(self.k_table, -3.) * np.power(self.k_table / self.k_pivot, self.n_s - 1)
+        table = (self.A_s 
+                 * 2. 
+                 * np.power(np.pi, 2.) 
+                 * np.power(self.k_table, -3.) 
+                 * np.power(self.k_table / self.k_pivot, self.n_s - 1))
         self.prim_table=table #Units of [Mpc^3] ?? 
  
     def gen_power_spectrum(self):
-        fb = self.omega_b / (self.omega_b + self.omega_cdm) #Unitless
-        fcdm = self.omega_cdm / (self.omega_b + self.omega_cdm) #Unitless
-        table = np.power(self.b_interp_table*fb + self.cdm_interp_table*fcdm, 2.) * self.prim_table
-        self.ps_table = table #Units of [Mpc^3] ??
-        self.log_ps_table = np.log(table) #Units of log[Mpc^3]
+        fb = self.omega_b / (self.omega_b + self.omega_cdm) # Unitless
+        fcdm = self.omega_cdm / (self.omega_b + self.omega_cdm) # Unitless
+        table = (np.power(self.b_interp_table*fb 
+                         + self.cdm_interp_table*fcdm, 2.) 
+                 * self.prim_table)
+        self.ps_table = table # Units of [Mpc^3]
+        self.log_ps_table = np.log(table) # Units of log[Mpc^3]
 
     def print_cosmo(self): 
         print('z_pk = ', self.z_pk)
@@ -139,7 +172,8 @@ class spectrum:
         print('k_pivot = ', self.k_pivot)
         print('volume = ', self.V)
 
-def gen_V(h, omega_b, omega_cdm, z_table, N_ncdm, T_ncdm=None, m_ncdm=0, c=2.9979e8, fsky=None):
+def gen_V(h, omega_b, omega_cdm, z_table, N_ncdm, T_ncdm=None, m_ncdm=0, 
+          c=2.9979e8, fsky=None):
     # T_ncdm in units of [K]
     # m_ncdm in units of [eV]
     # c in units of [m*s^-1] 
@@ -147,18 +181,18 @@ def gen_V(h, omega_b, omega_cdm, z_table, N_ncdm, T_ncdm=None, m_ncdm=0, c=2.997
 
     if fsky==None: 
         fsky = 1.
-    H = 1000. * 100. * h #H has units of [m*s^-1*Mpc^-1]
+    H = 1000. * 100. * h # H has units of [m*s^-1*Mpc^-1]
     if m_ncdm is not None:
-        if N_ncdm==3.: #Degenerate neutrinos 
+        if N_ncdm==3.: # Degenerate neutrinos 
             omega_chi = 3. * (m_ncdm/93.14)
-        elif N_ncdm==1.: #Light relic
+        elif N_ncdm==1.: # Light relic
             omega_chi = np.power(T_ncdm/1.95, 3.) * (m_ncdm/94.)
         else:
             print("ERROR") 
     else: 
         omega_chi = 0
-    omega_m = omega_b + omega_cdm + omega_chi #Unitless
-    omega_lambda = np.power(h, 2.) - omega_m #Unitless
+    omega_m = omega_b + omega_cdm + omega_chi # Unitless
+    omega_lambda = np.power(h, 2.) - omega_m # Unitless
 
     zmax = z_table[-1]
     zmin = z_table[-2]
@@ -166,22 +200,33 @@ def gen_V(h, omega_b, omega_cdm, z_table, N_ncdm, T_ncdm=None, m_ncdm=0, c=2.997
     dz = zmin / zsteps
     z_table_max = np.arange(0., zmax, dz)
     z_table_min = np.arange(0., zmin, dz)
-    z_integrand_max = (h * dz) /  np.sqrt(omega_m * np.power(1. + z_table_max, 3.) + omega_lambda)
-    z_integrand_min = (h * dz) /  np.sqrt(omega_m * np.power(1. + z_table_min, 3.) + omega_lambda)
+    z_integrand_max = (h * dz) /  np.sqrt(omega_m 
+                                          * np.power(1. + z_table_max, 3.) 
+                                          + omega_lambda)
+    z_integrand_min = (h * dz) /  np.sqrt(omega_m 
+                                          * np.power(1. + z_table_min, 3.) 
+                                          + omega_lambda)
     z_integral_max = np.sum(z_integrand_max)
     z_integral_min = np.sum(z_integrand_min)
     v_max = ((4. * np.pi / 3.)
-         * np.power(c / (1000. * 100. * h), 3.)
-         * np.power(z_integral_max, 3.))
+             * np.power(c / (1000.*100.*h), 3.)
+             * np.power(z_integral_max, 3.))
     v_min = ((4. * np.pi / 3.)
-         * np.power(c / (1000. * 100. * h), 3.)
-         * np.power(z_integral_min, 3.))
+             * np.power(c / (1000.*100.*h), 3.)
+             * np.power(z_integral_min, 3.))
     v = (v_max - v_min) * fsky
-    #Incorporate fsky into volume calculation.
-    return v #Units [Mpc^3]
+    # Incorporate fsky into volume calculation.
+    return v # Units [Mpc^3]
 
 def gen_k_table(volume, h, k_max, k_steps):
     # volume in units of [Mpc^3]
     # returns k_table in units [Mpc^-1]
-    k_table = np.linspace((np.pi / h) * np.power(volume, -1./3.), k_max, k_steps)
-    return k_table #Units [Mpc^-1]        
+    k_table = np.linspace((np.pi / h) * np.power(volume, -1./3.), 
+                          k_max, 
+                          k_steps)
+    return k_table #Units [Mpc^-1]   
+
+if __name__ == '__main__':   
+    # Actions to perform only if this module, 'data.py', is called
+    # directly (e.g. '$ python data.py'). These actions aren't 
+    # performed if the module is imported by another module.      

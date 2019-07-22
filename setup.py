@@ -13,7 +13,7 @@ setup(name='cosmicfish',
       zip_safe=False,
       test_suite='nose.collector',
       tests_require=['nose'],
-      #dependency_links=['https://github.com/lesgourg/class_public'],
+      # dependency_links=['https://github.com/lesgourg/class_public'],
       scripts=[
         'bin/test-script',
         'bin/install_class.sh',  
