@@ -4,7 +4,7 @@ import seaborn as sns
 
 import cosmicfish as cf
 
-class relic_convergence_analysis: 
+class convergence_analysis: 
 
     def __init__(self, fid, param, varytype, varyvals, z_table, m_ncdm,
                  classdir, datastore, dstep=0.01, fsky=None): 

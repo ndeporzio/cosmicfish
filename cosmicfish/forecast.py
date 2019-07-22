@@ -6,7 +6,7 @@ from scipy.integrate import quad
 
 import cosmicfish as cf 
 
-class relic_forecast: 
+class forecast: 
     """Given fiducial cosmology, generates forecasted Fisher and Covariance matrices."""
     
     def __init__(self, 
