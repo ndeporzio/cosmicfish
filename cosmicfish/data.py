@@ -230,3 +230,4 @@ if __name__ == '__main__':
     # Actions to perform only if this module, 'data.py', is called
     # directly (e.g. '$ python data.py'). These actions aren't 
     # performed if the module is imported by another module.      
+    print("End __main__ execution of 'data.py'...")  

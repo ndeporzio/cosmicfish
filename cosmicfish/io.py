@@ -161,3 +161,4 @@ if __name__ == '__main__':
     # Actions to perform only if this module, 'io.py', is called
     # directly (e.g. '$ python io.py'). These actions aren't 
     # performed if the module is imported by another module.
+    print("End __main__ execution of 'io.py'...")
