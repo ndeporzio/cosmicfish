@@ -132,7 +132,8 @@ class forecast:
             self.dPdM_ncdm, self.dlogPdM_ncdm = dPs_array(
                 self.M_ncdm_low, 
                 self.M_ncdm_high, 
-                self.fid['m_ncdm']*self.dstep)    
+                3.*self.fid['m_ncdm']*self.dstep)   
+                # ^^^CAUTION. Check factor of 3 in denominator.  
             self.dPdomega_ncdm = [np.array(self.dPdM_ncdm[k]) * 93.14
                                   for k in range(len(self.z_steps))]
             self.dlogPdomega_ncdm = [np.array(self.dlogPdM_ncdm[k]) * 93.14
@@ -870,17 +871,17 @@ class forecast:
 
         
         for muidx, muval in enumerate(mu_vals): 
-            # self.gen_rsd(muval)
+            #self.gen_rsd(muval)
             self.gen_fog(muval)
             self.gen_ap()
-            # self.gen_cov(muval)
+            self.gen_cov(muval)
             for zidx, zval in enumerate(self.z_steps): 
                 for kidx, kval in enumerate(self.k_table):
                     Pm[zidx][kidx][muidx] = (
                         self.spectra_mid[zidx].ps_table[kidx] 
-                        # * self.RSD[zidx][kidx] 
+                        #* self.RSD[zidx][kidx] 
                         * self.FOG[zidx][kidx]
-                        # * self.COV[zidx][kidx] # Need to make this term
+                        #### * self.COV[zidx][kidx] # Need to make this term
                         )
                     dlogPdA_s[zidx][kidx][muidx] = (
                         self.dlogPdA_s[zidx][kidx]
@@ -890,36 +891,39 @@ class forecast:
                         )
                     dlogPdomega_b[zidx][kidx][muidx] = (
                         self.dlogPdomega_b[zidx][kidx]
-                        # + self.dlogRSDdomega_b[zidx][kidx]
+                        #+ self.dlogRSDdomega_b[zidx][kidx]
                         + self.dlogFOGdomega_b[zidx][kidx]
                         + self.dlogAPdomega_b[zidx][kidx]
-                        # + self.dlogCOVdomega_b[zidx][kidx]
+                        + self.dlogCOVdomega_b[zidx][kidx]
                         )
                     dlogPdomega_cdm[zidx][kidx][muidx] = (
                         self.dlogPdomega_cdm[zidx][kidx]
-                        # + self.dlogRSDdomega_cdm[zidx][kidx]
+                        #+ self.dlogRSDdomega_cdm[zidx][kidx]
                         + self.dlogFOGdomega_cdm[zidx][kidx]
                         + self.dlogAPdomega_cdm[zidx][kidx]
-                        # + self.dlogCOVdomega_cdm[zidx][kidx]
+                        + self.dlogCOVdomega_cdm[zidx][kidx]
                         )
                     dlogPdh[zidx][kidx][muidx] = (
                         self.dlogPdh[zidx][kidx]
-                        # + self.dlogRSDdh[zidx][kidx] 
+                        #+ self.dlogRSDdh[zidx][kidx] 
                         + self.dlogFOGdh[zidx][kidx]
                         + self.dlogAPdh[zidx][kidx]
-                        # + self.dlogCOVdh[zidx][kidx]
+                        + self.dlogCOVdh[zidx][kidx]
                         )
                     dlogPdtau_reio[zidx][kidx][muidx] = (
                         self.dlogPdtau_reio[zidx][kidx]
                         ) 
                     dlogPdomega_ncdm[zidx][kidx][muidx] = (
                         self.dlogPdomega_ncdm[zidx][kidx]
-                        # + self.dlogRSDdomega_ncdm[zidx][kidx]
+                        #+ self.dlogRSDdomega_ncdm[zidx][kidx]
                         + self.dlogFOGdomega_ncdm[zidx][kidx]
                         + self.dlogAPdomega_ncdm[zidx][kidx]
-                        # + self.dlogCOVdomega_ncdm[zidx][kidx]
+                        + self.dlogCOVdomega_ncdm[zidx][kidx]
                         )
                     dlogPdM_ncdm = dlogPdomega_ncdm * (1. / 93.14) 
+                    # ^^^Careful, this overwrites the earlier dP_g value. 
+                    # we do this to reflect corrections in the contours
+                    # for M_ncdm 
 
         self.Pm = Pm 
 
@@ -1001,7 +1005,9 @@ def neff(ndens, Pg):
     return n 
 
 def fog(h, c, omega_b, omega_cdm, omega_ncdm, z, k, mu): 
+    #sigma_fog_0 = 250. # Units [km*s^-1]
     sigma_fog_0 = 250000. # Units [m*s^-1] 
+    # ^^^^ CAUTION! Convince self which is correct.
     sigma_z = 0.001
     sigma_fog = sigma_fog_0 * np.sqrt(1.+z)
     sigma_v = ((1. + z) 
