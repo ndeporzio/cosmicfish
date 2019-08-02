@@ -112,6 +112,10 @@ class forecast:
                            for k in self.k_table] 
                           for z in self.z_steps] # Analytic form
 
+
+    
+
+
         self.dPdomega_b, self.dlogPdomega_b = dPs_array(
             self.omega_b_low, 
             self.omega_b_high, 
@@ -841,7 +845,7 @@ class forecast:
         return 
         
     def gen_fisher(self, mu_step): # Really messy and inefficient
-        fisher = np.zeros((7, 7))
+        fisher = np.zeros((10, 10))
 
         mu_vals = np.arange(-1., 1., mu_step)
         Pm = np.zeros((len(self.z_steps), 
@@ -868,13 +872,20 @@ class forecast:
         dlogPdomega_ncdm = np.zeros((len(self.z_steps), 
                                      len(self.k_table), 
                                      len(mu_vals)))
-
-        
+        dlogPdsigmafog = np.zeros((len(self.z_steps),                         
+                                   len(self.k_table),                         
+                                   len(mu_vals)))
+        dlogPdbLbar = np.zeros((len(self.z_steps),                           
+                                len(self.k_table),                           
+                                len(mu_vals)))
+        dlogPdalphak2 = np.zeros((len(self.z_steps),                              
+                                  len(self.k_table),                              
+                                  len(mu_vals)))        
         for muidx, muval in enumerate(mu_vals): 
             #self.gen_rsd(muval)
             self.gen_fog(muval)
             self.gen_ap()
-            self.gen_cov(muval)
+            #self.gen_cov(muval)
             for zidx, zval in enumerate(self.z_steps): 
                 for kidx, kval in enumerate(self.k_table):
                     Pm[zidx][kidx][muidx] = (
@@ -894,21 +905,21 @@ class forecast:
                         #+ self.dlogRSDdomega_b[zidx][kidx]
                         + self.dlogFOGdomega_b[zidx][kidx]
                         + self.dlogAPdomega_b[zidx][kidx]
-                        + self.dlogCOVdomega_b[zidx][kidx]
+                        #+ self.dlogCOVdomega_b[zidx][kidx]
                         )
                     dlogPdomega_cdm[zidx][kidx][muidx] = (
                         self.dlogPdomega_cdm[zidx][kidx]
                         #+ self.dlogRSDdomega_cdm[zidx][kidx]
                         + self.dlogFOGdomega_cdm[zidx][kidx]
                         + self.dlogAPdomega_cdm[zidx][kidx]
-                        + self.dlogCOVdomega_cdm[zidx][kidx]
+                        #+ self.dlogCOVdomega_cdm[zidx][kidx]
                         )
                     dlogPdh[zidx][kidx][muidx] = (
                         self.dlogPdh[zidx][kidx]
                         #+ self.dlogRSDdh[zidx][kidx] 
                         + self.dlogFOGdh[zidx][kidx]
                         + self.dlogAPdh[zidx][kidx]
-                        + self.dlogCOVdh[zidx][kidx]
+                        #+ self.dlogCOVdh[zidx][kidx]
                         )
                     dlogPdtau_reio[zidx][kidx][muidx] = (
                         self.dlogPdtau_reio[zidx][kidx]
@@ -918,12 +929,65 @@ class forecast:
                         #+ self.dlogRSDdomega_ncdm[zidx][kidx]
                         + self.dlogFOGdomega_ncdm[zidx][kidx]
                         + self.dlogAPdomega_ncdm[zidx][kidx]
-                        + self.dlogCOVdomega_ncdm[zidx][kidx]
+                        #+ self.dlogCOVdomega_ncdm[zidx][kidx]
                         )
                     dlogPdM_ncdm = dlogPdomega_ncdm * (1. / 93.14) 
                     # ^^^Careful, this overwrites the earlier dP_g value. 
                     # we do this to reflect corrections in the contours
-                    # for M_ncdm 
+                    # for M_ncdm
+
+                    dlogPdsigmafog[zidx][kidx][muidx] = (                       
+                        -1. * np.power(kval                                     
+                                       * muval                                  
+                                       * (1. + zval)                            
+                                       / H(self.omega_b_fid,                    
+                                           self.omega_cdm_fid,                  
+                                           self.omega_ncdm_fid,                 
+                                           self.h_fid,                          
+                                           zval)                                
+                                       , 2.)                                    
+                        * sigmafog(zval)                                                         
+                        )
+
+                    dlogPdbLbar[zidx][kidx][muidx] = (
+                        2.
+                        * ggrowth(zval, 
+                                  kval, 
+                                  self.h_fid, 
+                                  self.omega_b_fid, 
+                                  self.omega_cdm_fid, 
+                                  self.omega_ncdm_fid)
+                        / (btildebias(zval, 
+                                      kval, 
+                                      self.h_fid, 
+                                      self.omega_b_fid, 
+                                      self.omega_cdm_fid, 
+                                      self.omega_ncdm_fid, 
+                                      0.7, 
+                                      1.0)
+                           + np.power(muval, 2.) * fgrowth(self.omega_b_fid,                             
+                                                           self.omega_cdm_fid,                           
+                                                           self.h_fid,                                   
+                                                           zval)
+                           )
+                          )
+                    dlogPdalphak2[zidx][kidx][muidx] = (                          
+                        2.                                                      
+                        * np.power(kval, 2.)                                      
+                        / (btildebias(zval,                                     
+                                      kval,                                     
+                                      self.h_fid,                               
+                                      self.omega_b_fid,                         
+                                      self.omega_cdm_fid,                       
+                                      self.omega_ncdm_fid,                      
+                                      0.7,                                      
+                                      1.0)                                      
+                           + np.power(muval, 2.) * fgrowth(self.omega_b_fid,    
+                                                           self.omega_cdm_fid,  
+                                                           self.h_fid,          
+                                                           zval)                
+                           )                                                    
+                          )
 
         self.Pm = Pm 
 
@@ -934,7 +998,10 @@ class forecast:
                         dlogPdA_s,
                         dlogPdtau_reio, 
                         dlogPdh, 
-                        dlogPdM_ncdm]
+                        dlogPdM_ncdm,
+                        dlogPdsigmafog,
+                        dlogPdbLbar,
+                        dlogPdalphak2]
         elif self.forecast=="relic": 
             paramvec = [dlogPdomega_b, 
                         dlogPdomega_cdm,  
@@ -942,7 +1009,10 @@ class forecast:
                         dlogPdA_s,
                         dlogPdtau_reio, 
                         dlogPdh, 
-                        dlogPdomega_ncdm] 
+                        dlogPdomega_ncdm, 
+                        dlogPdsigmafog,
+                        dlogPdbLbar, 
+                        dlogPdalphak2] 
 
         # Highly inefficient set of loops 
         for pidx1, p1 in enumerate(paramvec): 
@@ -1103,3 +1173,92 @@ def dT_ncdm_domega_ncdm(omega_ncdm, m_ncdm):
              * np.power(omega_ncdm, -2./3.))
     return deriv 
         
+
+def sigmafog(z): 
+    """Returns sigma_fog as function of redshift.
+
+    Value of sigma_fog^(0) hardcoded here.
+
+    Args: 
+        z : redshift to evaluate at
+    
+    Returns: 
+        Value of sigma_fog
+    """
+    sigfog0 = 250000. # Units [m s^-1]
+    sigfog = sigfog0 * np.sqrt(1. + z)  
+    return sigfog 
+
+def sigmav(z): 
+    """Returns sigma_v as function of redshift.
+
+    Value of sigma_z hardcoded here. 
+
+    Args: 
+        z : redshift to evaluate at
+
+    Returns:  
+        Value of sigma_v
+    """
+    sigmaz = 0.001
+    c = 2.9979e8
+    sigmaz = 0.001 * c 
+    sigmav = (1.+z) * np.sqrt(0.5 * np.power(sigmafog(z), 2.)  
+                              + np.power(c * sigmaz, 2.)) 
+    # careful units!!!
+    return sigmav
+
+def fgrowth(omega_b, omega_cdm, h, z): 
+    """Returns f growth factor.
+
+    Args: 
+        omega_b : little omega baryon abundance
+
+        omega_cdm: little omega cdm abundance
+
+        h : little h Hubble constant
+
+        z : redshift
+
+    Returns: 
+        Growth factor f(z) 
+    """
+
+    gamma = 0.55
+    epsilon = (omega_b + omega_cdm) / np.power(h, 2.)  
+    inner = ((epsilon * np.power(1. + z, 3.))
+             / (epsilon * np.power(1. + z, 3.) - epsilon + 1.))
+    f = np.power(inner, gamma)
+    return f 
+
+def ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm): 
+    """Returns g growth factor(?). 
+
+    Args: 
+        k : wave number in Mpc^-1
+
+        k_fs : free streaming scale
+
+        omega_b : little omega baryon abundance
+
+        omega_cdm : little omega cdm abunance 
+
+        omega_ncdm : little omega ncdm abundance 
+
+    Returns: 
+        Growth factor (?) g
+    """
+    
+    Delta_q = 1.6 
+    q = 5. * k / kfs(omega_ncdm, h, z) 
+    Delta_L =  0.6 * omega_ncdm / (omega_b + omega_cdm)
+    g = 1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))
+    return g 
+
+def btildebias(z, k, h, omega_b, omega_cdm, omega_ncdm, bLbar, alpha_2): 
+    btilde = (1. 
+              + (bLbar
+                 * fgrowth(omega_b, omega_cdm, h, z) 
+                 * ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm))
+              + (alpha_2 * np.power(k, 2.)))
+    return btilde   
