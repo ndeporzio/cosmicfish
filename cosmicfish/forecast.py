@@ -882,7 +882,7 @@ class forecast:
                                   len(self.k_table),                              
                                   len(mu_vals)))        
         for muidx, muval in enumerate(mu_vals): 
-            #self.gen_rsd(muval)
+            self.gen_rsd(muval)
             self.gen_fog(muval)
             self.gen_ap()
             #self.gen_cov(muval)
@@ -890,7 +890,7 @@ class forecast:
                 for kidx, kval in enumerate(self.k_table):
                     Pm[zidx][kidx][muidx] = (
                         self.spectra_mid[zidx].ps_table[kidx] 
-                        #* self.RSD[zidx][kidx] 
+                        * self.RSD[zidx][kidx] 
                         * self.FOG[zidx][kidx]
                         #### * self.COV[zidx][kidx] # Need to make this term
                         )
@@ -902,21 +902,21 @@ class forecast:
                         )
                     dlogPdomega_b[zidx][kidx][muidx] = (
                         self.dlogPdomega_b[zidx][kidx]
-                        #+ self.dlogRSDdomega_b[zidx][kidx]
+                        + self.dlogRSDdomega_b[zidx][kidx]
                         + self.dlogFOGdomega_b[zidx][kidx]
                         + self.dlogAPdomega_b[zidx][kidx]
                         #+ self.dlogCOVdomega_b[zidx][kidx]
                         )
                     dlogPdomega_cdm[zidx][kidx][muidx] = (
                         self.dlogPdomega_cdm[zidx][kidx]
-                        #+ self.dlogRSDdomega_cdm[zidx][kidx]
+                        + self.dlogRSDdomega_cdm[zidx][kidx]
                         + self.dlogFOGdomega_cdm[zidx][kidx]
                         + self.dlogAPdomega_cdm[zidx][kidx]
                         #+ self.dlogCOVdomega_cdm[zidx][kidx]
                         )
                     dlogPdh[zidx][kidx][muidx] = (
                         self.dlogPdh[zidx][kidx]
-                        #+ self.dlogRSDdh[zidx][kidx] 
+                        + self.dlogRSDdh[zidx][kidx] 
                         + self.dlogFOGdh[zidx][kidx]
                         + self.dlogAPdh[zidx][kidx]
                         #+ self.dlogCOVdh[zidx][kidx]
@@ -926,7 +926,7 @@ class forecast:
                         ) 
                     dlogPdomega_ncdm[zidx][kidx][muidx] = (
                         self.dlogPdomega_ncdm[zidx][kidx]
-                        #+ self.dlogRSDdomega_ncdm[zidx][kidx]
+                        + self.dlogRSDdomega_ncdm[zidx][kidx]
                         + self.dlogFOGdomega_ncdm[zidx][kidx]
                         + self.dlogAPdomega_ncdm[zidx][kidx]
                         #+ self.dlogCOVdomega_ncdm[zidx][kidx]
@@ -1090,7 +1090,8 @@ def fog(h, c, omega_b, omega_cdm, omega_ncdm, z, k, mu):
         
 
 def kfs(omega_ncdm, h, z): 
-    k_fs = (940. * 0.08 * omega_ncdm * h) / np.sqrt(1. + z)
+    #k_fs = (940. * 0.08 * omega_ncdm * h) / np.sqrt(1. + z)
+    k_fs = 0.08 * h * (93.14 * omega_ncdm) / (0.1 * np.sqrt(1. + z))  
     return k_fs
 
 def rsd(omega_b, omega_cdm, omega_ncdm, h, k_fs, z, mu, k):
