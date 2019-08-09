@@ -1,3 +1,6 @@
+import numpy as np
+import scipy 
+from scipy.integrate import quad
 import cosmicfish as cf
 
 def rsd(omega_b, omega_cdm, omega_ncdm, h, k_fs, z, mu, k, b1L, alphak2):                     
@@ -88,8 +91,8 @@ def neff(ndens, Pg):
 
 def kfs(omega_ncdm, h, z):                                                      
     #k_fs = (940. * 0.08 * omega_ncdm * h) / np.sqrt(1. + z)                    
-    k_fs = ((cf.KFS_NUMERATOR_FACTOR * h * NEUTRINO_SCALE_FACTOR * omega_ncdm) 
-            / (KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z)))            
+    k_fs = ((cf.KFS_NUMERATOR_FACTOR * h * cf.NEUTRINO_SCALE_FACTOR 
+        * omega_ncdm) / (cf.KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z)))            
     return k_fs 
 
 def omega_ncdm(T_ncdm, m_ncdm, forecast_type):                                  

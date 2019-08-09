@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
-import scipy 
+import scipy
+
+import cosmicfish as cf 
 
 from .io import correct_path
 
@@ -53,7 +55,7 @@ class spectrum:
         #
         #Derive k_table 
         #
-        self.V = gen_V(self.h, 
+        self.V = cf.gen_V(self.h, 
                        self.omega_b, 
                        self.omega_cdm, 
                        self.z_table, 
@@ -62,7 +64,7 @@ class spectrum:
                        self.m_ncdm, 
                        c=2.9979e8, 
                        fsky=self.fsky) #Units [Mpc^3]
-        self.k_table = gen_k_table(self.V, 
+        self.k_table = cf.gen_k_table(self.V, 
                                    self.h, 
                                    k_max=0.2, 
                                    k_steps=100) #Units [Mpc^-1]

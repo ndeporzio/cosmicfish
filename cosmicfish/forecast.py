@@ -104,46 +104,46 @@ class forecast:
         self.h_high, self.h_low = self.generate_spectra('h')
         self.tau_reio_high, self.tau_reio_low = self.generate_spectra(
                                                     'tau_reio')
-        if forecast_type=="neutrino": 
+        if self.forecast=="neutrino": 
             self.M_ncdm_high, self.M_ncdm_low = self.generate_spectra('m_ncdm')
-        elif forecast_type=="relic": 
+        elif self.forecast=="relic": 
             self.T_ncdm_high, self.T_ncdm_low = self.generate_spectra('T_ncdm')
 
         # Calculate centered derivatives about fiducial cosmo at each z 
 
         if analytic_A_s==False: 
-            self.dPdA_s, self.dlogPdA_s = dPs_array(self.A_s_low, 
+            self.dPdA_s, self.dlogPdA_s = cf.dPs_array(self.A_s_low, 
                 self.A_s_high, self.fid['A_s']*self.dstep) 
         else: 
             self.dlogPdA_s = [[(1. / self.A_s_fid) 
                 for k in self.k_table] for z in self.z_steps] # Analytic form
 
         if analytic_n_s==False: 
-            self.dPdn_s, self.dlogPdn_s = dPs_array(self.n_s_low, 
+            self.dPdn_s, self.dlogPdn_s = cf.dPs_array(self.n_s_low, 
                 self.n_s_high, self.fid['n_s']*self.dstep) 
         else:  
             self.dlogPdn_s = [[np.log( k / self.kp ) 
                 for k in self.k_table] for z in self.z_steps] # Analytic form
 
-        self.dPdomega_b, self.dlogPdomega_b = dPs_array(
+        self.dPdomega_b, self.dlogPdomega_b = cf.dPs_array(
             self.omega_b_low, 
             self.omega_b_high, 
             self.fid['omega_b'] * self.dstep) 
-        self.dPdomega_cdm, self.dlogPdomega_cdm = dPs_array(
+        self.dPdomega_cdm, self.dlogPdomega_cdm = cf.dPs_array(
             self.omega_cdm_low, 
             self.omega_cdm_high, 
             self.fid['omega_cdm']*self.dstep)
-        self.dPdh, self.dlogPdh = dPs_array(
+        self.dPdh, self.dlogPdh = cf.dPs_array(
             self.h_low, 
             self.h_high, 
             self.fid['h']*self.dstep)
-        self.dPdtau_reio, self.dlogPdtau_reio = dPs_array(
+        self.dPdtau_reio, self.dlogPdtau_reio = cf.dPs_array(
             self.tau_reio_low, 
             self.tau_reio_high, 
             self.fid['tau_reio']*self.dstep)
 
-        if forecast_type=="neutrino": 
-            self.dPdM_ncdm, self.dlogPdM_ncdm = dPs_array(
+        if self.forecast=="neutrino": 
+            self.dPdM_ncdm, self.dlogPdM_ncdm = cf.dPs_array(
                 self.M_ncdm_low, 
                 self.M_ncdm_high, 
                 self.M_ncdm_fid * self.dstep)   
@@ -152,8 +152,8 @@ class forecast:
                 * cf.NEUTRINO_SCALE_FACTOR for k in range(len(self.z_steps))]
             self.dlogPdomega_ncdm = [np.array(self.dlogPdM_ncdm[k]) 
                 * cf.NEUTRINO_SCALE_FACTOR for k in range(len(self.z_steps))]
-        elif forecast_type=="relic": 
-            self.dPdT_ncdm, self.dlogPdT_ncdm = dPs_array(
+        elif self.forecast=="relic": 
+            self.dPdT_ncdm, self.dlogPdT_ncdm = cf.dPs_array(
                 self.T_ncdm_low, 
                 self.T_ncdm_high, 
                 self.fid['T_ncdm']*self.dstep)
@@ -212,7 +212,7 @@ class forecast:
             for kval in self.k_table]                                           
             for zidx, zval in enumerate(self.z_steps)]
 
-        self.dlogRSDdM_ncdm = (self.dlogRSDdomega_ncdm 
+        self.dlogRSDdM_ncdm = (np.array(self.dlogRSDdomega_ncdm) 
             / cf.NEUTRINO_SCALE_FACTOR)
 
         self.dlogRSDdh = [[cf.derivative(                                 
@@ -247,7 +247,7 @@ class forecast:
         if 'fog' not in self.psterms:                                           
             self.psterms.append('fog')
 
-        fiducial = {'omega_b' : self.omega_b_ficd,                               
+        fiducial = {'omega_b' : self.omega_b_fid,                               
                     'omega_cdm' : self.omega_cdm_fid,                           
                     'omega_ncdm' : self.omega_ncdm_fid,                         
                     'h' : self.h_fid,                                           
@@ -279,7 +279,7 @@ class forecast:
             for kval in self.k_table]                                           
             for zval in self.z_steps]
 
-        self.dlogFOGdM_ncdm = (self.dlogFOGdomega_ncdm 
+        self.dlogFOGdM_ncdm = (np.array(self.dlogFOGdomega_ncdm) 
             / cf.NEUTRINO_SCALE_FACTOR) 
 
         self.dlogFOGdsigmafog0 = [[cf.derivative(cf.log_fog, 'sigma_fog_0',     
@@ -320,7 +320,7 @@ class forecast:
             **dict(fiducial, **{'z' : zval, 'z_fid' : zval}))
             for kval in self.k_table] for zval in self.z_steps]
 
-        self.dlogAPdM_ncdm = (self.dlogAPdomega_ncdm 
+        self.dlogAPdM_ncdm = (np.array(self.dlogAPdomega_ncdm) 
             / cf.NEUTRINO_SCALE_FACTOR) 
                             
     def gen_cov(self, mu):
@@ -413,26 +413,26 @@ class forecast:
             self.omega_ncdm_fid, self.h_fid, zval) for zval in self.z_steps]
 
         dmudomegab = [[(
-            (mu / kval) * dkdomegab 
-            + (mu / H_fid[zidx]) * dHdomegab) 
+            (mu / kval) * dkdomegab[zidx][kidx] 
+            + (mu / H_fid[zidx]) * dHdomegab[zidx][kidx])
             for kidx, kval in enumerate(self.k_table)]
             for zidx, zval in enumerate(self.z_steps)]
 
         dmudomegacdm = [[(                                                        
-            (mu / kval) * dkdomegacdm                                             
-            + (mu / H_fid[zidx]) * dHdomegacdm)                                   
+            (mu / kval) * dkdomegacdm[zidx][kidx]                                             
+            + (mu / H_fid[zidx]) * dHdomegacdm[zidx][kidx])                                   
             for kidx, kval in enumerate(self.k_table)]                          
             for zidx, zval in enumerate(self.z_steps)]
 
         dmudomegancdm = [[(                                                        
-            (mu / kval) * dkdomegancdm                                             
-            + (mu / H_fid[zidx]) * dHdomegancdm)                                   
+            (mu / kval) * dkdomegancdm[zidx][kidx]                                             
+            + (mu / H_fid[zidx]) * dHdomegancdm[zidx][kidx])                                   
             for kidx, kval in enumerate(self.k_table)]                          
             for zidx, zval in enumerate(self.z_steps)]
 
         dmudh = [[(                                                        
-            (mu / kval) * dkdh                                             
-            + (mu / H_fid[zidx]) * dHdh)                                   
+            (mu / kval) * dkdh[zidx][kidx]                                             
+            + (mu / H_fid[zidx]) * dHdh[zidx][kidx])                                   
             for kidx, kval in enumerate(self.k_table)]                          
             for zidx, zval in enumerate(self.z_steps)]
 
@@ -462,27 +462,25 @@ class forecast:
                                           - logP_mid[zidx][kidx])
                                          / (self.k_table[kidx+2]
                                             - self.k_table[kidx]))
-                dPdk[zidx][kidx+1] = ((P_mid[zidx][kidx+2]
-                                       - P_mid[zidx][kidx])
-                                      / (self.k_table[kidx+2]
-                                         - self.k_table[kidx]))
 
         # Careful with this approximation - is it appropriate? 
         for zidx, zval in enumerate(self.z_steps): 
             dlogPdk[zidx][0] = dlogPdk[zidx][1]
             dlogPdk[zidx][-1] = dlogPdk[zidx][-2]
 
-        dlogCOVdomega_b = dlogPdk * dkdomegab + dlogPdmu * dmudomegab
-        dlogCOVdomega_cdm = dlogPdk * dkdomegacdm + dlogPdmu * dmudomegacdm
-        dlogCOVdomega_ncdm = dlogPdk * dkdomegancdm + dlogPdmu * dmudomegancdm
-        dlogCOVdh = dlogPdk * dkdh + dlogPdmu * dmudh
+        self.dlogCOVdomega_b = (dlogPdk * dkdomegab 
+            + dlogPdmu * dmudomegab)
+        self.dlogCOVdomega_cdm = (dlogPdk * dkdomegacdm 
+            + dlogPdmu * dmudomegacdm)
+        self.dlogCOVdomega_ncdm = (dlogPdk * dkdomegancdm 
+            + dlogPdmu * dmudomegancdm)
+        self.dlogCOVdh = (dlogPdk * dkdh 
+            + dlogPdmu * dmudh)
 
-        self.dlogCOVdM_ncdm = (self.dlogCOVdomega_ncdm 
+        self.dlogCOVdM_ncdm = (np.array(self.dlogCOVdomega_ncdm) 
             / cf.NEUTRINO_SCALE_FACTOR)
     
     def gen_fisher(self, mu_step): # Really messy and inefficient
-
-        fisher = np.zeros((10, 10))
 
         mu_vals = np.arange(-1., 1., mu_step)
         Pm = np.zeros(
@@ -503,7 +501,7 @@ class forecast:
             (len(self.z_steps), len(self.k_table), len(mu_vals)))
         dlogPdsigmafog = np.zeros(
             (len(self.z_steps), len(self.k_table), len(mu_vals)))
-        dlogPdbLbar = np.zeros(
+        dlogPdb1L = np.zeros(
             (len(self.z_steps), len(self.k_table), len(mu_vals)))
         dlogPdalphak2 = np.zeros(
             (len(self.z_steps), len(self.k_table), len(mu_vals)))        
@@ -511,8 +509,8 @@ class forecast:
         for muidx, muval in enumerate(mu_vals): 
             self.gen_rsd(muval)
             self.gen_fog(muval)
-            self.gen_ap()
-            self.gen_cov(muval)
+            #self.gen_ap()
+            #self.gen_cov(muval)
 
             for zidx, zval in enumerate(self.z_steps): 
 
@@ -521,8 +519,8 @@ class forecast:
                         self.spectra_mid[zidx].ps_table[kidx] 
                         * self.RSD[zidx][kidx] 
                         * self.FOG[zidx][kidx]
-                        * self.AP[zidx][kidx]
-                        * self.COV[zidx][kidx] 
+                        #* self.AP[zidx][kidx]
+                        #* self.COV[zidx][kidx] 
                         )
                     dlogPdA_s[zidx][kidx][muidx] = (
                         self.dlogPdA_s[zidx][kidx]
@@ -534,22 +532,22 @@ class forecast:
                         self.dlogPdomega_b[zidx][kidx]
                         + self.dlogRSDdomega_b[zidx][kidx]
                         + self.dlogFOGdomega_b[zidx][kidx]
-                        + self.dlogAPdomega_b[zidx][kidx]
-                        + self.dlogCOVdomega_b[zidx][kidx]
+                        #+ self.dlogAPdomega_b[zidx][kidx]
+                        #+ self.dlogCOVdomega_b[zidx][kidx]
                         )
                     dlogPdomega_cdm[zidx][kidx][muidx] = (
                         self.dlogPdomega_cdm[zidx][kidx]
                         + self.dlogRSDdomega_cdm[zidx][kidx]
                         + self.dlogFOGdomega_cdm[zidx][kidx]
-                        + self.dlogAPdomega_cdm[zidx][kidx]
-                        + self.dlogCOVdomega_cdm[zidx][kidx]
+                        #+ self.dlogAPdomega_cdm[zidx][kidx]
+                        #+ self.dlogCOVdomega_cdm[zidx][kidx]
                         )
                     dlogPdh[zidx][kidx][muidx] = (
                         self.dlogPdh[zidx][kidx]
                         + self.dlogRSDdh[zidx][kidx] 
                         + self.dlogFOGdh[zidx][kidx]
-                        + self.dlogAPdh[zidx][kidx]
-                        + self.dlogCOVdh[zidx][kidx]
+                        #+ self.dlogAPdh[zidx][kidx]
+                        #+ self.dlogCOVdh[zidx][kidx]
                         )
                     dlogPdtau_reio[zidx][kidx][muidx] = (
                         self.dlogPdtau_reio[zidx][kidx]
@@ -558,8 +556,8 @@ class forecast:
                         self.dlogPdomega_ncdm[zidx][kidx]
                         + self.dlogRSDdomega_ncdm[zidx][kidx]
                         + self.dlogFOGdomega_ncdm[zidx][kidx]
-                        + self.dlogAPdomega_ncdm[zidx][kidx]
-                        + self.dlogCOVdomega_ncdm[zidx][kidx]
+                        #+ self.dlogAPdomega_ncdm[zidx][kidx]
+                        #+ self.dlogCOVdomega_ncdm[zidx][kidx]
                         )
                     dlogPdM_ncdm = dlogPdomega_ncdm / cf.NEUTRINO_SCALE_FACTOR 
                     # ^^^Careful, this overwrites the earlier dP_g value. 
@@ -589,7 +587,8 @@ class forecast:
                         dlogPdM_ncdm,
                         dlogPdsigmafog,
                         dlogPdb1L,
-                        dlogPdalphak2]
+                        dlogPdalphak2
+                        ]
 
         elif self.forecast=="relic": 
             paramvec = [dlogPdomega_b, 
@@ -601,7 +600,10 @@ class forecast:
                         dlogPdomega_ncdm, 
                         dlogPdsigmafog,
                         dlogPdb1L, 
-                        dlogPdalphak2] 
+                        dlogPdalphak2
+                        ] 
+
+        fisher = np.zeros((len(paramvec), len(paramvec))) 
 
         # Highly inefficient set of loops 
         for pidx1, p1 in enumerate(paramvec): 
