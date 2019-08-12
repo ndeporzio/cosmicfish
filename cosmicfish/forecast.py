@@ -509,18 +509,18 @@ class forecast:
         for muidx, muval in enumerate(mu_vals): 
             self.gen_rsd(muval)
             self.gen_fog(muval)
-            #self.gen_ap()
-            #self.gen_cov(muval)
+            self.gen_ap()
+            self.gen_cov(muval)
 
             for zidx, zval in enumerate(self.z_steps): 
 
                 for kidx, kval in enumerate(self.k_table):
-                    Pm[zidx][kidx][muidx] = (
-                        self.spectra_mid[zidx].ps_table[kidx] 
+                    Pm[zidx][kidx][muidx] = ( 1.
+                        * self.spectra_mid[zidx].ps_table[kidx] 
                         * self.RSD[zidx][kidx] 
                         * self.FOG[zidx][kidx]
-                        #* self.AP[zidx][kidx]
-                        #* self.COV[zidx][kidx] 
+                        * self.AP[zidx][kidx]
+                        #* self.COV[zidx][kidx]<---STILL WRONG 
                         )
                     dlogPdA_s[zidx][kidx][muidx] = (
                         self.dlogPdA_s[zidx][kidx]
@@ -532,22 +532,22 @@ class forecast:
                         self.dlogPdomega_b[zidx][kidx]
                         + self.dlogRSDdomega_b[zidx][kidx]
                         + self.dlogFOGdomega_b[zidx][kidx]
-                        #+ self.dlogAPdomega_b[zidx][kidx]
-                        #+ self.dlogCOVdomega_b[zidx][kidx]
+                        + self.dlogAPdomega_b[zidx][kidx]
+                        + self.dlogCOVdomega_b[zidx][kidx]
                         )
                     dlogPdomega_cdm[zidx][kidx][muidx] = (
                         self.dlogPdomega_cdm[zidx][kidx]
                         + self.dlogRSDdomega_cdm[zidx][kidx]
                         + self.dlogFOGdomega_cdm[zidx][kidx]
-                        #+ self.dlogAPdomega_cdm[zidx][kidx]
-                        #+ self.dlogCOVdomega_cdm[zidx][kidx]
+                        + self.dlogAPdomega_cdm[zidx][kidx]
+                        + self.dlogCOVdomega_cdm[zidx][kidx]
                         )
                     dlogPdh[zidx][kidx][muidx] = (
                         self.dlogPdh[zidx][kidx]
                         + self.dlogRSDdh[zidx][kidx] 
                         + self.dlogFOGdh[zidx][kidx]
-                        #+ self.dlogAPdh[zidx][kidx]
-                        #+ self.dlogCOVdh[zidx][kidx]
+                        + self.dlogAPdh[zidx][kidx]
+                        + self.dlogCOVdh[zidx][kidx]
                         )
                     dlogPdtau_reio[zidx][kidx][muidx] = (
                         self.dlogPdtau_reio[zidx][kidx]
@@ -556,8 +556,8 @@ class forecast:
                         self.dlogPdomega_ncdm[zidx][kidx]
                         + self.dlogRSDdomega_ncdm[zidx][kidx]
                         + self.dlogFOGdomega_ncdm[zidx][kidx]
-                        #+ self.dlogAPdomega_ncdm[zidx][kidx]
-                        #+ self.dlogCOVdomega_ncdm[zidx][kidx]
+                        + self.dlogAPdomega_ncdm[zidx][kidx]
+                        + self.dlogCOVdomega_ncdm[zidx][kidx]
                         )
                     dlogPdM_ncdm = dlogPdomega_ncdm / cf.NEUTRINO_SCALE_FACTOR 
                     # ^^^Careful, this overwrites the earlier dP_g value. 
@@ -714,7 +714,7 @@ class forecast:
                        n2 / self.fcoverage_deg,                                 
                        n / self.fcoverage_deg,                                  
                        self.spectra_mid[zidx].D_table[zidx],                    
-                       0.84 / self.spectra_mid[zidx].D_table[zidx]))            
+                       cf.DB_ELG / self.spectra_mid[zidx].D_table[zidx]))            
         return
                 
     def print_P_table(self): 
