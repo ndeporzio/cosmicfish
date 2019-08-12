@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='cosmicfish',
-      version='0.1.0',
+      version='0.2.0',
       description='A Fisher forecasting package for light relic cosmology.',
       keywords=['fisher forecast cosmology neutrino dark matter'], 
       url='https://github.com/ndeporzio/cosmicfish',
