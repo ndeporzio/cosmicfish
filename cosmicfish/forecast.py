@@ -87,7 +87,8 @@ class forecast:
                                          **{'z_pk' : j}),
                                     self.classdir,       
                                     self.datastore)[0:-20],
-                                self.z_steps) 
+                                self.z_steps,
+                                fsky=self.fsky) 
                             for j in self.z_steps]
         self.k_table = self.spectra_mid[0].k_table 
         # ^^^ All spectra should have same k_table
@@ -648,7 +649,8 @@ class forecast:
                                      param : (1.+self.dstep)*self.fid[param]}), 
                                 self.classdir,                                  
                                 self.datastore)[0:-20],                         
-                                self.z_steps)                                   
+                                self.z_steps,
+                                self.fsky)                                   
                         for j in self.z_steps]                                  
         spectra_low = [cf.spectrum(                                             
                            cf.generate_data(                                    
@@ -657,7 +659,8 @@ class forecast:
                                     param : (1.-self.dstep)*self.fid[param]}),  
                                self.classdir,                                   
                                self.datastore)[0:-20],                          
-                           self.z_steps)                                        
+                           self.z_steps,
+                           self.fsky)                                        
                        for j in self.z_steps]                                   
         return spectra_high, spectra_low 
 

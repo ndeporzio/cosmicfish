@@ -62,7 +62,7 @@ class spectrum:
                        self.N_ncdm, 
                        self.T_ncdm, 
                        self.m_ncdm, 
-                       c=2.9979e8, 
+                       c=cf.C, 
                        fsky=self.fsky) #Units [Mpc^3]
         self.k_table = cf.gen_k_table(self.V, 
                                    self.h, 
