@@ -3,29 +3,23 @@ import scipy
 from scipy.integrate import quad
 import cosmicfish as cf
 
-def rsd(omega_b, omega_cdm, omega_ncdm, h, k_fs, z, mu, k, b1L, alphak2):                     
-    gamma = cf.RSD_GAMMA                                                        
-    Deltaq = cf.RSD_DELTA_Q                                                     
-    q = (cf.RSD_Q_NUMERATOR_FACTOR * k) / k_fs                                  
-    epsilon = (omega_b + omega_cdm) / np.power(h, 2.)                           
-    f = np.power((epsilon * np.power(1.+z, 3.))                                 
-                 / ( epsilon * np.power(1.+z, 3.) - epsilon + 1.), gamma)       
+def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b1L, alphak2):                     
+    k_fs = cf.kfs(omega_ncdm, h,  z)
+    f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
+    q = (cf.RSD_Q_NUMERATOR_FACTOR * k) / k_fs
     DeltaL = ((cf.RSD_DELTA_L_NUMERATOR_FACTOR * omega_ncdm)                    
               / (omega_b + omega_cdm))                                          
-    g = 1. + (DeltaL / 2.) * np.tanh(1. + (np.log(q) / Deltaq))                 
+    g = 1. + (DeltaL / 2.) * np.tanh(1. + (np.log(q) / cf.RSD_DELTA_Q))                 
     b1tilde = 1. + b1L * g + alphak2 * np.power(k, 2.)                                                     
                                                                                 
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
     return R                                                                    
                                                                                 
-def log_rsd(omega_b, omega_cdm, omega_ncdm, h, k_fs, z, mu, k, b1L, alphak2):                 
-    return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, k_fs, z, mu, k, 
+def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b1L, alphak2):                 
+    return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, 
         b1L, alphak2))
 
 def fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):              
-    #sigma_fog_0 = 250. # Units [km*s^-1]                                       
-    #sigma_fog_0 = 250000. # Units [m*s^-1]                                      
-    # ^^^^ CAUTION! Convince self which is correct.                             
     sigma_z = cf.SIGMA_Z                                                        
     sigma_fog = sigma_fog_0 * np.sqrt(1.+z)                                     
     sigma_v = ((1. + z)                                                         
@@ -253,9 +247,9 @@ def gen_V(h, omega_b, omega_cdm, z_table, N_ncdm, T_ncdm=None, m_ncdm=0,
         fsky = 1.                                                               
     H = 1000. * 100. * h # H has units of [m*s^-1*Mpc^-1]                       
     if m_ncdm is not None:                                                      
-        if N_ncdm==3.: # Degenerate neutrinos                                   
+        if N_ncdm==3.: # Degenerate neutrinos CAUTION                                  
             omega_chi = 3. * (m_ncdm/ cf.NEUTRINO_SCALE_FACTOR)                                     
-        elif N_ncdm==1.: # Light relic                                          
+        elif N_ncdm==1.: # Light relic CAUTION                                         
             omega_chi = (np.power(T_ncdm/cf.RELIC_TEMP_SCALE, 3.) 
                          * (m_ncdm / cf.NETURINO_SCALE_FACTOR))                
         else:                                                                   

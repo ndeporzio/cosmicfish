@@ -105,7 +105,9 @@ class forecast:
         self.h_high, self.h_low = self.generate_spectra('h')
         self.tau_reio_high, self.tau_reio_low = self.generate_spectra(
                                                     'tau_reio')
-        if self.forecast=="neutrino": 
+        if self.forecast=="neutrino":
+            # Carefule with naming - you're varying m_ncdm but 
+            # calling it M_ncdm  
             self.M_ncdm_high, self.M_ncdm_low = self.generate_spectra('m_ncdm')
         elif self.forecast=="relic": 
             self.T_ncdm_high, self.T_ncdm_low = self.generate_spectra('T_ncdm')
@@ -147,8 +149,10 @@ class forecast:
             self.dPdM_ncdm, self.dlogPdM_ncdm = cf.dPs_array(
                 self.M_ncdm_low, 
                 self.M_ncdm_high, 
-                self.M_ncdm_fid * self.dstep)   
-                # ^^^CAUTION. Check factor of 3 in denominator.  
+                self.m_ncdm_fid * self.dstep)
+            self.dPdM_ncdm *= (1./3.) 
+            self.dlogPdM_ncdm *= (1./3.)    
+            # ^^^CAUTION. Carefule of factor of 3. .  
             self.dPdomega_ncdm = [np.array(self.dPdM_ncdm[k]) 
                 * cf.NEUTRINO_SCALE_FACTOR for k in range(len(self.z_steps))]
             self.dlogPdomega_ncdm = [np.array(self.dlogPdM_ncdm[k]) 
@@ -178,11 +182,7 @@ class forecast:
                     'alphak2' : cf.FID_ALPHAK2,
                     'mu' : mu}
 
-        kfs_table = cf.kfs(self.omega_ncdm_fid, self.h_fid, 
-            np.array(self.z_steps))
-
-        self.RSD = [[cf.rsd(**dict(fiducial, **{'k_fs' : kfs_table[zidx], 
-            'z' : zval, 'k' : kval})) 
+        self.RSD = [[cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval})) 
             for kval in self.k_table] 
             for zidx, zval in enumerate(self.z_steps)]   
 
@@ -190,8 +190,7 @@ class forecast:
             cf.log_rsd, 
             'omega_b', 
             self.dstep,
-            **dict(fiducial, **{'k_fs' : kfs_table[zidx], 'z' : zval, 
-                'k' :  kval}))
+            **dict(fiducial, **{'z' : zval, 'k' :  kval}))
             for kval in self.k_table] 
             for zidx, zval in enumerate(self.z_steps)]
 
@@ -199,8 +198,7 @@ class forecast:
             cf.log_rsd, 
             'omega_cdm', 
             self.dstep,  
-            **dict(fiducial, **{'k_fs' : kfs_table[zidx], 'z' : zval, 
-                'k' :  kval})) 
+            **dict(fiducial, **{'z' : zval, 'k' :  kval})) 
             for kval in self.k_table]                                           
             for zidx, zval in enumerate(self.z_steps)]
 
@@ -208,8 +206,7 @@ class forecast:
             cf.log_rsd,                                                         
             'omega_ncdm',                                                        
             self.dstep,                                                         
-            **dict(fiducial, **{'k_fs' : kfs_table[zidx], 'z' : zval, 
-                'k' :  kval})) 
+            **dict(fiducial, **{'z' : zval, 'k' :  kval})) 
             for kval in self.k_table]                                           
             for zidx, zval in enumerate(self.z_steps)]
 
@@ -220,8 +217,7 @@ class forecast:
             cf.log_rsd,                                                         
             'h',                                                       
             self.dstep,                                                         
-            **dict(fiducial, **{'k_fs' : kfs_table[zidx], 'z' : zval, 
-                'k' :  kval})) 
+            **dict(fiducial, **{'z' : zval, 'k' :  kval})) 
             for kval in self.k_table]                                           
             for zidx, zval in enumerate(self.z_steps)]   
 
@@ -229,8 +225,7 @@ class forecast:
             cf.log_rsd,                                                         
             'b1L',                                                                
             self.dstep,                                                         
-            **dict(fiducial, **{'k_fs' : kfs_table[zidx], 'z' : zval,           
-                'k' :  kval}))                                                  
+            **dict(fiducial, **{'z' : zval, 'k' :  kval}))                                                  
             for kval in self.k_table]                                           
             for zidx, zval in enumerate(self.z_steps)]
 
@@ -238,8 +233,7 @@ class forecast:
             cf.log_rsd,                                                         
             'alphak2',                                                                
             self.dstep,                                                         
-            **dict(fiducial, **{'k_fs' : kfs_table[zidx], 'z' : zval,           
-                'k' :  kval}))                                                  
+            **dict(fiducial, **{'z' : zval, 'k' :  kval}))                                                  
             for kval in self.k_table]                                           
             for zidx, zval in enumerate(self.z_steps)]  
 
@@ -481,7 +475,7 @@ class forecast:
         self.dlogCOVdM_ncdm = (np.array(self.dlogCOVdomega_ncdm) 
             / cf.NEUTRINO_SCALE_FACTOR)
     
-    def gen_fisher(self, mu_step): # Really messy and inefficient
+    def gen_fisher(self, mu_step=0.05): # Really messy and inefficient
 
         mu_vals = np.arange(-1., 1., mu_step)
         Pm = np.zeros(

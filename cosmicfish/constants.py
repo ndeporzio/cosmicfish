@@ -18,3 +18,5 @@ FID_B1L = 0.7
 FID_ALPHAK2 = 1.0
 
 DB_ELG = 0.84
+
+K_MAX = 0.2 #Units [Mpc^-1]

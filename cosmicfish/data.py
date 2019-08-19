@@ -66,7 +66,7 @@ class spectrum:
                        fsky=self.fsky) #Units [Mpc^3]
         self.k_table = cf.gen_k_table(self.V, 
                                    self.h, 
-                                   k_max=0.2, 
+                                   k_max=cf.K_MAX, 
                                    k_steps=100) #Units [Mpc^-1]
         #
         #Derive power spectrum 
@@ -139,7 +139,7 @@ class spectrum:
                              self.h * self.rawdata['k (h/Mpc)'], 
                              self.rawdata['d_b'])
         cdm_interpolator = scipy.interpolate.interp1d(
-                               self.h*self.rawdata['k (h/Mpc)'], 
+                               self.h * self.rawdata['k (h/Mpc)'], 
                                self.rawdata['d_cdm'])
         self.b_interp_table = b_interpolator(self.k_table)
         self.cdm_interp_table = cdm_interpolator(self.k_table) 
