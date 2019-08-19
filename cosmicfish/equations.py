@@ -78,9 +78,9 @@ def Da(omega_b, omega_cdm, omega_ncdm, h, z):
     integral, error = quad(integrand, 0., z)                                    
     return prefactor * integral   
 
-def neff(ndens, Pg):                                                            
+def neff(ndens, Pm):                                                            
     # ndens at specific z, Pm at specific k and z                               
-    n = np.power((ndens * Pg) / (ndens*Pg + 1.), 2.)                            
+    n = np.power((ndens * Pm) / (ndens*Pm + 1.), 2.)                            
     return n 
 
 def kfs(omega_ncdm, h, z):                                                      

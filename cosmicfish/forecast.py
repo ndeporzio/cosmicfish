@@ -93,7 +93,7 @@ class forecast:
         self.k_table = self.spectra_mid[0].k_table 
         # ^^^ All spectra should have same k_table
 
-        self.Pg = [self.spectra_mid[zidx].ps_table 
+        self.Pm = [self.spectra_mid[zidx].ps_table 
                    for zidx, zval in enumerate(self.z_steps)]
 
         # Generate variation spectra at each z    
@@ -435,15 +435,15 @@ class forecast:
         # dlogPdmu
         self.gen_rsd((1. + self.dstep) * mu)
         self.gen_fog((1. + self.dstep) * mu)
-        logP_mu_high = np.log(self.Pg) + np.log(self.RSD) + np.log(self.FOG) 
+        logP_mu_high = np.log(self.Pm) + np.log(self.RSD) + np.log(self.FOG) 
  
         self.gen_rsd((1. - self.dstep) * mu)
         self.gen_fog((1. - self.dstep) * mu)
-        logP_mu_low = np.log(self.Pg) + np.log(self.RSD) + np.log(self.FOG)
+        logP_mu_low = np.log(self.Pm) + np.log(self.RSD) + np.log(self.FOG)
         
         self.gen_rsd(mu)
         self.gen_fog(mu)
-        logP_mid = np.log(self.Pg) + np.log(self.RSD) + np.log(self.FOG)
+        logP_mid = np.log(self.Pm) + np.log(self.RSD) + np.log(self.FOG)
 
         dlogPdmu = (logP_mu_high - logP_mu_low) / (2. * self.dstep * mu) 
 
@@ -610,22 +610,24 @@ class forecast:
                     # print("For z = ", zval, ", V_eff = ", 
                     #       (Volume*self.h_fid)/(1.e9), " [h^{-1} Gpc^{3}]") 
                     for kidx, kval in enumerate(self.k_table): # Center intgrl? 
-                        integrand[zidx][kidx] = np.sum(
-                            mu_step *2. *np.pi
+                        integrand[zidx][kidx] = np.sum( #Perform mu integral
+                            mu_step 
                             * paramvec[pidx1][zidx][kidx]
                             * paramvec[pidx2][zidx][kidx]
-                            * np.power(self.k_table[kidx]/(2.*np.pi), 3.)
+                            * np.power(self.k_table[kidx], 2.)
+                            * (1. / (8.  * np.power(np.pi, 2)))
                             * np.power((self.n_densities[zidx] 
-                                        * self.Pg[zidx][kidx])
+                                        * self.Pm[zidx][kidx])
                                        / (self.n_densities[zidx] 
-                                          * self.Pg[zidx][kidx] + 1.), 
+                                          * self.Pm[zidx][kidx] + 1.), 
                                        2.) 
                             * Volume
-                            * (1. / self.k_table[kidx]))
+                            * np.power(self.k_table[kidx], 2.))
                             
                 for zidx, zval in enumerate(self.z_steps): 
                     val = 0 
-                    for kidx, kval in enumerate(self.k_table[:-1]): # Center? 
+                    for kidx, kval in enumerate(self.k_table[:-1]): # Center?
+                        #Approximating average in k_bin to integrate over k
                         val += (((integrand[zidx][kidx] 
                                   + integrand[zidx][kidx+1])
                                  / 2.)  
@@ -703,7 +705,8 @@ class forecast:
                    ("nbar/deg^2 = {4:.6e} [h^3 Gpc^-3 deg^-2] \n\t") +          
                    ("nbar/deg^2 = {5:.6e} [Mpc^-3 deg^-2] \n\t") +              
                    ("D = {6:.6f} \n\t") +                                       
-                   ("b_ELG = {7:.6f} \n\t")).format(                            
+                   ("b_ELG = {7:.6f} \n\t") +
+                   ("P_m(0.2h, 0) = {8:.2f} \n\t")).format(                            
                        zval,                                                    
                        (V*np.power(self.h_fid, 3.)) / (1.e9),                   
                        n2,                                                      
@@ -711,7 +714,8 @@ class forecast:
                        n2 / self.fcoverage_deg,                                 
                        n / self.fcoverage_deg,                                  
                        self.spectra_mid[zidx].D_table[zidx],                    
-                       cf.DB_ELG / self.spectra_mid[zidx].D_table[zidx]))            
+                       cf.DB_ELG / self.spectra_mid[zidx].D_table[zidx],
+                       self.Pm[zidx][69]))            
         return
                 
     def print_P_table(self): 
