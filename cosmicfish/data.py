@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
-import scipy 
+import scipy
+
+import cosmicfish as cf 
 
 from .io import correct_path
 
@@ -53,18 +55,18 @@ class spectrum:
         #
         #Derive k_table 
         #
-        self.V = gen_V(self.h, 
+        self.V = cf.gen_V(self.h, 
                        self.omega_b, 
                        self.omega_cdm, 
                        self.z_table, 
                        self.N_ncdm, 
                        self.T_ncdm, 
                        self.m_ncdm, 
-                       c=2.9979e8, 
+                       c=cf.C, 
                        fsky=self.fsky) #Units [Mpc^3]
-        self.k_table = gen_k_table(self.V, 
+        self.k_table = cf.gen_k_table(self.V, 
                                    self.h, 
-                                   k_max=0.2, 
+                                   k_max=cf.K_MAX, 
                                    k_steps=100) #Units [Mpc^-1]
         #
         #Derive power spectrum 
@@ -137,7 +139,7 @@ class spectrum:
                              self.h * self.rawdata['k (h/Mpc)'], 
                              self.rawdata['d_b'])
         cdm_interpolator = scipy.interpolate.interp1d(
-                               self.h*self.rawdata['k (h/Mpc)'], 
+                               self.h * self.rawdata['k (h/Mpc)'], 
                                self.rawdata['d_cdm'])
         self.b_interp_table = b_interpolator(self.k_table)
         self.cdm_interp_table = cdm_interpolator(self.k_table) 
@@ -171,60 +173,6 @@ class spectrum:
         print('T_ncdm = ', self.T_ncdm)
         print('k_pivot = ', self.k_pivot)
         print('volume = ', self.V)
-
-def gen_V(h, omega_b, omega_cdm, z_table, N_ncdm, T_ncdm=None, m_ncdm=0, 
-          c=2.9979e8, fsky=None):
-    # T_ncdm in units of [K]
-    # m_ncdm in units of [eV]
-    # c in units of [m*s^-1] 
-    # returns V in units [Mpc^3]
-
-    if fsky==None: 
-        fsky = 1.
-    H = 1000. * 100. * h # H has units of [m*s^-1*Mpc^-1]
-    if m_ncdm is not None:
-        if N_ncdm==3.: # Degenerate neutrinos 
-            omega_chi = 3. * (m_ncdm/93.14)
-        elif N_ncdm==1.: # Light relic
-            omega_chi = np.power(T_ncdm/1.95, 3.) * (m_ncdm/94.)
-        else:
-            print("ERROR") 
-    else: 
-        omega_chi = 0
-    omega_m = omega_b + omega_cdm + omega_chi # Unitless
-    omega_lambda = np.power(h, 2.) - omega_m # Unitless
-
-    zmax = z_table[-1]
-    zmin = z_table[-2]
-    zsteps = 100.
-    dz = zmin / zsteps
-    z_table_max = np.arange(0., zmax, dz)
-    z_table_min = np.arange(0., zmin, dz)
-    z_integrand_max = (h * dz) /  np.sqrt(omega_m 
-                                          * np.power(1. + z_table_max, 3.) 
-                                          + omega_lambda)
-    z_integrand_min = (h * dz) /  np.sqrt(omega_m 
-                                          * np.power(1. + z_table_min, 3.) 
-                                          + omega_lambda)
-    z_integral_max = np.sum(z_integrand_max)
-    z_integral_min = np.sum(z_integrand_min)
-    v_max = ((4. * np.pi / 3.)
-             * np.power(c / (1000.*100.*h), 3.)
-             * np.power(z_integral_max, 3.))
-    v_min = ((4. * np.pi / 3.)
-             * np.power(c / (1000.*100.*h), 3.)
-             * np.power(z_integral_min, 3.))
-    v = (v_max - v_min) * fsky
-    # Incorporate fsky into volume calculation.
-    return v # Units [Mpc^3]
-
-def gen_k_table(volume, h, k_max, k_steps):
-    # volume in units of [Mpc^3]
-    # returns k_table in units [Mpc^-1]
-    k_table = np.linspace((np.pi / h) * np.power(volume, -1./3.), 
-                          k_max, 
-                          k_steps)
-    return k_table #Units [Mpc^-1]   
 
 if __name__ == '__main__':   
     # Actions to perform only if this module, 'data.py', is called

@@ -4,7 +4,7 @@ import seaborn as sns
 
 import cosmicfish as cf
 
-class convergence_analysis: 
+class convergence: 
 
     def __init__(self, fid, param, varytype, varyvals, z_table, m_ncdm,
                  classdir, datastore, dstep=0.01, fsky=None): 
@@ -433,20 +433,3 @@ class convergence_analysis:
 
             plt.show()
 
-def dPs(fid_ps_table, var_ps_table, step, centered=False):
-    if centered==False: 
-        dps_table = (var_ps_table - fid_ps_table) / step
-    elif centered==True: 
-        var_high = var_ps_table
-        var_low = fid_ps_table
-        dps_table = (var_high - var_low)/(2 * step) 
-    return dps_table
-
-def dlogPs(fid_ps_table, var_ps_table, step, centered=False):
-    if centered==False: 
-        dlogps_table = (np.log(var_ps_table) - np.log(fid_ps_table)) / step
-    elif centered==True: 
-        var_high = np.log(var_ps_table)
-        var_low = np.log(fid_ps_table)
-        dlogps_table = (var_high - var_low)/(2 * step)
-    return dlogps_table
