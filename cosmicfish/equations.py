@@ -10,7 +10,7 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b1L, alphak2):
     DeltaL = ((cf.RSD_DELTA_L_NUMERATOR_FACTOR * omega_ncdm)                    
               / (omega_b + omega_cdm))                                          
     g = 1. + (DeltaL / 2.) * np.tanh(1. + (np.log(q) / cf.RSD_DELTA_Q))                 
-    b1tilde = 1. + b1L * g + alphak2 * np.power(k, 2.)                                                     
+    b1tilde = np.sqrt(1.+z) *  (1. + b1L * g + alphak2 * np.power(k, 2.))                                                     
                                                                                 
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
     return R                                                                    
@@ -286,9 +286,13 @@ def gen_V(h, omega_b, omega_cdm, z_table, N_ncdm, T_ncdm=None, m_ncdm=0,
 def gen_k_table(volume, h, k_max, k_steps):                                     
     # volume in units of [Mpc^3]                                                
     # returns k_table in units [Mpc^-1]                                         
-    k_table = np.linspace((np.pi / h) * np.power(volume, -1./3.),               
-                          k_max,                                                
-                          k_steps)                                              
+
+    #print('k_min = ', (np.pi / h) * np.power(volume, -1./3.))
+    #k_table = np.linspace((np.pi / h) * np.power(volume, -1./3.),               
+    #                      k_max,                                                
+    #                      k_steps)                                              
+
+    k_table = np.linspace(cf.K_MIN, k_max, k_steps) 
     return k_table #Units [Mpc^-1]
 
 

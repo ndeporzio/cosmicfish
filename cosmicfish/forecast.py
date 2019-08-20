@@ -18,7 +18,11 @@ class forecast:
                  dNdz,
                  fsky=None, 
                  fcoverage_deg=None,
-                 dstep=0.03): 
+                 dstep=0.03,
+                 RSD=True,  
+                 FOG=True, 
+                 AP=True, 
+                 COV=True): 
         self.classdir = classdir                                                
         self.datastore = datastore
         self.forecast = forecast_type
@@ -26,6 +30,10 @@ class forecast:
         self.z_steps = z_steps
         self.dNdz = dNdz
         self.dstep = dstep
+        self.use_rsd = RSD
+        self.use_fog = FOG     
+        self.use_ap = AP
+        self.use_cov = COV
 
         self.A_s_fid = self.fid['A_s']
         self.n_s_fid = self.fid['n_s']
@@ -494,6 +502,8 @@ class forecast:
             (len(self.z_steps), len(self.k_table), len(mu_vals)))
         dlogPdomega_ncdm = np.zeros(
             (len(self.z_steps), len(self.k_table), len(mu_vals)))
+        dlogPdM_ncdm = np.zeros(                                            
+            (len(self.z_steps), len(self.k_table), len(mu_vals))) 
         dlogPdsigmafog = np.zeros(
             (len(self.z_steps), len(self.k_table), len(mu_vals)))
         dlogPdb1L = np.zeros(
@@ -501,11 +511,15 @@ class forecast:
         dlogPdalphak2 = np.zeros(
             (len(self.z_steps), len(self.k_table), len(mu_vals)))        
 
-        for muidx, muval in enumerate(mu_vals): 
-            self.gen_rsd(muval)
-            self.gen_fog(muval)
-            self.gen_ap()
-            self.gen_cov(muval)
+        for muidx, muval in enumerate(mu_vals):
+            if self.use_rsd==True:  
+                self.gen_rsd(muval)
+            if self.use_fog==True:  
+                self.gen_fog(muval)
+            if self.use_ap==True: 
+                self.gen_ap()
+            if self.use_ap==True: 
+                self.gen_cov(muval)
 
             for zidx, zval in enumerate(self.z_steps): 
 
@@ -515,7 +529,7 @@ class forecast:
                         * self.RSD[zidx][kidx] 
                         * self.FOG[zidx][kidx]
                         * self.AP[zidx][kidx]
-                        #* self.COV[zidx][kidx]<---STILL WRONG 
+                        * self.COV[zidx][kidx] #Just equals 1
                         )
                     dlogPdA_s[zidx][kidx][muidx] = (
                         self.dlogPdA_s[zidx][kidx]
@@ -554,10 +568,11 @@ class forecast:
                         + self.dlogAPdomega_ncdm[zidx][kidx]
                         + self.dlogCOVdomega_ncdm[zidx][kidx]
                         )
-                    dlogPdM_ncdm = dlogPdomega_ncdm / cf.NEUTRINO_SCALE_FACTOR 
+
+                    dlogPdM_ncdm[zidx][kidx][muidx] = (
+                        dlogPdomega_ncdm[zidx][kidx][muidx] 
+                        / cf.NEUTRINO_SCALE_FACTOR) 
                     # ^^^Careful, this overwrites the earlier dP_g value. 
-                    # we do this to reflect corrections in the contours
-                    # for M_ncdm
 
                     dlogPdsigmafog[zidx][kidx][muidx] = (                       
                         self.dlogFOGdsigmafog0[zidx][kidx]
