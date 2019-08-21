@@ -136,14 +136,14 @@ class spectrum:
         
 
     def interpolate(self):
-        b_interpolator = scipy.interpolate.interp1d(
+        self.b_interpolator = scipy.interpolate.interp1d(
                              self.h * self.rawdata['k (h/Mpc)'], 
                              self.rawdata['d_b'])
-        cdm_interpolator = scipy.interpolate.interp1d(
+        self.cdm_interpolator = scipy.interpolate.interp1d(
                                self.h * self.rawdata['k (h/Mpc)'], 
                                self.rawdata['d_cdm'])
-        self.b_interp_table = b_interpolator(self.k_table)
-        self.cdm_interp_table = cdm_interpolator(self.k_table) 
+        self.b_interp_table = self.b_interpolator(self.k_table)
+        self.cdm_interp_table = self.cdm_interpolator(self.k_table) 
 
     def gen_primordial_table(self):
         table = (self.A_s 
