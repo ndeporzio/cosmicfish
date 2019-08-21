@@ -708,11 +708,12 @@ class forecast:
                                   * (zmax - zmin) / Volume)                     
         return Volume                                                           
                                                                                 
-    def print_v_table(self):                                                    
+    def print_v_table(self, k_index):                                                    
         for zidx, zval in enumerate(self.z_steps):                              
             V = self.V(zidx)                                                    
             n = self.n_densities[zidx]                                          
-            n2 = (1.e9 / np.power(self.h_fid, 3.)) * n                          
+            n2 = (1.e9 / np.power(self.h_fid, 3.)) * n     
+                     
             print((("For z = {0:.2f} \n\t") +                                   
                    ("V = {1:.6f} [h^-3 Gpc^3] \n\t") +                          
                    ("nbar = {2:.6f} [h^3 Gpc^-3] \n\t") +                       
@@ -721,7 +722,7 @@ class forecast:
                    ("nbar/deg^2 = {5:.6e} [Mpc^-3 deg^-2] \n\t") +              
                    ("D = {6:.6f} \n\t") +                                       
                    ("b_ELG = {7:.6f} \n\t") +
-                   ("P_m(0.2h, 0) = {8:.2f} \n\t")).format(                            
+                   ("P_m(k={8:.3f}) = {9:.2f} \n\t")).format(                            
                        zval,                                                    
                        (V*np.power(self.h_fid, 3.)) / (1.e9),                   
                        n2,                                                      
@@ -730,13 +731,14 @@ class forecast:
                        n / self.fcoverage_deg,                                  
                        self.spectra_mid[zidx].D_table[zidx],                    
                        cf.DB_ELG / self.spectra_mid[zidx].D_table[zidx],
-                       self.Pm[zidx][69]))            
+                       self.k_table[k_index],
+                       self.Pm[zidx][k_index]))            
         return
                 
-    def print_P_table(self):
+    def print_P_table(self, k_index, mu_index):
         print("P_g with following corrections: " + str(self.psterms)) 
         for zidx, zval in enumerate(self.z_steps): 
             print((("For z = {0:.2f},\t") + 
                    (" P(0.2h, 0) = {1:.2f}\n")).format(zval, 
-                                                        self.Pg[zidx][69][20]))
+                        self.Pg[zidx][k_index][mu_index]))
 
