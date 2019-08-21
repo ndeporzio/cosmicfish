@@ -64,7 +64,7 @@ class spectrum:
                        fsky=self.fsky) #Units [Mpc^3]
         self.k_table = gen_k_table(self.V, 
                                    self.h, 
-                                   k_max=0.2, 
+                                   k_max=cf.K_MAX, 
                                    k_steps=100) #Units [Mpc^-1]
         #
         #Derive power spectrum 
