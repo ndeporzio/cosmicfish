@@ -44,9 +44,9 @@ class forecast:
         self.m_ncdm_fid = self.fid['m_ncdm'] # Unit [eV]                   
         self.M_ncdm_fid = 3. * self.fid['m_ncdm'] # Unit [eV] i
 
-        self.sigma_fog_0_fid = cf.FID_SIGMA_FOG_0
-        self.b1L_fid = cf.FID_B1L
-        self.alphak2_fid = cf.FID_ALPHAK2 
+        self.sigma_fog_0_fid = self.fid['sigma_fog_0']
+        self.b1L_fid = self.fid['b1L']
+        self.alphak2_fid = self.fid['alphak2'] 
 
         self.n_densities = np.zeros(len(dNdz))
 
@@ -61,29 +61,14 @@ class forecast:
                                                 "neutrino")
         self.kp = cf.KP_PREFACTOR * self.h_fid # Units [Mpc^-1]
 
-        if (fsky is None) and (fcoverage_deg is not None):
-            self.fcoverage_deg = fcoverage_deg
-            self.fsky = fcoverage_deg / cf.FULL_SKY_DEGREES
-            # ^^^ http://www.badastronomy.com/bitesize/bigsky.html
-        elif (fsky is not None) and (fcoverage_deg is None):
-            self.fcoverage_deg =  cf.FULL_SKY_DEGREES * fsky
-            self.fsky = fsky
-        elif (fsky is not None) and (fcoverage_deg is not None):
-            print("Both f_sky and sky coverage specified,"
-                  + " using value for f_sky.")
-            self.fcoverage_deg = cf.FULL_SKY_DEGREES * fsky
-            self.fsky = fsky
-        else:
-            print("Assuming full sky survey.")
-            self.fsky = 1.
-            self.fcoverage_deg = cf.FULL_SKY_DEGREES
-
+        self.fsky, self.fcoverage_deg = cf.set_sky_cover(fsky,  fcoverage_deg)
+            
         self.psterms = []  
 
 
-    def gen_pg(self):  
-        if 'pg' not in self.psterms: 
-            self.psterms.append('pg') 
+    def gen_pm(self):  
+        if 'pm' not in self.psterms: 
+            self.psterms.append('pm') 
 
         analytic_A_s = True
         analytic_n_s = True
@@ -186,8 +171,8 @@ class forecast:
                     'omega_cdm' : self.omega_cdm_fid, 
                     'omega_ncdm' : self.omega_ncdm_fid,
                     'h' : self.h_fid, 
-                    'b1L' : cf.FID_B1L,
-                    'alphak2' : cf.FID_ALPHAK2,
+                    'b1L' : self.b1L_fid,
+                    'alphak2' : self.alphak2_fid,
                     'mu' : mu}
 
         self.RSD = [[cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval})) 
@@ -255,7 +240,7 @@ class forecast:
                     'omega_ncdm' : self.omega_ncdm_fid,                         
                     'h' : self.h_fid,                                           
                     'mu' : mu,
-                    'sigma_fog_0' : cf.FID_SIGMA_FOG_0}
+                    'sigma_fog_0' : self.sigma_fog_0_fid}
             
 
         self.FOG = [[cf.fog(**dict(fiducial, **{'z' : zval, 'k' :  kval})) 
@@ -485,8 +470,11 @@ class forecast:
     
     def gen_fisher(self, mu_step=0.05): # Really messy and inefficient
 
+        if 'pm' not in self.psterms:                                        
+            self.gen_pm() 
+
         mu_vals = np.arange(-1., 1., mu_step)
-        Pm = np.zeros(
+        Pg = np.zeros(
             (len(self.z_steps), len(self.k_table), len(mu_vals)))
         dlogPdA_s = np.zeros(
             (len(self.z_steps), len(self.k_table), len(mu_vals)))
@@ -524,7 +512,7 @@ class forecast:
             for zidx, zval in enumerate(self.z_steps): 
 
                 for kidx, kval in enumerate(self.k_table):
-                    Pm[zidx][kidx][muidx] = ( 1.
+                    Pg[zidx][kidx][muidx] = ( 1.
                         * self.spectra_mid[zidx].ps_table[kidx] 
                         * self.RSD[zidx][kidx] 
                         * self.FOG[zidx][kidx]
@@ -585,7 +573,18 @@ class forecast:
                     dlogPdalphak2[zidx][kidx][muidx] = (                          
                         self.dlogRSDdalphak2[zidx][kidx]                                                    
                         )
-        self.Pm = Pm 
+        self.Pg = Pg
+        self.dlogPdA_s = dlogPdA_s
+        self.dlogPdn_s = dlogPdn_s
+        self.dlogPdomega_b  = dlogPdomega_b
+        self.dlogPdomega_cdm = dlogPdomega_cdm
+        self.dlogPdh = dlogPdh
+        self.dlogPdtau_reio = dlogPdtau_reio
+        self.dlogPdomega_ncdm = dlogPdomega_ncdm
+        self.dlogPdM_ncdm = dlogPdM_ncdm
+        self.dlogPdsigmafog = dlogPdsigmafog
+        self.dlogPdb1L = dlogPdb1L
+        self.dlogPdalphak2 = dlogPdalphak2       
 
         if self.forecast=="neutrino": 
             paramvec = [dlogPdomega_b, 
@@ -733,9 +732,10 @@ class forecast:
                        self.Pm[zidx][69]))            
         return
                 
-    def print_P_table(self): 
+    def print_P_table(self):
+        print("P_g with following corrections: " + self.psterms) 
         for zidx, zval in enumerate(self.z_steps): 
             print((("For z = {0:.2f},\t") + 
                    (" P(0.2h, 0) = {1:.2f}\n")).format(zval, 
-                                                        self.Pm[zidx][69][20]))
+                                                        self.Pg[zidx][69][20]))
 

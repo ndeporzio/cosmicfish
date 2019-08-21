@@ -1,5 +1,17 @@
 # All hardcoded constants should appear here. 
 
+CLASSVARS = ['h', 'T_cmb', 'omega_b', 'N_eff', 'omega_cdm', 'N_ncdm',       
+    'm_ncdm', 'T_ncdm', 'Omega_k', 'Omega_fld', 'YHe', 'recombination',     
+    'reio_parametrization', 'tau_reio', 'reionization_exponent',            
+    'reionization_width', 'helium_fullreio_redshift',                       
+    'helium_fullreio_width', 'annihilation', 'decay', 'output',             
+    'l_max_scalars', 'modes', 'lensing', 'ic', 'P_k_ini type', 'k_pivot',   
+    'A_s', 'n_s', 'alpha_s', 'P_k_max_h/Mpc', 'z_pk', 'root',               
+    'write background', 'write parameters', 'background_verbose',           
+    'thermodynamics_verbose', 'perturbations_verbose', 'transfer_verbose',  
+    'primordial_verbose', 'spectra_verbose',  'nonlinear_verbose',          
+    'lensing_verbose', 'output_verbose']
+
 C = 2.9979e8 # Speed of light in [m s^-1]
 FULL_SKY_DEGREES = 41253. # Sky size in [deg^2]
 NEUTRINO_SCALE_FACTOR = 93.14 # Neutrino mass/abundance rel. factor in [eV]
@@ -13,9 +25,9 @@ RSD_DELTA_L_NUMERATOR_FACTOR = 0.6
 RELIC_TEMP_SCALE = 1.95
 KP_PREFACTOR = 0.05
 
-FID_SIGMA_FOG_0 = 250000 #Units m s^-1
-FID_B1L = 0.7 
-FID_ALPHAK2 = 1.0
+#FID_SIGMA_FOG_0 = 250000 #Units m s^-1
+#FID_B1L = 0.7 
+#FID_ALPHAK2 = 1.0
 
 DB_ELG = 0.84
 

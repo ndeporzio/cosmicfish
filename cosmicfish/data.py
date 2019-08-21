@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
-import scipy
-
-import cosmicfish as cf 
+import scipy 
 
 from .io import correct_path
 
@@ -55,18 +53,18 @@ class spectrum:
         #
         #Derive k_table 
         #
-        self.V = cf.gen_V(self.h, 
+        self.V = gen_V(self.h, 
                        self.omega_b, 
                        self.omega_cdm, 
                        self.z_table, 
                        self.N_ncdm, 
                        self.T_ncdm, 
                        self.m_ncdm, 
-                       c=cf.C, 
+                       c=2.9979e8, 
                        fsky=self.fsky) #Units [Mpc^3]
-        self.k_table = cf.gen_k_table(self.V, 
+        self.k_table = gen_k_table(self.V, 
                                    self.h, 
-                                   k_max=cf.K_MAX, 
+                                   k_max=0.2, 
                                    k_steps=100) #Units [Mpc^-1]
         #
         #Derive power spectrum 
@@ -139,7 +137,7 @@ class spectrum:
                              self.h * self.rawdata['k (h/Mpc)'], 
                              self.rawdata['d_b'])
         cdm_interpolator = scipy.interpolate.interp1d(
-                               self.h * self.rawdata['k (h/Mpc)'], 
+                               self.h*self.rawdata['k (h/Mpc)'], 
                                self.rawdata['d_cdm'])
         self.b_interp_table = b_interpolator(self.k_table)
         self.cdm_interp_table = cdm_interpolator(self.k_table) 
