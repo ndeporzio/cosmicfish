@@ -91,29 +91,29 @@ class spectrum:
     def input(self): 
         with open(self.dataconfig) as f: 
             for line in f:
-                if line.startswith("z_pk"):
+                if line.startswith("z_pk = "):
                     self.z_pk = float(line.split(' = ')[1]) 
-                if line.startswith("A_s"): 
+                if line.startswith("A_s = "): 
                     self.A_s = float(line.split(' = ')[1])
-                if line.startswith("n_s"):
+                if line.startswith("n_s = "):
                     self.n_s = float(line.split(' = ')[1])
-                if line.startswith("omega_b"):
+                if line.startswith("omega_b = "):
                     self.omega_b = float(line.split(' = ')[1])
-                if line.startswith("omega_cdm"):
+                if line.startswith("omega_cdm = "):
                     self.omega_cdm = float(line.split(' = ')[1])
-                if line.startswith("tau_reio"):
+                if line.startswith("tau_reio = "):
                     self.tau_reio = float(line.split(' = ')[1])
-                if line.startswith("h"):
+                if line.startswith("h = "):
                     self.h = float(line.split(' = ')[1])
-                if line.startswith("m_ncdm"):
+                if line.startswith("m_ncdm = "):
                     self.m_ncdm = float(line.split(' = ')[1][0:4])
-                if line.startswith("T_ncdm"):
+                if line.startswith("T_ncdm = "):
                     self.T_ncdm = float(line.split(' = ')[1])
-                if line.startswith("N_ncdm"):
+                if line.startswith("N_ncdm = "):
                     self.N_ncdm = float(line.split(' = ')[1])
-                if line.startswith("T_cmb"):
+                if line.startswith("T_cmb = "):
                     self.T_cmb = float(line.split(' = ')[1])
-                if line.startswith("k_pivot"): 
+                if line.startswith("k_pivot = "): 
                     self.k_pivot = float(line.split(' = ')[1])
         self.rawdata = pd.read_csv(self.datapath, 
                                     skiprows=11, 

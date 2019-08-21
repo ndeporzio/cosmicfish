@@ -62,7 +62,7 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
     # Add to/overwrite fiducial cosmology with specified arguments.
     # 
     for key, value in kwargs.items():
-        if (key  in cf.CLASSVARS): 
+        if (key in cf.CLASSVARS): 
             modify[key] = value
 
     check, existingdata = check_data(datastore, **modify)
@@ -170,13 +170,15 @@ def is_data(path, **kwargs):
         for key, val in kwargs.items():
             if key=='m_ncdm':
                 if kwargs['N_ncdm']==3: 
-                    test = (key + ' = '
+                    test = ('\n'
+                            + key 
+                            + ' = '
                             + str(val) + ', '
                             + str(val) + ', '
                             + str(val)
                             + '\n')                                         
                 else: 
-                    test = (key + ' = ' + str(val) + '\n')
+                    test = ('\n' + key + ' = ' + str(val) + '\n')
             else: 
                 test = (key+' = '+str(val)+'\n')     
             if test not in text:
