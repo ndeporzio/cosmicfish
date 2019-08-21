@@ -141,7 +141,7 @@ class convergence:
             data = datahigh - datalow                               
             plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'%') 
             plt.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel) 
-        plt.title((r'\Delta $dlogP_g/d$'                                               
+        plt.title((r'$\Delta$ $dlogP_g/d$'                                               
             +paramname+r' for z={:.3f}, $\mu$={:0.2f}').format(                  
                 self.z_steps[z_index],                                          
                 np.arange(-1, 1, self.mu_step)[mu_index]))                      
