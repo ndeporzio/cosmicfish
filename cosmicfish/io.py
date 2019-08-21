@@ -5,6 +5,8 @@ import subprocess
 import numpy as np
 import pandas as pd
 
+import cosmicfish as cf
+
 def install_class(classdir): 
     '''Installs CLASS to specified directory.
     
@@ -54,13 +56,14 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
     # Add fiducial cosmology
     #
     for key, value in fiducial.items():
-        if key not in kwargs:
+        if (key in cf.CLASSVARS) and (key not in kwargs):
             modify[key] = value
     #
     # Add to/overwrite fiducial cosmology with specified arguments.
     # 
     for key, value in kwargs.items():
-        modify[key] = value
+        if (key  in cf.CLASSVARS): 
+            modify[key] = value
 
     check, existingdata = check_data(datastore, **modify)
 

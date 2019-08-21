@@ -55,18 +55,18 @@ class convergence:
 
         # Calculate fiducial spectra
         self.forecasts = [cf.forecast(
-                            self.classdir, 
-                            self.datastore,
-                            self.type,
-                            self.fid,
-                            self.z_steps,
-                            self.dNdz,
-                            self.fsky,
-                            vfactor,  
-                            self.use_rsd,
-                            self.use_fog,
-                            self.use_ap,
-                            self.use_cov)
+                            classdir=self.classdir, 
+                            datastore=self.datastore,
+                            forecast_type=self.type,
+                            fiducialcosmo=self.fid,
+                            z_steps=self.z_steps,
+                            dNdz=self.dNdz,
+                            fsky=self.fsky,
+                            dstep=vfactor,  
+                            RSD=self.use_rsd,
+                            FOG=self.use_fog,
+                            AP=self.use_ap,
+                            COV=self.use_cov)
                             for vidx, vfactor in enumerate(self.varyfactors)]
 
         for fcst in self.forecasts: 
