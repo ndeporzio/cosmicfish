@@ -67,7 +67,7 @@ class convergence:
                             self.use_fog,
                             self.use_ap,
                             self.use_cov)
-                            for vidx, vfactor in self.varyfactors]
+                            for vidx, vfactor in enumerate(self.varyfactors)]
 
         for fcst in self.forecasts: 
             fcst.gen_fisher(mu_step=self.mu_step) 
@@ -84,7 +84,7 @@ class convergence:
             plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'\%') 
             ax1.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel)
         ax1.set_title(r'$P_g$ for z={:.3f}, $\mu$={0.2f}'.format(
-            self.z_steps[z_index], np.arange(-1, 1, self.mu_step)[mu_index])
+            self.z_steps[z_index], np.arange(-1, 1, self.mu_step)[mu_index]))
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
         ax1.set_ylabel(r'$P_g$ [Mpc$^3$]')
         ax1.set_xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))
@@ -97,7 +97,7 @@ class convergence:
             plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'\%') 
             ax1.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel) 
         ax1.set_title(r'$log(P_g)$ for z={:.3f}, $\mu$={0.2f}'.format(               
-            self.z_steps[z_index], np.arange(-1, 1, self.mu_step)[mu_index])    
+            self.z_steps[z_index], np.arange(-1, 1, self.mu_step)[mu_index]))    
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')                                       
         ax1.set_ylabel(r'log($P_g$) [log(Mpc$^3$)]')                                      
         ax1.set_xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))         
