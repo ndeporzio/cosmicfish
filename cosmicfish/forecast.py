@@ -734,7 +734,7 @@ class forecast:
         return
                 
     def print_P_table(self):
-        print("P_g with following corrections: " + self.psterms) 
+        print("P_g with following corrections: " + str(self.psterms)) 
         for zidx, zval in enumerate(self.z_steps): 
             print((("For z = {0:.2f},\t") + 
                    (" P(0.2h, 0) = {1:.2f}\n")).format(zval, 
