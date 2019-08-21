@@ -293,9 +293,9 @@ def gen_k_table(volume, h, k_max, k_steps, scaling='log'):
     #                      k_steps)                                              
 
     if scaling=='linear': 
-        k_table = np.linspace(cf.K_MIN, k_max, k_steps) 
+        k_table = np.linspace(cf.K_MIN, cf.K_MAX, k_steps) 
     elif scaling=='log':  
-        k_table = np.logspace(cf.K_MIN, cf.K_MAX, k_steps)
+        k_table = np.geomspace(cf.K_MIN, cf.K_MAX, k_steps)
     return k_table #Units [Mpc^-1]
 
 def set_sky_cover(fsky=None, fcoverage_deg=None): 
