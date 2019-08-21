@@ -89,9 +89,8 @@ class forecast:
         self.Pm = [self.spectra_mid[zidx].ps_table 
                    for zidx, zval in enumerate(self.z_steps)]
 
-        # Generate variation spectra at each z    
-        self.A_s_high, self.A_s_low = self.generate_spectra('A_s') 
-        self.n_s_high, self.n_s_low = self.generate_spectra('n_s')
+        # Generate variation spectra at each z   
+ 
         self.omega_b_high, self.omega_b_low = self.generate_spectra('omega_b')
         self.omega_cdm_high, self.omega_cdm_low = self.generate_spectra(
                                                       'omega_cdm')
@@ -108,6 +107,7 @@ class forecast:
         # Calculate centered derivatives about fiducial cosmo at each z 
 
         if analytic_A_s==False: 
+            self.A_s_high, self.A_s_low = self.generate_spectra('A_s') 
             self.dPdA_s, self.dlogPdA_s = cf.dPs_array(self.A_s_low, 
                 self.A_s_high, self.fid['A_s']*self.dstep) 
         else: 
@@ -115,6 +115,7 @@ class forecast:
                 for k in self.k_table] for z in self.z_steps] # Analytic form
 
         if analytic_n_s==False: 
+            self.n_s_high, self.n_s_low = self.generate_spectra('n_s')
             self.dPdn_s, self.dlogPdn_s = cf.dPs_array(self.n_s_low, 
                 self.n_s_high, self.fid['n_s']*self.dstep) 
         else:  
