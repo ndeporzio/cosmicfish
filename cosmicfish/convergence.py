@@ -75,19 +75,18 @@ class convergence:
 
     def plot_ps(self, z_index=0, mu_index=0, xscale='linear', plotdata=False):
         sns.set() 
-        sns.set_palette("Blues_d", n_colors=len(self.variants)+1)
+        sns.set_palette("Blues_d", n_colors=len(self.varyfactors)+1)
         plt.figure(figsize=(15, 7.5))
 
         ax1 = plt.subplot(1, 2, 1)
         for idx, fcst in enumerate(self.forecasts):
             data = np.array(fcst.Pg)
-            plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'\%') 
+            plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'%') 
             ax1.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel)
-        ax1.set_title(r'$P_g$ for z={:.3f}, $\mu$={0.2f}'.format(
+        ax1.set_title(r'$P_g$ for z={:.3f}, $\mu$={:0.2f}'.format(
             self.z_steps[z_index], np.arange(-1, 1, self.mu_step)[mu_index]))
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
         ax1.set_ylabel(r'$P_g$ [Mpc$^3$]')
-        ax1.set_xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))
         ax1.legend()
         ax1.set_xscale(xscale) 
 
@@ -95,34 +94,33 @@ class convergence:
         for idx, fcst in enumerate(self.forecasts):                             
             data =  np.log(fcst.Pg)                                            
             plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'\%') 
-            ax1.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel) 
-        ax1.set_title(r'$log(P_g)$ for z={:.3f}, $\mu$={0.2f}'.format(               
+            ax2.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel) 
+        ax2.set_title(r'$log(P_g)$ for z={:.3f}, $\mu$={:0.2f}'.format(               
             self.z_steps[z_index], np.arange(-1, 1, self.mu_step)[mu_index]))    
-        ax1.set_xlabel(r'k [Mpc$^{-1}$]')                                       
-        ax1.set_ylabel(r'log($P_g$) [log(Mpc$^3$)]')                                      
-        ax1.set_xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))         
-        ax1.legend()                                                            
-        ax1.set_xscale(xscale) 
+        ax2.set_xlabel(r'k [Mpc$^{-1}$]')                                       
+        ax2.set_ylabel(r'log($P_g$) [log(Mpc$^3$)]')                                      
+        ax2.legend()                                                            
+        ax2.set_xscale(xscale) 
+
         plt.show()
 
     def plot_dps(self, paramname, z_index=0, mu_index=0, xscale='linear', 
         plotdata=False):  
 
         sns.set()                                                               
-        sns.set_palette("Blues_d", n_colors=len(self.variants)+1)               
+        sns.set_palette("Blues_d", n_colors=len(self.varyfactors)+1)               
         plt.figure(figsize=(15, 7.5))                                           
                                                                                 
         for idx, fcst in enumerate(self.forecasts):                             
             data = np.array(getattr(fcst, 'dlogPd'+paramname))                                            
-            plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'\%') 
+            plotlabel = (r'$\Delta $' + str(100.*self.varyfactors[idx]) + r'%') 
             plt.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel) 
         plt.title((r'$dlogP_g/d$'
-            +paramname+r' for z={:.3f}, $\mu$={0.2f}').format(               
+            +paramname+r' for z={:.3f}, $\mu$={:0.2f}').format(               
                 self.z_steps[z_index], 
                 np.arange(-1, 1, self.mu_step)[mu_index]))    
         plt.xlabel(r'k [Mpc$^{-1}$]')                                       
         plt.ylabel(r'$dlogP_g/d$'+paramname+r' [Mpc$^3$]')                                      
-        plt.xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))         
         plt.legend()                                                            
         plt.xscale(xscale)                                                  
                                                                                 
@@ -132,7 +130,7 @@ class convergence:
         plotdata=False):                                                        
                                                                                 
         sns.set()                                                               
-        sns.set_palette("Blues_d", n_colors=len(self.variants)+1)               
+        sns.set_palette("Blues_d", n_colors=len(self.varyfactors)+1)               
         plt.figure(figsize=(15, 7.5))                                           
                                                                                 
         for idx, fcst in enumerate(self.forecasts[0:-1]):
@@ -141,15 +139,14 @@ class convergence:
             datalow = np.array(
                 getattr(self.forecasts[idx], 'dlogPd'+paramname)) 
             data = datahigh - datalow                               
-            plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'\%') 
+            plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'%') 
             plt.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel) 
         plt.title((r'\Delta $dlogP_g/d$'                                               
-            +paramname+r' for z={:.3f}, $\mu$={0.2f}').format(                  
+            +paramname+r' for z={:.3f}, $\mu$={:0.2f}').format(                  
                 self.z_steps[z_index],                                          
                 np.arange(-1, 1, self.mu_step)[mu_index]))                      
         plt.xlabel(r'k [Mpc$^{-1}$]')                                           
         plt.ylabel(r'\Delta $dlogP_g/d$'+paramname+r' [Mpc$^3$]')                                          
-        plt.xlim(0, 1.1 * np.max(self.spectra[z_index][0].k_table))             
         plt.legend()                                                            
         plt.xscale(xscale)                                                      
                                                                                 
