@@ -6,10 +6,7 @@ import cosmicfish as cf
 def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b1L, alphak2):                     
     k_fs = cf.kfs(omega_ncdm, h,  z)
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
-    q = (cf.RSD_Q_NUMERATOR_FACTOR * k) / k_fs
-    DeltaL = ((cf.RSD_DELTA_L_NUMERATOR_FACTOR * omega_ncdm)                    
-              / (omega_b + omega_cdm))                                          
-    g = 1. + (DeltaL / 2.) * np.tanh(1. + (np.log(q) / cf.RSD_DELTA_Q))                 
+    g = cf.ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm)                   
     b1tilde = np.sqrt(1.+z) *  (1. + b1L * g + alphak2 * np.power(k, 2.))                                                     
                                                                                 
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
@@ -68,7 +65,7 @@ def H(omega_b, omega_cdm, omega_ncdm, h, z):
     # Returns H in units of m/s/Mpc                                             
     omega_m = omega_b + omega_cdm + omega_ncdm                                  
     omega_lambda = np.power(h, 2.) - omega_m                                    
-    Hval = 1000.*100.*h*np.sqrt(omega_m * np.power(1. + z, 3.) + omega_lambda)  
+    Hval = 1000.* 100. * np.sqrt(omega_m * np.power(1. + z, 3.) + omega_lambda)  
     return Hval 
 
 def Da(omega_b, omega_cdm, omega_ncdm, h, z):                                
