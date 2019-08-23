@@ -632,12 +632,11 @@ class forecast:
                             * np.power(self.k_table[kidx], 2.)
                             * (1. / (8.  * np.power(np.pi, 2)))
                             * np.power((self.n_densities[zidx] 
-                                        * self.Pm[zidx][kidx])
+                                        * self.Pg[zidx][kidx])
                                        / (self.n_densities[zidx] 
-                                          * self.Pm[zidx][kidx] + 1.), 
+                                          * self.Pg[zidx][kidx] + 1.), 
                                        2.) 
-                            * Volume
-                            * np.power(self.k_table[kidx], 2.))
+                            * Volume)
                             
                 for zidx, zval in enumerate(self.z_steps): 
                     val = 0 
