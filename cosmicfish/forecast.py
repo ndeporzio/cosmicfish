@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -49,6 +50,7 @@ class forecast:
         self.alphak2_fid = self.fid['alphak2'] 
 
         self.n_densities = np.zeros(len(dNdz))
+        self.pandas_cmb_fisher = None
 
         if self.forecast=="relic": 
             self.T_ncdm_fid = self.fid['T_ncdm'] # Units [T_cmb]
@@ -826,4 +828,162 @@ class forecast:
             print((("For z = {0:.2f},\t") + 
                    (" P(0.2h, 0) = {1:.2f}\n")).format(zval, 
                         self.Pg[zidx][k_index][mu_index]))
+
+
+    def load_cmb_fisher(self, fisherpath=("~/Desktop/CMBS4_Fisher.dat")): 
+        # Parameter ordering: omega_b, omega_cdm, n_s, A_s, tau_reio, H_0, 
+        # M_ncdm 
+
+        fmat = pd.read_csv(fisherpath, sep='\t', header=0)
+        fmat.iloc[:,5] *= 100. # Change of variables H0->h
+        fmat.iloc[5,:] *= 100. # Change of variables H0->h
+        fmat.iloc[:,6] *= 3. # Change of variables M->m
+        fmat.iloc[6,:] *= 3. # Change of variables M->m
+        fmat = fmat.rename(index=str, columns={"H_0": "h", "M_ncdm": "m_ncdm"})
+
+        self.numpy_cmb_fisher =  np.array(fmat)
+        self.pandas_cmb_fisher = fmat
+
+        self.numpy_cmb_covariance = np.linalg.inv(self.pandas_cmb_fisher)
+        self.pandas_cmb_covariance = pd.DataFrame(np.linalg.inv(                 
+            self.pandas_cmb_fisher), columns=self.pandas_cmb_fisher.columns) 
+
+        print("The following CMB Fisher matrix was loaded: ")
+        print(self.pandas_cmb_fisher) 
+
+    def export_matrices(self): 
+        if self.fisher==[]:  
+            print("No LSS Fisher matrix has been generated. Please execute \
+                    the `forecast.gen_fisher()` function.`") 
+        else:  
+            lssfisher = pd.DataFrame(self.fisher,  columns=[
+                'omega_b', 
+                'omega_cdm', 
+                'n_s', 
+                'A_s', 
+                'tau_reio', 
+                'h', 
+                'M_ncdm', 
+                'sigma_fog', 
+                'bLbar', 
+                'alpha_k2'])
+            lssfisher.iloc[:,7] *= 1e3 #To correct units on sigma_fog
+            lssfisher.iloc[7,:] *= 1e3 #To correct units on sigam_fog
+
+            lssfisher.iloc[:,6] *= 3. # total to single neutrino mass
+            lssfisher.iloc[6,:] *= 3. # total to single neutrino mass
+            lssfisher = lssfisher.rename(index=str, columns={
+                "M_ncdm": "m_ncdm"})
+            
+            self.pandas_lss_fisher = lssfisher
+            self.numpy_lss_fisher = np.array(lssfisher)
+
+            nonzeroidx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+            nonzeroparams = [              
+                'omega_b',                                                      
+                'omega_cdm',                                                    
+                'n_s',                                                          
+                'A_s',                                                          
+                'tau_reio',                                                     
+                'h',                                                            
+                'm_ncdm',                                                       
+                'sigma_fog',                                                    
+                'bLbar',                                                        
+                'alpha_k2']
+
+            if self.use_rsd==False: 
+                nonzeroparams.remove('bLbar')
+                nonzeroparams.remove('alpha_k2') 
+                nonzeroidx.remove(8)
+                nonzeroidx.remove(9)
+
+            if self.use_fog==False:
+                nonzeroparams.remove('sigma_fog')
+                nonzeroidx.remove(7)
+    
+            self.pandas_lss_covariance = pd.DataFrame(np.linalg.inv(
+                lssfisher.iloc[nonzeroidx, nonzeroidx]), 
+                columns=nonzeroparams)
+            self.numpy_lss_covariance = np.array(np.linalg.inv(
+                lssfisher.iloc[nonzeroidx, nonzeroidx]))
+
+        if self.pandas_cmb_fisher is not None: 
+            fullfisher = np.zeros((10, 10))
+            for i in np.arange(10): 
+                for j in np.arange(10):
+                    if (i<7) and (j<7): 
+                        fullfisher[i, j] = (self.numpy_lss_fisher[i, j] 
+                            + self.numpy_cmb_fisher[i, j]) 
+                    else:  
+                        fullfisher[i, j] = self.numpy_lss_fisher[i, j]
+
+        self.pandas_full_fisher = pd.DataFrame(fullfisher, columns=[              
+                'omega_b',                                                      
+                'omega_cdm',                                                    
+                'n_s',                                                          
+                'A_s',                                                          
+                'tau_reio',                                                     
+                'h',                                                            
+                'M_ncdm',                                                       
+                'sigma_fog',                                                    
+                'bLbar',                                                        
+                'alpha_k2'])
+        self.numpy_full_fisher = fullfisher   
+        
+        self.pandas_full_covariance = pd.DataFrame(np.linalg.inv(
+            self.pandas_full_fisher.iloc[nonzeroidx, nonzeroidx]), 
+            columns = nonzeroparams)
+        self.numpy_full_covariance = np.linalg.inv(
+            self.numpy_full_fisher[np.ix_(nonzeroidx, nonzeroidx)])
+
+        print("Pandas Fisher Matrices: ")
+        print(self.pandas_cmb_fisher)                                            
+        print(self.pandas_lss_fisher)                                            
+        print(self.pandas_full_fisher)  
+                    
+        outnames=[
+                '# omega_b',                                                    
+                'omega_cdm',                                                    
+                'n_s',                                                          
+                'A_s',                                                          
+                'tau_reio',                                                     
+                'h',                                                            
+                'm_0']
+        if self.use_fog==True:
+            outnames.append('sigma_fog')
+        if self.use_rsd==True:
+            outnames.append('bLbar')
+            outnames.append('alpha_k2') 
+
+        self.pandas_full_covariance.to_csv(
+            "~/Desktop/inv_fullfisher.mat", 
+            sep="\t", 
+            index=False,
+            header=outnames) 
+        self.pandas_cmb_covariance.to_csv(                                     
+            "~/Desktop/inv_cmbfisher.mat",                                     
+            sep="\t",                                                           
+            index=False,                                                        
+            header=['# omega_b', 'omega_cdm', 'n_s', 'A_s', 'tau_reio', 'h', 
+                'm_0'])
+        self.pandas_lss_covariance.to_csv(                                     
+            "~/Desktop/inv_lssfisher.mat",                                     
+            sep="\t",                                                           
+            index=False,                                                        
+            header=outnames)
+
+# Take care of singular  matrix  when you   turn  of RSD, FOG
+
+ 
+
+
+
+
+
+
+
+
+
+
+
 
