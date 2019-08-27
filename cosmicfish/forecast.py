@@ -65,28 +65,34 @@ class forecast:
 
         self.fsky, self.fcoverage_deg = cf.set_sky_cover(fsky,  fcoverage_deg)
             
-        self.psterms = []  
+        self.psterms = [] 
+
+        # Generate tables
+        self.k_table = [0] * len(self.z_steps)
+        for i in range(len(self.z_steps)):
+            V = self.V(i)  
+            self.k_table[i] = cf.gen_k_table(
+                volume=V, 
+                z=self.z_steps[i],
+                h=self.h_fid, 
+                n_s=self.n_s_fid,
+                k_steps=100)           
 
 
     def gen_pm(self):  
         if 'pm' not in self.psterms: 
             self.psterms.append('pm') 
 
-        analytic_A_s = True
-        analytic_n_s = True
-
         # Generate spectra at each z for fid cosmo
         self.spectra_mid = [cf.spectrum(
                                 cf.generate_data(
                                     dict(self.fid,      
-                                         **{'z_pk' : j}),
+                                         **{'z_pk' : zval}),
                                     self.classdir,       
                                     self.datastore)[0:-20],
-                                self.z_steps,
-                                fsky=self.fsky) 
-                            for j in self.z_steps]
-        self.k_table = self.spectra_mid[0].k_table 
-        # ^^^ All spectra should have same k_table
+                                fsky=self.fsky,
+                                k_table=self.k_table[zidx]) 
+                            for zidx, zval in enumerate(self.z_steps)]
 
         self.Pm = [self.spectra_mid[zidx].ps_table 
                    for zidx, zval in enumerate(self.z_steps)]
@@ -108,21 +114,23 @@ class forecast:
 
         # Calculate centered derivatives about fiducial cosmo at each z 
 
-        if analytic_A_s==False: 
+        if cf.ANALYTIC_A_S==False: 
             self.A_s_high, self.A_s_low = self.generate_spectra('A_s') 
             self.dPdA_s, self.dlogPdA_s = cf.dPs_array(self.A_s_low, 
                 self.A_s_high, self.fid['A_s']*self.dstep) 
         else: 
             self.dlogPdA_s = [[(1. / self.A_s_fid) 
-                for k in self.k_table] for z in self.z_steps] # Analytic form
+                for kidx, kval in enumerate(self.k_table[zidx])] 
+                for zidx, zval in enumerate(self.z_steps)] # Analytic form
 
-        if analytic_n_s==False: 
+        if cf.ANALYTIC_N_S==False: 
             self.n_s_high, self.n_s_low = self.generate_spectra('n_s')
             self.dPdn_s, self.dlogPdn_s = cf.dPs_array(self.n_s_low, 
                 self.n_s_high, self.fid['n_s']*self.dstep) 
         else:  
-            self.dlogPdn_s = [[np.log( k / self.kp ) 
-                for k in self.k_table] for z in self.z_steps] # Analytic form
+            self.dlogPdn_s = [[np.log( kval / self.kp ) 
+                for kidx, kval in enumerate(self.k_table[zidx])] 
+                for zidx, zval in enumerate(self.z_steps)] # Analytic form
 
         self.dPdomega_b, self.dlogPdomega_b = cf.dPs_array(
             self.omega_b_low, 
@@ -149,21 +157,25 @@ class forecast:
             self.dPdM_ncdm *= (1./3.) 
             self.dlogPdM_ncdm *= (1./3.)    
             # ^^^CAUTION. Carefule of factor of 3. .  
-            self.dPdomega_ncdm = [np.array(self.dPdM_ncdm[k]) 
-                * cf.NEUTRINO_SCALE_FACTOR for k in range(len(self.z_steps))]
-            self.dlogPdomega_ncdm = [np.array(self.dlogPdM_ncdm[k]) 
-                * cf.NEUTRINO_SCALE_FACTOR for k in range(len(self.z_steps))]
+            self.dPdomega_ncdm = [
+                np.array(self.dPdM_ncdm[zidx]) * cf.NEUTRINO_SCALE_FACTOR 
+                for zidx, zval in enumerate(self.z_steps)]
+            self.dlogPdomega_ncdm = [
+                np.array(self.dlogPdM_ncdm[zidx]) * cf.NEUTRINO_SCALE_FACTOR 
+                for zidx, zval in enumerate(self.z_steps)]
         elif self.forecast=="relic": 
             self.dPdT_ncdm, self.dlogPdT_ncdm = cf.dPs_array(
                 self.T_ncdm_low, 
                 self.T_ncdm_high, 
                 self.fid['T_ncdm']*self.dstep)
-            self.dPdomega_ncdm = [np.array(self.dPdT_ncdm[k]) 
+            self.dPdomega_ncdm = [
+                np.array(self.dPdT_ncdm[zidx]) 
                 / domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.m_ncdm_fid)
-                for k in range(len(self.z_steps))]
-            self.dlogPdomega_ncdm = [np.array(self.dlogPdT_ncdm[k]) 
+                for zidx in enumerate(self.z_steps)]
+            self.dlogPdomega_ncdm = [
+                np.array(self.dlogPdT_ncdm[zidx]) 
                 / domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.m_ncdm_fid)
-                for k in range(len(self.z_steps))]
+                for zidx, zval in enumerate(self.z_steps)]
  
     def gen_rsd(self, mu): 
         '''Given mu, creates len(z_steps) array. Each elem is len(k_table).'''
@@ -179,7 +191,7 @@ class forecast:
                     'mu' : mu}
 
         self.RSD = [[cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval})) 
-            for kval in self.k_table] 
+            for kidx, kval in enumerate(self.k_table[zidx])] 
             for zidx, zval in enumerate(self.z_steps)]   
 
         self.dlogRSDdomega_b = [[cf.derivative(
@@ -187,7 +199,7 @@ class forecast:
             'omega_b', 
             self.dstep,
             **dict(fiducial, **{'z' : zval, 'k' :  kval}))
-            for kval in self.k_table] 
+            for kidx, kval in enumerate(self.k_table[zidx])] 
             for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogRSDdomega_cdm = [[cf.derivative(
@@ -195,7 +207,7 @@ class forecast:
             'omega_cdm', 
             self.dstep,  
             **dict(fiducial, **{'z' : zval, 'k' :  kval})) 
-            for kval in self.k_table]                                           
+            for kidx, kval in enumerate(self.k_table[zidx])]                                           
             for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogRSDdomega_ncdm = [[cf.derivative(                                  
@@ -203,7 +215,7 @@ class forecast:
             'omega_ncdm',                                                        
             self.dstep,                                                         
             **dict(fiducial, **{'z' : zval, 'k' :  kval})) 
-            for kval in self.k_table]                                           
+            for kidx, kval in enumerate(self.k_table[zidx])]                                           
             for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogRSDdM_ncdm = (np.array(self.dlogRSDdomega_ncdm) 
@@ -214,7 +226,7 @@ class forecast:
             'h',                                                       
             self.dstep,                                                         
             **dict(fiducial, **{'z' : zval, 'k' :  kval})) 
-            for kval in self.k_table]                                           
+            for kidx, kval in enumerate(self.k_table[zidx])]                                           
             for zidx, zval in enumerate(self.z_steps)]   
 
         self.dlogRSDdb1L = [[cf.derivative(                                       
@@ -222,7 +234,7 @@ class forecast:
             'b1L',                                                                
             self.dstep,                                                         
             **dict(fiducial, **{'z' : zval, 'k' :  kval}))                                                  
-            for kval in self.k_table]                                           
+            for kidx, kval in enumerate(self.k_table[zidx])]                                           
             for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogRSDdalphak2 = [[cf.derivative(                                       
@@ -230,7 +242,7 @@ class forecast:
             'alphak2',                                                                
             self.dstep,                                                         
             **dict(fiducial, **{'z' : zval, 'k' :  kval}))                                                  
-            for kval in self.k_table]                                           
+            for kidx, kval in enumerate(self.k_table[zidx])]                                           
             for zidx, zval in enumerate(self.z_steps)]  
 
     def gen_fog(self, mu):
@@ -245,37 +257,37 @@ class forecast:
                     'mu' : mu,
                     'sigma_fog_0' : self.sigma_fog_0_fid}
             
-
         self.FOG = [[cf.fog(**dict(fiducial, **{'z' : zval, 'k' :  kval})) 
-            for kval in self.k_table] for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])] 
+            for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogFOGdomega_b = [[cf.derivative(cf.log_fog, 'omega_b', 
             self.dstep, **dict(fiducial, **{'z' : zval, 'k' :  kval}))                       
-            for kval in self.k_table]                                           
-            for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])]                                           
+            for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogFOGdomega_cdm = [[cf.derivative(cf.log_fog, 'omega_cdm',           
             self.dstep, **dict(fiducial, **{'z' : zval, 'k' :  kval}))           
-            for kval in self.k_table]                                           
-            for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])]                                           
+            for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogFOGdomega_ncdm = [[cf.derivative(cf.log_fog, 'omega_ncdm',           
             self.dstep, **dict(fiducial, **{'z' : zval, 'k' :  kval}))           
-            for kval in self.k_table]                                           
-            for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])]                                           
+            for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogFOGdM_ncdm = (np.array(self.dlogFOGdomega_ncdm) 
             / cf.NEUTRINO_SCALE_FACTOR) 
 
         self.dlogFOGdh = [[cf.derivative(cf.log_fog, 'h', self.dstep,           
             **dict(fiducial, **{'z' : zval, 'k' :  kval}))                      
-            for kval in self.k_table]                                           
-            for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])]                                           
+            for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogFOGdsigmafog0 = [[cf.derivative(cf.log_fog, 'sigma_fog_0',     
             self.dstep, **dict(fiducial, **{'z' : zval, 'k' :  kval}))           
-            for kval in self.k_table]                                           
-            for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])]                                           
+            for zidx, zval in enumerate(self.z_steps)]
 
     def gen_ap(self):
 
@@ -292,26 +304,31 @@ class forecast:
                     'h_fid' : self.h_fid}                                           
 
         self.AP = [[cf.ap(**dict(fiducial, **{'z' : zval, 'z_fid' : zval}))
-            for kval in self.k_table] for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])] 
+            for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogAPdomega_b = [[cf.derivative(cf.log_ap, 'omega_b', self.dstep,             
             **dict(fiducial, **{'z' : zval, 'z_fid' : zval}))                    
-            for kval in self.k_table] for zval in self.z_steps] 
+            for kidx, kval in enumerate(self.k_table[zidx])] 
+            for zidx, zval in enumerate(self.z_steps)] 
 
         self.dlogAPdomega_cdm = [[cf.derivative(cf.log_ap, 'omega_cdm', 
             self.dstep, **dict(fiducial, **{'z' : zval, 'z_fid' : zval}))                    
-            for kval in self.k_table] for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])] 
+            for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogAPdomega_ncdm = [[cf.derivative(cf.log_ap, 'omega_ncdm', 
             self.dstep, **dict(fiducial, **{'z' : zval, 'z_fid' : zval}))                    
-            for kval in self.k_table] for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])] 
+            for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogAPdM_ncdm = (np.array(self.dlogAPdomega_ncdm) 
             / cf.NEUTRINO_SCALE_FACTOR) 
 
         self.dlogAPdh = [[cf.derivative(cf.log_ap, 'h', self.dstep,             
             **dict(fiducial, **{'z' : zval, 'z_fid' : zval}))                   
-            for kval in self.k_table] for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])] 
+            for zidx, zval in enumerate(self.z_steps)]
                             
     def gen_cov(self, mu):
 
@@ -322,7 +339,8 @@ class forecast:
             self.psterms.append('cov') 
 
         self.COV = [[cf.cov() 
-            for kval in self.k_table] for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])] 
+            for zidx, zval in enumerate(self.z_steps)]
 
         fiducial = {
             'omega_b' : self.omega_b_fid, 
@@ -332,35 +350,43 @@ class forecast:
 
         dHdomegab = [[cf.derivative(cf.H, 'omega_b', self.dstep,             
             **dict(fiducial, **{'z' : zval}))                    
-            for kval in self.k_table] for zval in self.z_steps] 
+            for kidx, kval in enumerate(self.k_table[zidx])] 
+            for zidx, zval in enumerate(self.z_steps)] 
  
         dHdomegacdm = [[cf.derivative(cf.H, 'omega_cdm', self.dstep,                
             **dict(fiducial, **{'z' : zval}))                                    
-            for kval in self.k_table] for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])] 
+            for zidx, zval in enumerate(self.z_steps)]
 
         dHdomegancdm = [[cf.derivative(cf.H, 'omega_ncdm', self.dstep,                
             **dict(fiducial, **{'z' : zval}))                                    
-            for kval in self.k_table] for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])] 
+            for zidx, zval in enumerate(self.z_steps)]
 
         dHdh = [[cf.derivative(cf.H, 'h', self.dstep,                
             **dict(fiducial, **{'z' : zval}))                                    
-            for kval in self.k_table] for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])] 
+            for zidx, zval in enumerate(self.z_steps)]
 
         dDadomegab = [[cf.derivative(cf.Da, 'omega_b', self.dstep,                
-            **dict(fiducial, **{'z' : zval}))                                    
-            for kval in self.k_table] for zval in self.z_steps]                 
+            **dict(fiducial, **{'z' : zval}))                   
+            for kidx, kval in enumerate(self.k_table[zidx])]                    
+            for zidx, zval in enumerate(self.z_steps)]                 
                                                                                 
         dDadomegacdm = [[cf.derivative(cf.Da, 'omega_cdm', self.dstep,            
-            **dict(fiducial, **{'z' : zval}))                                    
-            for kval in self.k_table] for zval in self.z_steps]                 
+            **dict(fiducial, **{'z' : zval}))         
+            for kidx, kval in enumerate(self.k_table[zidx])]                    
+            for zidx, zval in enumerate(self.z_steps)]                           
                                                                                 
         dDadomegancdm = [[cf.derivative(cf.Da, 'omega_ncdm', self.dstep,          
-            **dict(fiducial, **{'z' : zval}))                                   
-            for kval in self.k_table] for zval in self.z_steps]                 
+            **dict(fiducial, **{'z' : zval}))                   
+            for kidx, kval in enumerate(self.k_table[zidx])]                    
+            for zidx, zval in enumerate(self.z_steps)]                
                                                                                 
         dDadh = [[cf.derivative(cf.Da, 'h', self.dstep,                           
             **dict(fiducial, **{'z' : zval}))                                    
-            for kval in self.k_table] for zval in self.z_steps]  
+            for kidx, kval in enumerate(self.k_table[zidx])]                    
+            for zidx, zval in enumerate(self.z_steps)]
 
         fiducial = {
             'omega_b' : self.omega_b_fid,                                       
@@ -370,60 +396,63 @@ class forecast:
             'mu' : mu}
 
         dkdH = [[cf.cov_dkdH(**dict(fiducial, **{'z' : zval, 'k' : kval}))                                    
-            for kval in self.k_table] for zval in self.z_steps] 
+            for kidx, kval in enumerate(self.k_table[zidx])]                    
+            for zidx, zval in enumerate(self.z_steps)]
 
         dkdDa = [[cf.cov_dkdDa(**dict(fiducial, **{'z' : zval, 'k' : kval}))                        
-            for kval in self.k_table] for zval in self.z_steps]
+            for kidx, kval in enumerate(self.k_table[zidx])]                    
+            for zidx, zval in enumerate(self.z_steps)]
 
         dkdomegab = [[(
             dkdH[zidx][kidx] * dHdomegab[zidx][kidx]
             + dkdDa[zidx][kidx] * dDadomegab[zidx][kidx])
-            for kidx, kval in enumerate(self.k_table)] 
+            for kidx, kval in enumerate(self.k_table[zidx])]                    
             for zidx, zval in enumerate(self.z_steps)]
 
         dkdomegacdm = [[(                                                         
             dkdH[zidx][kidx] * dHdomegacdm[zidx][kidx]                            
             + dkdDa[zidx][kidx] * dDadomegacdm[zidx][kidx])                       
-            for kidx, kval in enumerate(self.k_table)]                          
+            for kidx, kval in enumerate(self.k_table[zidx])]                          
             for zidx, zval in enumerate(self.z_steps)] 
 
         dkdomegancdm = [[(                                                         
             dkdH[zidx][kidx] * dHdomegancdm[zidx][kidx]                            
             + dkdDa[zidx][kidx] * dDadomegancdm[zidx][kidx])                       
-            for kidx, kval in enumerate(self.k_table)]                          
+            for kidx, kval in enumerate(self.k_table[zidx])]                          
             for zidx, zval in enumerate(self.z_steps)]
 
         dkdh = [[(                                                         
             dkdH[zidx][kidx] * dHdh[zidx][kidx]                            
             + dkdDa[zidx][kidx] * dDadh[zidx][kidx])                       
-            for kidx, kval in enumerate(self.k_table)]                          
+            for kidx, kval in enumerate(self.k_table[zidx])]                          
             for zidx, zval in enumerate(self.z_steps)]
 
         H_fid = [cf.H(self.omega_b_fid, self.omega_cdm_fid, 
-            self.omega_ncdm_fid, self.h_fid, zval) for zval in self.z_steps]
+            self.omega_ncdm_fid, self.h_fid, zval) 
+            for zidx, zval in enumerate(self.z_steps)]
 
         dmudomegab = [[(
             (mu / kval) * dkdomegab[zidx][kidx] 
             + (mu / H_fid[zidx]) * dHdomegab[zidx][kidx])
-            for kidx, kval in enumerate(self.k_table)]
+            for kidx, kval in enumerate(self.k_table[zidx])]
             for zidx, zval in enumerate(self.z_steps)]
 
         dmudomegacdm = [[(                                                        
             (mu / kval) * dkdomegacdm[zidx][kidx]                                             
             + (mu / H_fid[zidx]) * dHdomegacdm[zidx][kidx])                                   
-            for kidx, kval in enumerate(self.k_table)]                          
+            for kidx, kval in enumerate(self.k_table[zidx])]                          
             for zidx, zval in enumerate(self.z_steps)]
 
         dmudomegancdm = [[(                                                        
             (mu / kval) * dkdomegancdm[zidx][kidx]                                             
             + (mu / H_fid[zidx]) * dHdomegancdm[zidx][kidx])                                   
-            for kidx, kval in enumerate(self.k_table)]                          
+            for kidx, kval in enumerate(self.k_table[zidx])]                          
             for zidx, zval in enumerate(self.z_steps)]
 
         dmudh = [[(                                                        
             (mu / kval) * dkdh[zidx][kidx]                                             
             + (mu / H_fid[zidx]) * dHdh[zidx][kidx])                                   
-            for kidx, kval in enumerate(self.k_table)]                          
+            for kidx, kval in enumerate(self.k_table[zidx])]                          
             for zidx, zval in enumerate(self.z_steps)]
 
         # Fix everything below: very redundant, slow, error prone
@@ -443,15 +472,15 @@ class forecast:
         dlogPdmu = (logP_mu_high - logP_mu_low) / (2. * self.dstep * mu) 
 
         # dlogPdk
-        dlogPdk = np.zeros((len(self.z_steps), len(self.k_table)))
+        dlogPdk = np.zeros((len(self.z_steps), len(self.k_table[0])))
         
         for zidx, zval in enumerate(self.z_steps): 
-            for kidx, kval in enumerate(self.k_table[1:-1]):
+            for kidx, kval in enumerate(self.k_table[zidx][1:-1]):
                 # Careful with this derivative definition, uneven spacing
                 dlogPdk[zidx][kidx+1] = ((logP_mid[zidx][kidx+2] 
                                           - logP_mid[zidx][kidx])
-                                         / (self.k_table[kidx+2]
-                                            - self.k_table[kidx]))
+                                         / (self.k_table[zidx][kidx+2]
+                                            - self.k_table[zidx][kidx]))
 
         # Careful with this approximation - is it appropriate? 
         for zidx, zval in enumerate(self.z_steps): 
@@ -476,131 +505,131 @@ class forecast:
 
         mu_vals = np.arange(-1., 1., mu_step)
         Pg = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdA_s = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdn_s = np.zeros(   
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdomega_b = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdomega_cdm = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdh = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdtau_reio = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdomega_ncdm = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdM_ncdm = np.zeros(                                            
-            (len(self.z_steps), len(self.k_table), len(mu_vals))) 
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
         dlogPdsigmafog = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdb1L = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdalphak2 = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))        
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))        
 
         for muidx, muval in enumerate(mu_vals):
             if self.use_rsd==True:  
                 self.gen_rsd(muval)
             else:  
                 self.RSD = [[1. 
-                    for kval in self.k_table] 
-                    for zval in self.z_steps]
+                    for kidx, kval in enumerate(self.k_table[zidx])] 
+                    for zidx, zval in enumerate(self.z_steps)]
                 self.dlogRSDdomega_b = [[0.
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps] 
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)] 
                 self.dlogRSDdomega_cdm = [[0.                                     
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps] 
-                self.dlogRSDdomega_ncdm = [[0.                                     
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]
-                self.dlogRSDdM_ncdm = [[0.                                  
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]
-                self.dlogRSDdh = [[0.                                  
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]
-                self.dlogRSDdb1L = [[0.                                  
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]
-                self.dlogRSDdalphak2 = [[0.                                  
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)] 
+                self.dlogRSDdomega_ncdm = [[0.                 
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                     
+                self.dlogRSDdM_ncdm = [[0.                     
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]              
+                self.dlogRSDdh = [[0.                          
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]         
+                self.dlogRSDdb1L = [[0.                        
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]           
+                self.dlogRSDdalphak2 = [[0.                    
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]               
 
             if self.use_fog==True:  
                 self.gen_fog(muval)
             else: 
                 self.FOG = [[1.                                                 
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]
-                self.dlogFOGdomega_b = [[0.                                     
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogFOGdomega_cdm = [[0.                                   
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogFOGdomega_ncdm = [[0.                                  
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogFOGdM_ncdm = [[0.                                      
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogFOGdh = [[0.                                           
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogFOGdsigmafog0 = [[0.                                     
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)] 
+                self.dlogFOGdomega_b = [[0.                    
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                  
+                self.dlogFOGdomega_cdm = [[0.                  
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                  
+                self.dlogFOGdomega_ncdm = [[0.                 
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                  
+                self.dlogFOGdM_ncdm = [[0.                     
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                  
+                self.dlogFOGdh = [[0.                          
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                  
+                self.dlogFOGdsigmafog0 = [[0.                  
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                    
 
             if self.use_ap==True: 
                 self.gen_ap()
             else: 
                 self.AP = [[1.                                                 
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]
-                self.dlogAPdomega_b = [[0.                                     
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogAPdomega_cdm = [[0.                                   
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogAPdomega_ncdm = [[0.                                  
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogAPdM_ncdm = [[0.                                      
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogAPdh = [[0.                                           
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)] 
+                self.dlogAPdomega_b = [[0.                     
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                 
+                self.dlogAPdomega_cdm = [[0.                   
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                 
+                self.dlogAPdomega_ncdm = [[0.                  
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                 
+                self.dlogAPdM_ncdm = [[0.                      
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                 
+                self.dlogAPdh = [[0.                           
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                 
 
             if self.use_cov==True: 
                 self.gen_cov(muval)
             else:
                 self.COV = [[1.                                                 
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]
-                self.dlogCOVdomega_b = [[0.                                      
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogCOVdomega_cdm = [[0.                                    
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogCOVdomega_ncdm = [[0.                                   
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogCOVdM_ncdm = [[0.                                       
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]                                   
-                self.dlogCOVdh = [[0.                                            
-                    for kval in self.k_table]                                   
-                    for zval in self.z_steps]
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)] 
+                self.dlogCOVdomega_b = [[0.                    
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                   
+                self.dlogCOVdomega_cdm = [[0.                  
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                   
+                self.dlogCOVdomega_ncdm = [[0.                 
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                   
+                self.dlogCOVdM_ncdm = [[0.                     
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                   
+                self.dlogCOVdh = [[0.                          
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                   
 
             for zidx, zval in enumerate(self.z_steps): 
+                for kidx, kval in enumerate(self.k_table[zidx]):
 
-                for kidx, kval in enumerate(self.k_table):
                     Pg[zidx][kidx][muidx] = ( 1.
                         * self.spectra_mid[zidx].ps_table[kidx] 
                         * self.RSD[zidx][kidx] 
@@ -706,18 +735,18 @@ class forecast:
         # Highly inefficient set of loops 
         for pidx1, p1 in enumerate(paramvec): 
             for pidx2, p2 in enumerate(paramvec):
-                integrand = np.zeros((len(self.z_steps), len(self.k_table)))
+                integrand = np.zeros((len(self.z_steps), len(self.k_table[0])))
                 integral = np.zeros(len(self.z_steps))
                 for zidx, zval in enumerate(self.z_steps):
                     Volume = self.V(zidx)
                     # print("For z = ", zval, ", V_eff = ", 
                     #       (Volume*self.h_fid)/(1.e9), " [h^{-1} Gpc^{3}]") 
-                    for kidx, kval in enumerate(self.k_table): # Center intgrl? 
+                    for kidx, kval in enumerate(self.k_table[zidx]): # Center intgrl? 
                         integrand[zidx][kidx] = np.sum( #Perform mu integral
                             mu_step 
                             * paramvec[pidx1][zidx][kidx]
                             * paramvec[pidx2][zidx][kidx]
-                            * np.power(self.k_table[kidx], 2.)
+                            * np.power(kval, 2.)
                             * (1. / (8.  * np.power(np.pi, 2)))
                             * np.power((self.n_densities[zidx] 
                                         * self.Pg[zidx][kidx])
@@ -728,12 +757,14 @@ class forecast:
                             
                 for zidx, zval in enumerate(self.z_steps): 
                     val = 0 
-                    for kidx, kval in enumerate(self.k_table[:-1]): # Center?
+                    for kidx, kval in enumerate(self.k_table[zidx][:-1]): 
+                        #Center?
                         #Approximating average in k_bin to integrate over k
                         val += (((integrand[zidx][kidx] 
                                   + integrand[zidx][kidx+1])
                                  / 2.)  
-                                * (self.k_table[kidx+1]-self.k_table[kidx]))
+                                * (self.k_table[zidx][kidx+1]
+                                    -self.k_table[zidx][kidx]))
                     integral[zidx] = val  
                 fisher[pidx1][pidx2] = np.sum(integral)
                 print("Fisher element (", pidx1, ", ", pidx2,") calculated...") 
@@ -743,32 +774,31 @@ class forecast:
         spectra_high = [cf.spectrum(                                            
                             cf.generate_data(                                   
                                 dict(self.fid,                                  
-                                     **{'z_pk' : j,                             
+                                     **{'z_pk' : zval,                             
                                      param : (1.+self.dstep)*self.fid[param]}), 
                                 self.classdir,                                  
                                 self.datastore)[0:-20],                         
-                                self.z_steps,
-                                self.fsky)                                   
-                        for j in self.z_steps]                                  
+                                self.fsky,
+                                k_table=self.k_table[zidx])                                   
+                        for zidx, zval in enumerate(self.z_steps)]                                  
         spectra_low = [cf.spectrum(                                             
-                           cf.generate_data(                                    
-                               dict(self.fid,                                   
-                                    **{'z_pk' : j,                              
+                            cf.generate_data(                                    
+                                dict(self.fid,                                   
+                                    **{'z_pk' : zval,                              
                                     param : (1.-self.dstep)*self.fid[param]}),  
-                               self.classdir,                                   
-                               self.datastore)[0:-20],                          
-                           self.z_steps,
-                           self.fsky)                                        
-                       for j in self.z_steps]                                   
+                                self.classdir,                                   
+                                self.datastore)[0:-20],                          
+                            self.fsky,
+                            k_table=self.k_table[zidx])                                        
+                       for zidx, zval in enumerate(self.z_steps)]                                   
         return spectra_high, spectra_low 
 
     def V(self, zidx):                                                          
-        if zidx==(len(self.z_steps)-1):                                         
-            zidx -=1                                                            
+        delta_z = self.z_steps[-1] - self.z_steps[-2] 
         omega_m = self.omega_b_fid + self.omega_cdm_fid + self.omega_ncdm_fid   
         omega_lambda = np.power(self.h_fid, 2.) - omega_m                       
-        zmax = self.z_steps[zidx+1]                                             
-        zmin = self.z_steps[zidx]                                               
+        zmax = self.z_steps[zidx]+(0.5 *  delta_z)                                              
+        zmin = self.z_steps[zidx]-(0.5 *  delta_z)                                                
         zsteps = 100.                                                           
         dz = zmin / zsteps                                                      
         z_table_max = np.arange(0., zmax, dz)                                   
@@ -816,9 +846,9 @@ class forecast:
                        n,                                                       
                        n2 / self.fcoverage_deg,                                 
                        n / self.fcoverage_deg,                                  
-                       self.spectra_mid[zidx].D_table[zidx],                    
-                       cf.DB_ELG / self.spectra_mid[zidx].D_table[zidx],
-                       self.k_table[k_index],
+                       self.spectra_mid[zidx].D,                    
+                       cf.DB_ELG / self.spectra_mid[zidx].D,
+                       self.k_table[zidx][k_index],
                        self.Pm[zidx][k_index]))            
         return
                 

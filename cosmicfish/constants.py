@@ -27,5 +27,7 @@ KP_PREFACTOR = 0.05
 
 DB_ELG = 0.84
 
-K_MAX = 0.2 # Units [Mpc^-1]
-K_MIN = 0.002 # Units [Mpc^-1]
+K_MAX_PREFACTOR = 0.2
+
+ANALYTIC_A_S = True
+ANALYTIC_N_S = True

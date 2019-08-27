@@ -7,7 +7,7 @@ from .io import correct_path
 
 class spectrum: 
    
-    def __init__(self, datadirectory, z_table, fsky=None): 
+    def __init__(self, datadirectory, fsky=None, k_table=None): 
 
         # While this spectrum is for a specific z value, how we bin z
         # in analysis determines V and thus range of k table. 
@@ -18,8 +18,8 @@ class spectrum:
         self.datapath = correct_path(datadirectory + "/test_tk.dat")
         self.background_data = correct_path(datadirectory 
                                             + "/test_background.dat")
-        self.z_table = z_table # Unitless 
         self.fsky = fsky # Unitless  
+        self.k_table=k_table
         #
         # Values read from CLASS output. 
         #
@@ -45,7 +45,7 @@ class spectrum:
         self.ps_table = None # Units of [Mpc^3]
         self.log_ps_table = None # Units of log([Mpc^3])
         self.class_pk = None # Units of [Mpc^3]
-        self.D_table = None # Unitless 
+        self.D = None # Unitless 
         # 
         # Import data 
         # 
@@ -58,17 +58,20 @@ class spectrum:
             self.h, 
             self.omega_b, 
             self.omega_cdm, 
-            self.z_table, 
+            self.z_pk, 
             self.N_ncdm, 
             self.T_ncdm, 
             self.m_ncdm, 
             c=cf.C, 
             fsky=self.fsky) #Units [Mpc^3]
-        self.k_table = cf.gen_k_table(
-            self.V, 
-            self.h, 
-            k_max=cf.K_MAX, 
-            k_steps=100) #Units [Mpc^-1]
+
+        if self.k_table is None:  
+            self.k_table = cf.gen_k_table(
+                volume=self.V, 
+                z=self.z_pk, 
+                h=self.h, 
+                n_s=self.n_s, 
+                k_steps=100) #Units [Mpc^-1]
         #
         #Derive power spectrum 
         #
@@ -85,8 +88,8 @@ class spectrum:
                               usecols=[0,20], 
                               names = ["z", "D"])
         interpolator = scipy.interpolate.interp1d(rawdata['z'], rawdata['D'])
-        self.D_table = interpolator(self.z_table)
-        #print(self.D_table) 
+        self.D = interpolator(self.z_pk)
+        #print(self.D) 
 
     def input(self): 
         with open(self.dataconfig) as f: 
