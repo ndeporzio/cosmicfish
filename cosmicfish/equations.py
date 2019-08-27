@@ -233,8 +233,8 @@ def btildebias(z, k, h, omega_b, omega_cdm, omega_ncdm, bLbar, alpha_2):
               + (alpha_2 * np.power(k, 2.)))                                    
     return btilde 
 
-def gen_V(h, omega_b, omega_cdm, z_table, N_ncdm, T_ncdm=None, m_ncdm=0,        
-          c=cf.C, fsky=None):                                               
+def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,        
+          c=cf.C, fsky=None, z_spacing=0.1):                                               
     # T_ncdm in units of [K]                                                    
     # m_ncdm in units of [eV]                                                   
     # c in units of [m*s^-1]                                                    
@@ -256,8 +256,8 @@ def gen_V(h, omega_b, omega_cdm, z_table, N_ncdm, T_ncdm=None, m_ncdm=0,
     omega_m = omega_b + omega_cdm + omega_chi # Unitless                        
     omega_lambda = np.power(h, 2.) - omega_m # Unitless                         
                                                                                 
-    zmax = z_table[-1]                                                          
-    zmin = z_table[-2]                                                          
+    zmax = z + (0.5 * z_spacing)                                                          
+    zmin = z - (0.5 * z_spacing)                                                            
     zsteps = 100.                                                               
     dz = zmin / zsteps                                                          
     z_table_max = np.arange(0., zmax, dz)                                       
@@ -280,14 +280,17 @@ def gen_V(h, omega_b, omega_cdm, z_table, N_ncdm, T_ncdm=None, m_ncdm=0,
     # Incorporate fsky into volume calculation.                                 
     return v # Units [Mpc^3]                                                    
                                                                                 
-def gen_k_table(volume, h, k_max, k_steps, scaling='log'):                                     
+def gen_k_table(volume, z, h, n_s, k_steps, scaling='log'):                                     
     # volume in units of [Mpc^3]                                                
     # returns k_table in units [Mpc^-1]                                         
 
     #print('k_min = ', (np.pi / h) * np.power(volume, -1./3.))
     #k_table = np.linspace((np.pi / h) * np.power(volume, -1./3.),               
     #                      k_max,                                                
-    #                      k_steps)                                              
+    #                      k_steps)       
+
+    kmin = h * np.power(volume, -1./3.) 
+    kmax = cf.K_MAX_PREFACTOR * np.power(1.+z, 2./(2.+n_s)) * h                                   
 
     if scaling=='linear': 
         k_table = np.linspace(cf.K_MIN, cf.K_MAX, k_steps) 
