@@ -68,7 +68,7 @@ class spectrum:
         if self.k_table is None:  
             self.k_table = cf.gen_k_table(
                 volume=self.V, 
-                z=self.z_pk 
+                z=self.z_pk, 
                 h=self.h, 
                 n_s=self.n_s, 
                 k_steps=100) #Units [Mpc^-1]

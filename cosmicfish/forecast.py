@@ -68,11 +68,11 @@ class forecast:
         self.psterms = [] 
 
         # Generate tables
-        self.k_table = np.zeros(len(self.z_steps))
+        self.k_table = [0] * len(self.z_steps)
         for i in range(len(self.z_steps)):
             V = self.V(i)  
             self.k_table[i] = cf.gen_k_table(
-                volume=self.V, 
+                volume=V, 
                 z=self.z_steps[i],
                 h=self.h_fid, 
                 n_s=self.n_s_fid,
@@ -83,9 +83,6 @@ class forecast:
         if 'pm' not in self.psterms: 
             self.psterms.append('pm') 
 
-        analytic_A_s = True
-        analytic_n_s = True
-
         # Generate spectra at each z for fid cosmo
         self.spectra_mid = [cf.spectrum(
                                 cf.generate_data(
@@ -94,7 +91,7 @@ class forecast:
                                     self.classdir,       
                                     self.datastore)[0:-20],
                                 fsky=self.fsky,
-                                k_table=self.k_table[jidx]) 
+                                k_table=self.k_table[zidx]) 
                             for zidx, zval in enumerate(self.z_steps)]
 
         self.Pm = [self.spectra_mid[zidx].ps_table 
@@ -117,7 +114,7 @@ class forecast:
 
         # Calculate centered derivatives about fiducial cosmo at each z 
 
-        if analytic_A_s==False: 
+        if cf.ANALYTIC_A_S==False: 
             self.A_s_high, self.A_s_low = self.generate_spectra('A_s') 
             self.dPdA_s, self.dlogPdA_s = cf.dPs_array(self.A_s_low, 
                 self.A_s_high, self.fid['A_s']*self.dstep) 
@@ -126,14 +123,14 @@ class forecast:
                 for kidx, kval in enumerate(self.k_table[zidx])] 
                 for zidx, zval in enumerate(self.z_steps)] # Analytic form
 
-        if analytic_n_s==False: 
+        if cf.ANALYTIC_N_S==False: 
             self.n_s_high, self.n_s_low = self.generate_spectra('n_s')
             self.dPdn_s, self.dlogPdn_s = cf.dPs_array(self.n_s_low, 
                 self.n_s_high, self.fid['n_s']*self.dstep) 
         else:  
             self.dlogPdn_s = [[np.log( kval / self.kp ) 
                 for kidx, kval in enumerate(self.k_table[zidx])] 
-                for zidx, zval in enumeraate(self.z_steps)] # Analytic form
+                for zidx, zval in enumerate(self.z_steps)] # Analytic form
 
         self.dPdomega_b, self.dlogPdomega_b = cf.dPs_array(
             self.omega_b_low, 
@@ -508,29 +505,29 @@ class forecast:
 
         mu_vals = np.arange(-1., 1., mu_step)
         Pg = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdA_s = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdn_s = np.zeros(   
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdomega_b = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdomega_cdm = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdh = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdtau_reio = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdomega_ncdm = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdM_ncdm = np.zeros(                                            
-            (len(self.z_steps), len(self.k_table), len(mu_vals))) 
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
         dlogPdsigmafog = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdb1L = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdalphak2 = np.zeros(
-            (len(self.z_steps), len(self.k_table), len(mu_vals)))        
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))        
 
         for muidx, muval in enumerate(mu_vals):
             if self.use_rsd==True:  
@@ -632,6 +629,7 @@ class forecast:
 
             for zidx, zval in enumerate(self.z_steps): 
                 for kidx, kval in enumerate(self.k_table[zidx]):
+
                     Pg[zidx][kidx][muidx] = ( 1.
                         * self.spectra_mid[zidx].ps_table[kidx] 
                         * self.RSD[zidx][kidx] 
@@ -737,7 +735,7 @@ class forecast:
         # Highly inefficient set of loops 
         for pidx1, p1 in enumerate(paramvec): 
             for pidx2, p2 in enumerate(paramvec):
-                integrand = np.zeros((len(self.z_steps), len(self.k_table)))
+                integrand = np.zeros((len(self.z_steps), len(self.k_table[0])))
                 integral = np.zeros(len(self.z_steps))
                 for zidx, zval in enumerate(self.z_steps):
                     Volume = self.V(zidx)
@@ -850,7 +848,7 @@ class forecast:
                        n / self.fcoverage_deg,                                  
                        self.spectra_mid[zidx].D,                    
                        cf.DB_ELG / self.spectra_mid[zidx].D,
-                       self.k_table[k_index],
+                       self.k_table[zidx][k_index],
                        self.Pm[zidx][k_index]))            
         return
                 
