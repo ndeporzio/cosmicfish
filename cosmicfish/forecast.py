@@ -472,15 +472,15 @@ class forecast:
         dlogPdmu = (logP_mu_high - logP_mu_low) / (2. * self.dstep * mu) 
 
         # dlogPdk
-        dlogPdk = np.zeros((len(self.z_steps), len(self.k_table)))
+        dlogPdk = np.zeros((len(self.z_steps), len(self.k_table[0])))
         
         for zidx, zval in enumerate(self.z_steps): 
             for kidx, kval in enumerate(self.k_table[zidx][1:-1]):
                 # Careful with this derivative definition, uneven spacing
                 dlogPdk[zidx][kidx+1] = ((logP_mid[zidx][kidx+2] 
                                           - logP_mid[zidx][kidx])
-                                         / (self.k_table[kidx+2]
-                                            - self.k_table[kidx]))
+                                         / (self.k_table[zidx][kidx+2]
+                                            - self.k_table[zidx][kidx]))
 
         # Careful with this approximation - is it appropriate? 
         for zidx, zval in enumerate(self.z_steps): 
