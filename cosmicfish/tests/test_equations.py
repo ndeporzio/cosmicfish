@@ -119,6 +119,23 @@ class TestEquations(TestCase):
                                                                                 
         self.assertTrue(np.isclose(TEST, EVAL, RTOL, ATOL))
 
+    def test_ap_2(self): 
+
+        omega_b_nf = 1.1 * omega_b
+        omega_cdm_nf = 1.1 * omega_cdm
+        omega_ncdm_nf = 1.1 * omega_ncdm
+        h_nf = 1.1 * h
+        z_nf = 1.1 * z
+
+        TEST = 1.2622065637538376
+        EVAL = cf.ap(omega_b_nf, omega_cdm_nf, omega_ncdm_nf, h_nf, z_nf, 
+            omega_b, omega_cdm,  omega_ncdm, h, z)
+         
+        print("Test output: ", EVAL)                                            
+        print("Benchmark value: ", TEST)                                        
+                                                                                
+        self.assertTrue(np.isclose(TEST, EVAL, RTOL, ATOL))
+
     def test_cov(self):
                                                                                 
         TEST = 1.0                                                              
