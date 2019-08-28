@@ -53,6 +53,9 @@ def log_ap(omega_b, omega_cdm, omega_ncdm, h, z,
 def cov(): 
     return 1.  
 
+def log_cov():
+    return np.log(cf.cov())
+
 def cov_dkdH(omega_b, omega_cdm, omega_ncdm, h, z, mu, k):
     return  (2. * k * np.power(mu, 2.) 
         / cf.H(omega_b, omega_cdm, omega_ncdm, h, z)) 
