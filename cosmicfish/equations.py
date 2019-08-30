@@ -85,8 +85,8 @@ def neff(ndens, Pm):
 
 def kfs(omega_ncdm, h, z):                                                      
     #k_fs = (940. * 0.08 * omega_ncdm * h) / np.sqrt(1. + z)                    
-    k_fs = ((cf.KFS_NUMERATOR_FACTOR * h * cf.NEUTRINO_SCALE_FACTOR 
-        * omega_ncdm) / (cf.KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z)))            
+    k_fs = ((cf.KFS_NUMERATOR_FACTOR * h * (cf.NEUTRINO_SCALE_FACTOR 
+        * omega_ncdm / 3.)) / (cf.KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z)))            
     return k_fs 
 
 def omega_ncdm(T_ncdm, m_ncdm, forecast_type):                                  

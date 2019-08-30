@@ -22,7 +22,7 @@ class TestEquations(TestCase):
 
     def test_kfs(self):  
 
-        TEST = 0.23809020713603482
+        TEST = 0.07936340237867828
         EVAL = cf.kfs(omega_ncdm, h, z) 
 
         print("Test output: ", EVAL)
@@ -43,7 +43,7 @@ class TestEquations(TestCase):
     def test_ggrowth(self):
         test_k = 0.1
 
-        TEST = 1.001286340493369                                              
+        TEST = 1.0014156220263413                                          
         EVAL = cf.ggrowth(z, test_k,  h,  omega_b, omega_cdm, omega_ncdm)                            
 
         print("Test output: ", EVAL)                                            
@@ -155,3 +155,28 @@ class TestEquations(TestCase):
         print("Benchmark value: ", TEST)                                        
                                                                                 
         self.assertTrue(np.isclose(TEST, EVAL, RTOL, ATOL)) 
+
+    def test_H(self):
+
+        TEST = 120057.21682503408
+        EVAL = cf.H(omega_b, omega_cdm, omega_ncdm, h, z)
+        
+        print("Test output: ", EVAL)                                            
+        print("Benchmark value: ", TEST)                                        
+                                                                                
+        self.assertTrue(np.isclose(TEST, EVAL, RTOL, ATOL))        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
