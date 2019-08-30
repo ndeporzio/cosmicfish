@@ -78,9 +78,9 @@ def Da(omega_b, omega_cdm, omega_ncdm, h, z):
     integral, error = quad(integrand, 0., z)                                    
     return prefactor * integral   
 
-def neff(ndens, Pm):                                                            
-    # ndens at specific z, Pm at specific k and z                               
-    n = np.power((ndens * Pm) / (ndens*Pm + 1.), 2.)                            
+def neff(ndens, Pg):                                                            
+    # ndens at specific z, Pg at specific k and z                               
+    n = np.power((ndens * Pg) / (ndens*Pg + 1.), 2.)                            
     return n 
 
 def kfs(omega_ncdm, h, z):                                                      
@@ -261,7 +261,7 @@ def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,
                                                                                 
     zmax = z + (0.5 * z_spacing)                                                          
     zmin = z - (0.5 * z_spacing)                                                            
-    zsteps = 100.                                                               
+    zsteps = 10000.                                                               
     dz = zmin / zsteps                                                          
     z_table_max = np.arange(0., zmax, dz)                                       
     z_table_min = np.arange(0., zmin, dz)                                       
@@ -274,12 +274,12 @@ def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,
     z_integral_max = np.sum(z_integrand_max)                                    
     z_integral_min = np.sum(z_integrand_min)                                    
     v_max = ((4. * np.pi / 3.)                                                  
-             * np.power(c / (1000.*100.*h), 3.)                                 
+             * np.power(c / H, 3.)                                 
              * np.power(z_integral_max, 3.))                                    
     v_min = ((4. * np.pi / 3.)                                                  
-             * np.power(c / (1000.*100.*h), 3.)                                 
+             * np.power(c / H, 3.)                                 
              * np.power(z_integral_min, 3.))                                    
-    v = (v_max - v_min) * fsky                                                  
+    v = (v_max - v_min) * fsky                     
     # Incorporate fsky into volume calculation.                                 
     return v # Units [Mpc^3]                                                    
                                                                                 

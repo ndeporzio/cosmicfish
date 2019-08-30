@@ -748,11 +748,8 @@ class forecast:
                             * paramvec[pidx2][zidx][kidx]
                             * np.power(kval, 2.)
                             * (1. / (8.  * np.power(np.pi, 2)))
-                            * np.power((self.n_densities[zidx] 
-                                        * self.Pg[zidx][kidx])
-                                       / (self.n_densities[zidx] 
-                                          * self.Pg[zidx][kidx] + 1.), 
-                                       2.) 
+                            * cf.neff(self.n_densities[zidx], 
+                                self.Pg[zidx][kidx]) 
                             * Volume)
                             
                 for zidx, zval in enumerate(self.z_steps): 

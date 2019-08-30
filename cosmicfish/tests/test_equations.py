@@ -13,6 +13,7 @@ h = 0.70148
 sigma_fog_0 = 250000.
 b1L = 0.7
 alphak2 = 1.0
+c = 2.9979e8 
 
 z = 1.0
 mu = 0.1
@@ -166,13 +167,37 @@ class TestEquations(TestCase):
                                                                                 
         self.assertTrue(np.isclose(TEST, EVAL, RTOL, ATOL))        
 
+    def test_Da(self): 
+    
+        TEST = 1672.990829337001                                               
+        EVAL = cf.Da(omega_b, omega_cdm, omega_ncdm, h, z)                       
+                                                                                
+        print("Test output: ", EVAL)                                            
+        print("Benchmark value: ", TEST)                                        
+                                                                                
+        self.assertTrue(np.isclose(TEST, EVAL, RTOL, ATOL)) 
 
+    def test_neff(self):
+        Pg = 1315.71
+        nbar = 465448.76455
 
+        TEST = 0.9999999967341373
+        EVAL = cf.neff(nbar, Pg) 
 
+        print("Test output: ", EVAL)                                            
+        print("Benchmark value: ", TEST)                                        
+                                                                                
+        self.assertTrue(np.isclose(TEST, EVAL, RTOL, ATOL))  
 
+    def  test_genV(self):
+        
+        TEST = 1.2478295308979862E10                                  
+        EVAL = cf.gen_V(h, omega_b, omega_cdm, 1.05, 3., None, 0.02, c, 0.34, 0.1)
 
+        print("Test output: ", EVAL)                                            
+        print("Benchmark value: ", TEST)
 
-
+        self.assertTrue(np.isclose(TEST, EVAL, RTOL, ATOL)) 
 
 
 
