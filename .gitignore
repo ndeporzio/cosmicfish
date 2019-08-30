@@ -10,3 +10,6 @@ __pycache__
 
 #Ignore nosetest and coverage files
 .coverage
+
+#Ignore apple directory system files
+.DS_Store
