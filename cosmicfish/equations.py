@@ -6,7 +6,7 @@ import cosmicfish as cf
 def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b1L, alphak2):                     
     k_fs = cf.kfs(omega_ncdm, h,  z)
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
-    g = cf.ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm)                   
+    g = cf.ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm)                 
     b1tilde = np.sqrt(1.+z) *  (1. + b1L * g + alphak2 * np.power(k, 2.))                                                     
                                                                                 
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
@@ -84,7 +84,6 @@ def neff(ndens, Pg):
     return n 
 
 def kfs(omega_ncdm, h, z):                                                      
-    #k_fs = (940. * 0.08 * omega_ncdm * h) / np.sqrt(1. + z)                    
     k_fs = ((cf.KFS_NUMERATOR_FACTOR * h * (cf.NEUTRINO_SCALE_FACTOR 
         * omega_ncdm / 3.)) / (cf.KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z)))            
     return k_fs 
@@ -228,13 +227,13 @@ def ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm):
     g = 1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))               
     return g
 
-def btildebias(z, k, h, omega_b, omega_cdm, omega_ncdm, bLbar, alpha_2):        
-    btilde = (1.                                                                
-              + (bLbar                                                          
-                 * fgrowth(omega_b, omega_cdm, h, z)                            
-                 * ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm))            
-              + (alpha_2 * np.power(k, 2.)))                                    
-    return btilde 
+#def btildebias(z, k, h, omega_b, omega_cdm, omega_ncdm, bLbar, alpha_2):        
+#    btilde = (1.                                                                
+#              + (bLbar                                                          
+#                 * fgrowth(omega_b, omega_cdm, h, z)                            
+#                 * ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm))            
+#              + (alpha_2 * np.power(k, 2.)))                                    
+#    return btilde 
 
 def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,        
           c=cf.C, fsky=None, z_spacing=0.1):                                               
