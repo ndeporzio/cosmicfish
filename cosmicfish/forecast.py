@@ -506,6 +506,10 @@ class forecast:
         mu_vals = np.arange(-1., 1., mu_step)
         Pg = np.zeros(
             (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+        RSD = np.zeros(                                                          
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+        FOG = np.zeros(                                                          
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
         dlogPdA_s = np.zeros(
             (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdn_s = np.zeros(   
@@ -637,6 +641,8 @@ class forecast:
                         * self.AP[zidx][kidx]
                         * self.COV[zidx][kidx] #Just equals 1
                         )
+                    RSD[zidx][kidx][muidx] = (self.RSD[zidx][kidx]) 
+                    FOG[zidx][kidx][muidx] = (self.FOG[zidx][kidx])
                     dlogPdA_s[zidx][kidx][muidx] = (
                         self.dlogPdA_s[zidx][kidx]
                         )
@@ -692,6 +698,8 @@ class forecast:
                         self.dlogRSDdalphak2[zidx][kidx]                                                    
                         )
         self.Pg = Pg
+        self.RSD = RSD
+        self.FOG = FOG
         self.dlogPdA_s = dlogPdA_s
         self.dlogPdn_s = dlogPdn_s
         self.dlogPdomega_b  = dlogPdomega_b
