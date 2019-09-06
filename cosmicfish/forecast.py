@@ -504,6 +504,8 @@ class forecast:
             self.gen_pm() 
 
         mu_vals = np.arange(-1., 1., mu_step)
+        self.mu_table = mu_vals
+
         Pg = np.zeros(
             (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         RSD = np.zeros(                                                          
@@ -860,9 +862,14 @@ class forecast:
     def print_P_table(self, k_index, mu_index):
         print("P_g with following corrections: " + str(self.psterms)) 
         for zidx, zval in enumerate(self.z_steps): 
-            print((("For z = {0:.2f},\t") + 
-                   (" P(0.2h, 0) = {1:.2f}\n")).format(zval, 
-                        self.Pg[zidx][k_index][mu_index]))
+            print((
+                ("For z = {0:.2f},\t") 
+                + (" Pg({1:.2f}, {2:.2f}) = {3:.2f}\n")
+                ).format(
+                    zval,
+                    self.k_table[zidx][k_index], 
+                    self.mu_table[mu_index], 
+                    self.Pg[zidx][k_index][mu_index]))
 
 
     def load_cmb_fisher(self, fisherpath=("~/Desktop/CMBS4_Fisher.dat")): 
