@@ -82,7 +82,8 @@ class convergence:
         for idx, fcst in enumerate(self.forecasts):
             data = np.array(fcst.Pg)
             plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'%') 
-            ax1.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel)
+            ax1.plot(fcst.k_table[z_index], data[z_index, :, mu_index], 
+                label=plotlabel)
         ax1.set_title(r'$P_g$ for z={:.3f}, $\mu$={:0.2f}'.format(
             self.z_steps[z_index], np.arange(-1, 1, self.mu_step)[mu_index]))
         ax1.set_xlabel(r'k [Mpc$^{-1}$]')
@@ -94,7 +95,8 @@ class convergence:
         for idx, fcst in enumerate(self.forecasts):                             
             data =  np.log(fcst.Pg)                                            
             plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'\%') 
-            ax2.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel) 
+            ax2.plot(fcst.k_table[z_index], data[z_index, :, mu_index], 
+                label=plotlabel) 
         ax2.set_title(r'$log(P_g)$ for z={:.3f}, $\mu$={:0.2f}'.format(               
             self.z_steps[z_index], np.arange(-1, 1, self.mu_step)[mu_index]))    
         ax2.set_xlabel(r'k [Mpc$^{-1}$]')                                       
@@ -114,7 +116,8 @@ class convergence:
         for idx, fcst in enumerate(self.forecasts):                             
             data = np.array(getattr(fcst, 'dlogPd'+paramname))                                            
             plotlabel = (r'$\Delta $' + str(100.*self.varyfactors[idx]) + r'%') 
-            plt.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel) 
+            plt.plot(fcst.k_table[z_index], data[z_index, :, mu_index], 
+                label=plotlabel) 
         plt.title((r'$dlogP_g/d$'
             +paramname+r' for z={:.3f}, $\mu$={:0.2f}').format(               
                 self.z_steps[z_index], 
@@ -140,7 +143,8 @@ class convergence:
                 getattr(self.forecasts[idx], 'dlogPd'+paramname)) 
             data = datahigh - datalow                               
             plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'%') 
-            plt.plot(fcst.k_table, data[z_index, :, mu_index], label=plotlabel) 
+            plt.plot(fcst.k_table[z_index], data[z_index, :, mu_index], 
+                label=plotlabel) 
         plt.title((r'$\Delta$ $dlogP_g/d$'                                               
             +paramname+r' for z={:.3f}, $\mu$={:0.2f}').format(                  
                 self.z_steps[z_index],                                          
