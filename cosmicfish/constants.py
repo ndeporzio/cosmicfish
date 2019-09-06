@@ -31,3 +31,7 @@ K_MAX_PREFACTOR = 0.2
 
 ANALYTIC_A_S = True
 ANALYTIC_N_S = True
+
+RSD_DELTA_LAMBDACDM = 4.8e-3                                                    
+RSD_ALPHA = 4.                                                                  
+RSD_KEQ_PREFACTOR = 0.015   

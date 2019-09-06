@@ -25,6 +25,11 @@ def fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):
                / cf.H(omega_b, omega_cdm, omega_ncdm, h, z), 2.))                  
     return F                                                                    
 
+def rlambdacdm(h, k): 
+    val = 1. + cf.RSD_DELTA_LAMBDACDM * np.tanh(
+        (cf.RSD_ALPHA * k) / (cf.RSD_KEQ_PREFACTOR * h)) 
+    return val
+
 def sigma_fog(sigma_fog_0, z): 
     val = sigma_fog_0 *  np.sqrt(1. + z)
     return val
@@ -232,7 +237,8 @@ def ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm):
     q = cf.RSD_Q_NUMERATOR_FACTOR * k / cf.kfs(omega_ncdm, h, z)                                          
     Delta_L =  (cf.RSD_DELTA_L_NUMERATOR_FACTOR * omega_ncdm 
                 / (omega_b + omega_cdm))                         
-    g = 1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))               
+    g = (cf.rlambdacdm(h, k)
+        * (1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))))               
     return g
 
 #def btildebias(z, k, h, omega_b, omega_cdm, omega_ncdm, bLbar, alpha_2):        
