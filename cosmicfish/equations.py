@@ -18,14 +18,22 @@ def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b1L, alphak2):
 
 def fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):              
     sigma_z = cf.SIGMA_Z                                                        
-    sigma_fog = sigma_fog_0 * np.sqrt(1.+z)                                     
-    sigma_v = ((1. + z)                                                         
-               * np.sqrt((np.power(sigma_fog, 2.) / 2.)                         
-                         + np.power(cf.C * sigma_z, 2.)))                       
+    sigma_fog = cf.sigma_fog(sigma_fog_0,  z)                                      
+    sigma_v = cf.sigma_v(sigma_fog, sigma_z, z)                                                    
     F = np.exp(-1.                                                              
                * np.power((k*mu*sigma_v)                                        
                / cf.H(omega_b, omega_cdm, omega_ncdm, h, z), 2.))                  
     return F                                                                    
+
+def sigma_fog(sigma_fog_0, z): 
+    val = sigma_fog_0 *  np.sqrt(1. + z)
+    return val
+
+def sigma_v(sigma_fog, sigma_z, z): 
+    val = ((1. + z) 
+        * np.sqrt((np.power(sigma_fog, 2.) / 2.)                         
+        + np.power(cf.C * sigma_z, 2.))) 
+    return  val
                                                                                 
 def log_fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):          
     return np.log(cf.fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu,              
@@ -221,7 +229,7 @@ def ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm):
     """                                                                         
                                                                                 
     Delta_q = cf.RSD_DELTA_Q                                                               
-    q = cf.RSD_Q_NUMERATOR_FACTOR * k / kfs(omega_ncdm, h, z)                                          
+    q = cf.RSD_Q_NUMERATOR_FACTOR * k / cf.kfs(omega_ncdm, h, z)                                          
     Delta_L =  (cf.RSD_DELTA_L_NUMERATOR_FACTOR * omega_ncdm 
                 / (omega_b + omega_cdm))                         
     g = 1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))               
