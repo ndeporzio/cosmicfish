@@ -504,8 +504,14 @@ class forecast:
             self.gen_pm() 
 
         mu_vals = np.arange(-1., 1., mu_step)
+        self.mu_table = mu_vals
+
         Pg = np.zeros(
             (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+        RSD = np.zeros(                                                          
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+        FOG = np.zeros(                                                          
+            (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
         dlogPdA_s = np.zeros(
             (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdn_s = np.zeros(   
@@ -637,6 +643,8 @@ class forecast:
                         * self.AP[zidx][kidx]
                         * self.COV[zidx][kidx] #Just equals 1
                         )
+                    RSD[zidx][kidx][muidx] = (self.RSD[zidx][kidx]) 
+                    FOG[zidx][kidx][muidx] = (self.FOG[zidx][kidx])
                     dlogPdA_s[zidx][kidx][muidx] = (
                         self.dlogPdA_s[zidx][kidx]
                         )
@@ -692,6 +700,8 @@ class forecast:
                         self.dlogRSDdalphak2[zidx][kidx]                                                    
                         )
         self.Pg = Pg
+        self.RSD = RSD
+        self.FOG = FOG
         self.dlogPdA_s = dlogPdA_s
         self.dlogPdn_s = dlogPdn_s
         self.dlogPdomega_b  = dlogPdomega_b
@@ -852,9 +862,14 @@ class forecast:
     def print_P_table(self, k_index, mu_index):
         print("P_g with following corrections: " + str(self.psterms)) 
         for zidx, zval in enumerate(self.z_steps): 
-            print((("For z = {0:.2f},\t") + 
-                   (" P(0.2h, 0) = {1:.2f}\n")).format(zval, 
-                        self.Pg[zidx][k_index][mu_index]))
+            print((
+                ("For z = {0:.2f},\t") 
+                + (" Pg({1:.2f}, {2:.2f}) = {3:.2f}\n")
+                ).format(
+                    zval,
+                    self.k_table[zidx][k_index], 
+                    self.mu_table[mu_index], 
+                    self.Pg[zidx][k_index][mu_index]))
 
 
     def load_cmb_fisher(self, fisherpath=("~/Desktop/CMBS4_Fisher.dat")): 

@@ -7,7 +7,6 @@ def dPs_array(low, high, step):
               for zval in range(len(high))])                                     
     return dPs, dlogPs    
 
-
 def dPs(fid_ps_table, var_ps_table, step, centered=False):                      
     if centered==False:                                                         
         dps_table = (var_ps_table - fid_ps_table) / step                        
@@ -16,7 +15,6 @@ def dPs(fid_ps_table, var_ps_table, step, centered=False):
         var_low = fid_ps_table                                                  
         dps_table = (var_high - var_low)/(2 * step)                             
     return dps_table                                                            
-
                                                                                 
 def dlogPs(fid_ps_table, var_ps_table, step, centered=False):                   
     if centered==False:                                                         
@@ -41,5 +39,10 @@ def derivative(function, dif_variable, relstep, **kwargs):
     func_low = function(**args_low)
 
     deriv = (func_high - func_low) / (2. * relstep * kwargs[dif_variable])  
-    
     return(deriv)  
+
+def log_interp(x_eval, x_data, y_data):
+    logx_eval = np.log10(x_eval)
+    logx_data = np.log10(x_data)
+    logy_data = np.log10(y_data)
+    return np.power(10.0, np.interp(logx_eval, logx_data, logy_data))

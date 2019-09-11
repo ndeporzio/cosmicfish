@@ -17,7 +17,7 @@ FULL_SKY_DEGREES = 41253. # Sky size in [deg^2]
 NEUTRINO_SCALE_FACTOR = 93.14 # Neutrino mass/abundance rel. factor in [eV]
 SIGMA_Z = 0.001 #Appears in FOG term. Units of [c]. 
 KFS_NUMERATOR_FACTOR = 0.08
-KFS_DENOMINATOR_FACTOR = 0.01
+KFS_DENOMINATOR_FACTOR = 0.1
 RSD_GAMMA = 0.55
 RSD_DELTA_Q = 1.6
 RSD_Q_NUMERATOR_FACTOR = 5.
@@ -31,3 +31,7 @@ K_MAX_PREFACTOR = 0.2
 
 ANALYTIC_A_S = True
 ANALYTIC_N_S = True
+
+RSD_DELTA_LAMBDACDM = 4.8e-3                                                    
+RSD_ALPHA = 4.                                                                  
+RSD_KEQ_PREFACTOR = 0.015   

@@ -6,7 +6,7 @@ import cosmicfish as cf
 def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b1L, alphak2):                     
     k_fs = cf.kfs(omega_ncdm, h,  z)
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
-    g = cf.ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm)                   
+    g = cf.ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm)                 
     b1tilde = np.sqrt(1.+z) *  (1. + b1L * g + alphak2 * np.power(k, 2.))                                                     
                                                                                 
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
@@ -18,14 +18,27 @@ def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b1L, alphak2):
 
 def fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):              
     sigma_z = cf.SIGMA_Z                                                        
-    sigma_fog = sigma_fog_0 * np.sqrt(1.+z)                                     
-    sigma_v = ((1. + z)                                                         
-               * np.sqrt((np.power(sigma_fog, 2.) / 2.)                         
-                         + np.power(cf.C * sigma_z, 2.)))                       
+    sigma_fog = cf.sigma_fog(sigma_fog_0,  z)                                      
+    sigma_v = cf.sigma_v(sigma_fog, sigma_z, z)                                                    
     F = np.exp(-1.                                                              
                * np.power((k*mu*sigma_v)                                        
                / cf.H(omega_b, omega_cdm, omega_ncdm, h, z), 2.))                  
     return F                                                                    
+
+def rlambdacdm(h, k): 
+    val = 1. + cf.RSD_DELTA_LAMBDACDM * np.tanh(
+        (cf.RSD_ALPHA * k) / (cf.RSD_KEQ_PREFACTOR * h)) 
+    return val
+
+def sigma_fog(sigma_fog_0, z): 
+    val = sigma_fog_0 *  np.sqrt(1. + z)
+    return val
+
+def sigma_v(sigma_fog, sigma_z, z): 
+    val = ((1. + z) 
+        * np.sqrt((np.power(sigma_fog, 2.) / 2.)                         
+        + np.power(cf.C * sigma_z, 2.))) 
+    return  val
                                                                                 
 def log_fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):          
     return np.log(cf.fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu,              
@@ -84,7 +97,6 @@ def neff(ndens, Pg):
     return n 
 
 def kfs(omega_ncdm, h, z):                                                      
-    #k_fs = (940. * 0.08 * omega_ncdm * h) / np.sqrt(1. + z)                    
     k_fs = ((cf.KFS_NUMERATOR_FACTOR * h * (cf.NEUTRINO_SCALE_FACTOR 
         * omega_ncdm / 3.)) / (cf.KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z)))            
     return k_fs 
@@ -222,19 +234,20 @@ def ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm):
     """                                                                         
                                                                                 
     Delta_q = cf.RSD_DELTA_Q                                                               
-    q = cf.RSD_Q_NUMERATOR_FACTOR * k / kfs(omega_ncdm, h, z)                                          
+    q = cf.RSD_Q_NUMERATOR_FACTOR * k / cf.kfs(omega_ncdm, h, z)                                          
     Delta_L =  (cf.RSD_DELTA_L_NUMERATOR_FACTOR * omega_ncdm 
                 / (omega_b + omega_cdm))                         
-    g = 1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))               
+    g = (cf.rlambdacdm(h, k)
+        * (1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))))               
     return g
 
-def btildebias(z, k, h, omega_b, omega_cdm, omega_ncdm, bLbar, alpha_2):        
-    btilde = (1.                                                                
-              + (bLbar                                                          
-                 * fgrowth(omega_b, omega_cdm, h, z)                            
-                 * ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm))            
-              + (alpha_2 * np.power(k, 2.)))                                    
-    return btilde 
+#def btildebias(z, k, h, omega_b, omega_cdm, omega_ncdm, bLbar, alpha_2):        
+#    btilde = (1.                                                                
+#              + (bLbar                                                          
+#                 * fgrowth(omega_b, omega_cdm, h, z)                            
+#                 * ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm))            
+#              + (alpha_2 * np.power(k, 2.)))                                    
+#    return btilde 
 
 def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,        
           c=cf.C, fsky=None, z_spacing=0.1):                                               
