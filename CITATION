@@ -1,0 +1,18 @@
+To cite "cosmicfish" in publications, please use the following:
+
+N. DePorzio. cosmicfish: fisher forecasting light relics in cosmology. 
+Springer New York, 2009. #Change these lines once paper is published
+
+A BibTeX entry for LaTeX users is:
+
+@Article{,
+   author = {Nicholas DePorzio},
+   title = {cosmicfish: fisher forecasting light relics in cosmology},
+   journal = {}, 
+   volume = {}, 
+   number = {}, 
+   year = {2019},
+   url = {},
+   DOI = {},
+   pages = {} 
+ }
