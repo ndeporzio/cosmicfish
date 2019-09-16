@@ -49,7 +49,7 @@ class convergence:
             'omega_ncdm',
             'M_ncdm',
             'sigmafog',
-            'b1L',
+            'b0',
             'alphak2'] 
             
 

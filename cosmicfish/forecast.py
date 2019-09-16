@@ -46,7 +46,8 @@ class forecast:
         self.M_ncdm_fid = 3. * self.fid['m_ncdm'] # Unit [eV] i
 
         self.sigma_fog_0_fid = self.fid['sigma_fog_0']
-        self.b1L_fid = self.fid['b1L']
+        #self.b1L_fid = self.fid['b1L']
+        self.b0_fid = self.fid['b0']
         self.alphak2_fid = self.fid['alphak2'] 
 
         self.n_densities = np.zeros(len(dNdz))
@@ -186,11 +187,13 @@ class forecast:
                     'omega_cdm' : self.omega_cdm_fid, 
                     'omega_ncdm' : self.omega_ncdm_fid,
                     'h' : self.h_fid, 
-                    'b1L' : self.b1L_fid,
+                    #'b1L' : self.b1L_fid,
+                    'b0' : self.b0_fid,
                     'alphak2' : self.alphak2_fid,
                     'mu' : mu}
 
-        self.RSD = [[cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval})) 
+        self.RSD = [[cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval,
+            'D' : self.spectra_mid[zidx].D})) 
             for kidx, kval in enumerate(self.k_table[zidx])] 
             for zidx, zval in enumerate(self.z_steps)]   
 
@@ -198,7 +201,8 @@ class forecast:
             cf.log_rsd, 
             'omega_b', 
             self.dstep,
-            **dict(fiducial, **{'z' : zval, 'k' :  kval}))
+            **dict(fiducial, **{'z' : zval, 'k' :  kval,
+                'D' : self.spectra_mid[zidx].D}))
             for kidx, kval in enumerate(self.k_table[zidx])] 
             for zidx, zval in enumerate(self.z_steps)]
 
@@ -206,7 +210,8 @@ class forecast:
             cf.log_rsd, 
             'omega_cdm', 
             self.dstep,  
-            **dict(fiducial, **{'z' : zval, 'k' :  kval})) 
+            **dict(fiducial, **{'z' : zval, 'k' :  kval,
+                'D' : self.spectra_mid[zidx].D})) 
             for kidx, kval in enumerate(self.k_table[zidx])]                                           
             for zidx, zval in enumerate(self.z_steps)]
 
@@ -214,7 +219,8 @@ class forecast:
             cf.log_rsd,                                                         
             'omega_ncdm',                                                        
             self.dstep,                                                         
-            **dict(fiducial, **{'z' : zval, 'k' :  kval})) 
+            **dict(fiducial, **{'z' : zval, 'k' :  kval,
+                'D' : self.spectra_mid[zidx].D})) 
             for kidx, kval in enumerate(self.k_table[zidx])]                                           
             for zidx, zval in enumerate(self.z_steps)]
 
@@ -225,15 +231,17 @@ class forecast:
             cf.log_rsd,                                                         
             'h',                                                       
             self.dstep,                                                         
-            **dict(fiducial, **{'z' : zval, 'k' :  kval})) 
+            **dict(fiducial, **{'z' : zval, 'k' :  kval,
+                'D' : self.spectra_mid[zidx].D})) 
             for kidx, kval in enumerate(self.k_table[zidx])]                                           
             for zidx, zval in enumerate(self.z_steps)]   
 
-        self.dlogRSDdb1L = [[cf.derivative(                                       
+        self.dlogRSDdb0 = [[cf.derivative(                                       
             cf.log_rsd,                                                         
-            'b1L',                                                                
+            'b0',                                                                
             self.dstep,                                                         
-            **dict(fiducial, **{'z' : zval, 'k' :  kval}))                                                  
+            **dict(fiducial, **{'z' : zval, 'k' :  kval,
+                'D' : self.spectra_mid[zidx].D}))                                                  
             for kidx, kval in enumerate(self.k_table[zidx])]                                           
             for zidx, zval in enumerate(self.z_steps)]
 
@@ -241,7 +249,8 @@ class forecast:
             cf.log_rsd,                                                         
             'alphak2',                                                                
             self.dstep,                                                         
-            **dict(fiducial, **{'z' : zval, 'k' :  kval}))                                                  
+            **dict(fiducial, **{'z' : zval, 'k' :  kval,
+                'D' : self.spectra_mid[zidx].D}))                                                  
             for kidx, kval in enumerate(self.k_table[zidx])]                                           
             for zidx, zval in enumerate(self.z_steps)]  
 
@@ -530,7 +539,7 @@ class forecast:
             (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
         dlogPdsigmafog = np.zeros(
             (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
-        dlogPdb1L = np.zeros(
+        dlogPdb0 = np.zeros(
             (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
         dlogPdalphak2 = np.zeros(
             (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))        
@@ -557,7 +566,7 @@ class forecast:
                 self.dlogRSDdh = [[0.                          
                     for kidx, kval in enumerate(self.k_table[zidx])]            
                     for zidx, zval in enumerate(self.z_steps)]         
-                self.dlogRSDdb1L = [[0.                        
+                self.dlogRSDdb0 = [[0.                        
                     for kidx, kval in enumerate(self.k_table[zidx])]            
                     for zidx, zval in enumerate(self.z_steps)]           
                 self.dlogRSDdalphak2 = [[0.                    
@@ -692,8 +701,8 @@ class forecast:
                         self.dlogFOGdsigmafog0[zidx][kidx]
                         )
 
-                    dlogPdb1L[zidx][kidx][muidx] = (
-                        self.dlogRSDdb1L[zidx][kidx]    
+                    dlogPdb0[zidx][kidx][muidx] = (
+                        self.dlogRSDdb0[zidx][kidx]    
                         )
 
                     dlogPdalphak2[zidx][kidx][muidx] = (                          
@@ -711,7 +720,7 @@ class forecast:
         self.dlogPdomega_ncdm = dlogPdomega_ncdm
         self.dlogPdM_ncdm = dlogPdM_ncdm
         self.dlogPdsigmafog = dlogPdsigmafog
-        self.dlogPdb1L = dlogPdb1L
+        self.dlogPdb0 = dlogPdb0
         self.dlogPdalphak2 = dlogPdalphak2       
 
         if self.forecast=="neutrino": 
@@ -723,7 +732,7 @@ class forecast:
                         dlogPdh, 
                         dlogPdM_ncdm,
                         dlogPdsigmafog,
-                        dlogPdb1L,
+                        dlogPdb0,
                         dlogPdalphak2
                         ]
 
@@ -736,7 +745,7 @@ class forecast:
                         dlogPdh, 
                         dlogPdomega_ncdm, 
                         dlogPdsigmafog,
-                        dlogPdb1L, 
+                        dlogPdb0, 
                         dlogPdalphak2
                         ] 
 
@@ -907,7 +916,7 @@ class forecast:
                 'h', 
                 'M_ncdm', 
                 'sigma_fog', 
-                'bLbar', 
+                'b0', 
                 'alpha_k2'])
             lssfisher.iloc[:,7] *= 1e3 #To correct units on sigma_fog
             lssfisher.iloc[7,:] *= 1e3 #To correct units on sigam_fog
@@ -930,11 +939,11 @@ class forecast:
                 'h',                                                            
                 'm_ncdm',                                                       
                 'sigma_fog',                                                    
-                'bLbar',                                                        
+                'b0',                                                        
                 'alpha_k2']
 
             if self.use_rsd==False: 
-                nonzeroparams.remove('bLbar')
+                nonzeroparams.remove('b0')
                 nonzeroparams.remove('alpha_k2') 
                 nonzeroidx.remove(8)
                 nonzeroidx.remove(9)
@@ -968,7 +977,7 @@ class forecast:
                 'h',                                                            
                 'M_ncdm',                                                       
                 'sigma_fog',                                                    
-                'bLbar',                                                        
+                'b0',                                                        
                 'alpha_k2'])
         self.numpy_full_fisher = fullfisher   
         
@@ -994,7 +1003,7 @@ class forecast:
         if self.use_fog==True:
             outnames.append('sigma_fog')
         if self.use_rsd==True:
-            outnames.append('bLbar')
+            outnames.append('b0')
             outnames.append('alpha_k2') 
 
         self.pandas_full_covariance.to_csv(

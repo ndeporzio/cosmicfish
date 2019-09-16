@@ -3,18 +3,20 @@ import scipy
 from scipy.integrate import quad
 import cosmicfish as cf
 
-def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b1L, alphak2):                     
+def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2):                     
     k_fs = cf.kfs(omega_ncdm, h,  z)
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
     g = cf.ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm)                 
-    b1tilde = np.sqrt(1.+z) *  (1. + b1L * g + alphak2 * np.power(k, 2.))                                                     
-                                                                                
+    bl = cf.bL(b0, D) 
+    #b1tilde = np.sqrt(1.+z) *  (1. + b1L * g + alphak2 * np.power(k, 2.)) 
+    b1tilde = np.sqrt(1.+z) *  (1. + bl * g + alphak2 * np.power(k, 2.))  
+                                                                               
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
     return R                                                                    
                                                                                 
-def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b1L, alphak2):                 
+def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2):                 
     return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, 
-        b1L, alphak2))
+        b0, D, alphak2))
 
 def fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):              
     sigma_z = cf.SIGMA_Z                                                        
@@ -240,6 +242,11 @@ def ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm):
     g = (cf.rlambdacdm(h, k)
         * (1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))))               
     return g
+
+def bL(b0, D): 
+    val = (b0 / D) - 1.
+    return val 
+    
 
 #def btildebias(z, k, h, omega_b, omega_cdm, omega_ncdm, bLbar, alpha_2):        
 #    btilde = (1.                                                                
