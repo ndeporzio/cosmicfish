@@ -11,8 +11,7 @@ def install_class(classdir):
     '''Installs CLASS to specified directory.
     
     Args: 
-        classdir (str) : path to directory containing an installed              
-            build of CLASS.
+        classdir (str) : path to directory to install CLASS at.
 
     Returns: 
         No values returned. 
@@ -208,7 +207,7 @@ def correct_path(pathname):
     return fix4    
 
 def config_directory(): 
-    '''Returns path of data directory in package distribution.i
+    '''Returns path of data directory in package distribution.
     
     Returns: 
         Path to the `config` directory of the local cosmicfish package 
@@ -218,6 +217,18 @@ def config_directory():
     path = os.path.dirname(path)
     path = os.path.join(path, 'config')
     return path
+
+def priors_directory():
+    '''Returns path of priors directory in package distribution.                 
+                                                                                
+    Returns:                                                                    
+        Path to the `priors` directory of the local cosmicfish package          
+        distribution.                                                           
+    '''                                                                         
+    path = os.path.abspath(__file__)                                            
+    path = os.path.dirname(path)                                                
+    path = os.path.join(path, 'priors')                                         
+    return path 
 
 def replace_text(document, old_text, new_text):
     '''Replace text in a specified file.
@@ -236,6 +247,17 @@ def replace_text(document, old_text, new_text):
         new_doc=f.read().replace(old_text, new_text)
     with open(document, "w") as f:
         f.write(new_doc)
+
+def citation(): 
+    path = os.path.abspath(__file__)
+    path = os.path.join(path, "..") 
+    path = os.path.abspath(path)                                            
+    path = os.path.dirname(path)                                                
+    path = os.path.join(path, 'CITATION')
+
+    with open(path, 'r') as text: 
+        for line in text: 
+            print(line)  
 
 if __name__ == '__main__':
     # Actions to perform only if this module, 'io.py', is called
