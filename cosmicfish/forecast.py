@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -881,9 +882,13 @@ class forecast:
                     self.Pg[zidx][k_index][mu_index]))
 
 
-    def load_cmb_fisher(self, fisherpath=("~/Desktop/CMBS4_Fisher.dat")): 
+    def load_cmb_fisher(self, fisherpath=None): 
         # Parameter ordering: omega_b, omega_cdm, n_s, A_s, tau_reio, H_0, 
         # M_ncdm 
+
+        if fisherpath==None: 
+            fisherpath = os.path.join(cf.priors_directory(), 
+                "CMBS4_Fisher.dat")
 
         fmat = pd.read_csv(fisherpath, sep='\t', header=0)
         fmat.iloc[:,5] *= 100. # Change of variables H0->h
