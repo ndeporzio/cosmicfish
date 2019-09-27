@@ -44,10 +44,8 @@ class forecast:
         self.h_fid = self.fid['h']
         self.tau_reio_fid = self.fid['tau_reio']
         self.m_ncdm_fid = self.fid['m_ncdm'] # Unit [eV]                   
-        self.M_ncdm_fid = 3. * self.fid['m_ncdm'] # Unit [eV] i
 
         self.sigma_fog_0_fid = self.fid['sigma_fog_0']
-        #self.b1L_fid = self.fid['b1L']
         self.b0_fid = self.fid['b0']
         self.alphak2_fid = self.fid['alphak2'] 
 
@@ -59,26 +57,28 @@ class forecast:
             self.omega_ncdm_fid = cf.omega_ncdm(self.T_ncdm_fid, 
                                                 self.m_ncdm_fid, 
                                                 "relic")
-        elif self.forecast=="neutrino": 
+        elif self.forecast=="neutrino":
+            self.T_ncdm_fid = cf.RELIC_TEMP_SCALE
+            self.M_ncdm_fid = 3. * self.fid['m_ncdm'] # Unit [eV] 
             self.omega_ncdm_fid = cf.omega_ncdm(None, 
                                                 self.m_ncdm_fid, 
                                                 "neutrino")
         self.kp = cf.KP_PREFACTOR * self.h_fid # Units [Mpc^-1]
 
-        self.fsky, self.fcoverage_deg = cf.set_sky_cover(fsky,  fcoverage_deg)
+        self.fsky, self.fcoverage_deg = cf.set_sky_cover(fsky, fcoverage_deg)
             
         self.psterms = [] 
 
         # Generate tables
         self.k_table = [0] * len(self.z_steps)
-        for i in range(len(self.z_steps)):
-            V = self.V(i)  
-            self.k_table[i] = cf.gen_k_table(
+        for zidx, zval in enumerate(self.z_steps):
+            V = self.V(zidx)  
+            self.k_table[zidx] = cf.gen_k_table(
                 volume=V, 
-                z=self.z_steps[i],
+                z=self.z_steps[zidx],
                 h=self.h_fid, 
                 n_s=self.n_s_fid,
-                k_steps=100)           
+                k_steps=cf.DEFAULT_K_TABLE_STEPS)           
 
 
     def gen_pm(self):  
@@ -107,6 +107,8 @@ class forecast:
         self.h_high, self.h_low = self.generate_spectra('h')
         self.tau_reio_high, self.tau_reio_low = self.generate_spectra(
                                                     'tau_reio')
+        else: 
+            print("Matter power spectrum already generated!") 
         if self.forecast=="neutrino":
             # Carefule with naming - you're varying m_ncdm but 
             # calling it M_ncdm  
