@@ -257,7 +257,7 @@ def bL(b0, D):
 #    return btilde 
 
 def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,        
-          c=cf.C, fsky=None, z_spacing=0.1):                                               
+          c=cf.C, fsky=None, z_spacing=cf.DEFAULT_Z_BIN_SPACING):                                               
     # T_ncdm in units of [K]                                                    
     # m_ncdm in units of [eV]                                                   
     # c in units of [m*s^-1]                                                    
@@ -268,12 +268,11 @@ def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,
     H = 1000. * 100. * h # H has units of [m*s^-1*Mpc^-1]                       
     if m_ncdm is not None:                                                      
         if N_ncdm==3.: # Degenerate neutrinos CAUTION                                  
-            omega_chi = 3. * (m_ncdm/ cf.NEUTRINO_SCALE_FACTOR)                                     
+            omega_chi = cf.omega_ncdm(T_ncdm, m_ncdm, "neutrino")                                   
         elif N_ncdm==1.: # Light relic CAUTION                                         
-            omega_chi = (np.power(T_ncdm/cf.RELIC_TEMP_SCALE, 3.) 
-                         * (m_ncdm / cf.NETURINO_SCALE_FACTOR))                
+            omega_chi = omega_ncdm(T_ncdm, m_ncdm, "relic")               
         else:                                                                   
-            print("ERROR")                                                      
+            print("N_ncdm must be 1 (relics) or 3 (degenerate neutrinos).")
     else:                                                                       
         omega_chi = 0                                                           
     omega_m = omega_b + omega_cdm + omega_chi # Unitless                        
@@ -312,7 +311,7 @@ def gen_k_table(volume, z, h, n_s, k_steps, scaling='log'):
     #                      k_max,                                                
     #                      k_steps)       
 
-    kmin = h * np.power(volume, -1./3.) 
+    kmin = np.pi * np.power(volume, -1./3.) 
     kmax = cf.K_MAX_PREFACTOR * np.power(1.+z, 2./(2.+n_s)) * h                                   
 
     if scaling=='linear': 
