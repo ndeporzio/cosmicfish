@@ -3,12 +3,18 @@ import scipy
 from scipy.integrate import quad
 import cosmicfish as cf
 
-def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2):                     
-    k_fs = cf.kfs(omega_ncdm, h,  z)
+def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2, 
+    relic=False, T_ncdm=None):
+
+    if relic==False:             
+        m_ncdm = cf.m_ncdm(omega_ncdm/3., cf.RELIC_TEMP_SCALE)     
+        k_fs = cf.kfs(m_ncdm, h,  z)
+    else: 
+        m_ncdm = cf.m_ncdm(omega_ncdm, T_ncdm)
+        k_fs = cf.kfs(m_ncdm, h, z) 
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
-    g = cf.ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm)                 
+    g = cf.ggrowth(z, k, kfs, h, omega_b, omega_cdm, omega_ncdm)                 
     bl = cf.bL(b0, D) 
-    #b1tilde = np.sqrt(1.+z) *  (1. + b1L * g + alphak2 * np.power(k, 2.)) 
     b1tilde = np.sqrt(1.+z) *  (1. + bl * g + alphak2 * np.power(k, 2.))  
                                                                                
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
@@ -98,9 +104,10 @@ def neff(ndens, Pg):
     n = np.power((ndens * Pg) / (ndens*Pg + 1.), 2.)                            
     return n 
 
-def kfs(omega_ncdm, h, z):                                                      
-    k_fs = ((cf.KFS_NUMERATOR_FACTOR * h * (cf.NEUTRINO_SCALE_FACTOR 
-        * omega_ncdm / 3.)) / (cf.KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z)))            
+def kfs(m_ncdm, h, z):                                                      
+    k_fs = (
+        (cf.KFS_NUMERATOR_FACTOR * h * m_ncdm) 
+        / (cf.KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z)))            
     return k_fs 
 
 def omega_ncdm(T_ncdm, m_ncdm, forecast_type):                                  
@@ -132,6 +139,13 @@ def T_ncdm(omega_ncdm, m_ncdm):
               * cf.RELIC_TEMP_SCALE)                  
     return T_ncdm
 
+def m_ncdm(omega_ncdm, T_ncdm): 
+    val = (
+        cf.NEUTRINO_SCALE_FACTOR 
+        * omega_ncdm 
+        * np.power(cf.RELIC_TEMP_SCALE / T_ncdm, 3.))
+    return val 
+
 def domega_ncdm_dT_ncdm(T_ncdm, m_ncdm):                                        
     # RELICS ONLY?                                                              
     """Returns derivative of omega_ncdm wrt T_ncdm.                             
@@ -147,7 +161,7 @@ def domega_ncdm_dT_ncdm(T_ncdm, m_ncdm):
              * np.power(cf.RELIC_TEMP_SCALE, -3.))    
     return deriv  
 
-def dT_ncdm_domega_ncdm(omega_ncdm, m_ncdm):                                    
+def dT_ncdm_domega_ncdm(omega_ncdm, M_ncdm):                                    
     # RELICS ONLY?                                                              
     """Returns derivative of T_ncdm wrt  omega_ncdm.                            
                                                                                 
@@ -158,9 +172,13 @@ def dT_ncdm_domega_ncdm(omega_ncdm, m_ncdm):
     """                                                                         
                                                                                 
     deriv = ((cf.RELIC_TEMP_SCALE / 3)                                                         
-             * np.power(cf.NEUTRINO_SCALE_FACTOR / m_ncdm, 1./3.)                                    
+             * np.power(cf.NEUTRINO_SCALE_FACTOR / M_ncdm, 1./3.)                                    
              * np.power(omega_ncdm, -2./3.))                                    
     return deriv       
+
+def dM_ncdm_domega_ncdm(T_ncdm):
+    deriv = cf.NEUTRINO_SCALE_FACTOR * np.power(1.95 / T_ncdm, 3.) 
+    return deriv 
 
 def sigmafog(z, sigma_fog_0):                                                                
     """Returns sigma_fog as function of redshift.                               
@@ -217,7 +235,7 @@ def fgrowth(omega_b, omega_cdm, h, z):
     f = np.power(inner, gamma)                                                  
     return f              
 
-def ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm):                           
+def ggrowth(z, k, kfs, h, omega_b, omega_cdm, omega_ncdm):                           
     """Returns g growth factor(?).                                              
                                                                                 
     Args:                                                                       
@@ -236,7 +254,7 @@ def ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm):
     """                                                                         
                                                                                 
     Delta_q = cf.RSD_DELTA_Q                                                               
-    q = cf.RSD_Q_NUMERATOR_FACTOR * k / cf.kfs(omega_ncdm, h, z)                                          
+    q = cf.RSD_Q_NUMERATOR_FACTOR * k / kfs                                          
     Delta_L =  (cf.RSD_DELTA_L_NUMERATOR_FACTOR * omega_ncdm 
                 / (omega_b + omega_cdm))                         
     g = (cf.rlambdacdm(h, k)

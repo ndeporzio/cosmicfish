@@ -52,7 +52,8 @@ class forecast:
         self.n_densities = np.zeros(len(dNdz))
         self.pandas_cmb_fisher = None
 
-        if self.forecast=="relic": 
+        if self.forecast=="relic":
+            self.M_ncdm_fid = self.m_ncdm_fid 
             self.T_ncdm_fid = self.fid['T_ncdm'] # Units [T_cmb]
             self.omega_ncdm_fid = cf.omega_ncdm(self.T_ncdm_fid, 
                                                 self.m_ncdm_fid, 
@@ -72,7 +73,7 @@ class forecast:
         # Generate tables
         self.k_table = [0] * len(self.z_steps)
         for zidx, zval in enumerate(self.z_steps):
-            V = self.V(zidx)  
+            V = self.V(zidx) #Redundant to cf.gen_V 
             self.k_table[zidx] = cf.gen_k_table(
                 volume=V, 
                 z=self.z_steps[zidx],
@@ -107,14 +108,13 @@ class forecast:
         self.h_high, self.h_low = self.generate_spectra('h')
         self.tau_reio_high, self.tau_reio_low = self.generate_spectra(
                                                     'tau_reio')
-        else: 
-            print("Matter power spectrum already generated!") 
         if self.forecast=="neutrino":
-            # Carefule with naming - you're varying m_ncdm but 
-            # calling it M_ncdm  
+            # We give 'm_ncdm' as parameter name to 'generate_spectra', but 
+            # 'generate_data' makes 3 copies of this for neutrinos. So really,
+            # we are varying M_ncdm
             self.M_ncdm_high, self.M_ncdm_low = self.generate_spectra('m_ncdm')
         elif self.forecast=="relic": 
-            self.T_ncdm_high, self.T_ncdm_low = self.generate_spectra('T_ncdm')
+            self.M_ncdm_high, self.M_ncdm_low = self.generate_spectra('m_ncdm')
 
         # Calculate centered derivatives about fiducial cosmo at each z 
 
@@ -157,10 +157,7 @@ class forecast:
             self.dPdM_ncdm, self.dlogPdM_ncdm = cf.dPs_array(
                 self.M_ncdm_low, 
                 self.M_ncdm_high, 
-                self.m_ncdm_fid * self.dstep)
-            self.dPdM_ncdm *= (1./3.) 
-            self.dlogPdM_ncdm *= (1./3.)    
-            # ^^^CAUTION. Carefule of factor of 3. .  
+                3. * self.m_ncdm_fid * self.dstep)
             self.dPdomega_ncdm = [
                 np.array(self.dPdM_ncdm[zidx]) * cf.NEUTRINO_SCALE_FACTOR 
                 for zidx, zval in enumerate(self.z_steps)]
@@ -168,32 +165,38 @@ class forecast:
                 np.array(self.dlogPdM_ncdm[zidx]) * cf.NEUTRINO_SCALE_FACTOR 
                 for zidx, zval in enumerate(self.z_steps)]
         elif self.forecast=="relic": 
-            self.dPdT_ncdm, self.dlogPdT_ncdm = cf.dPs_array(
-                self.T_ncdm_low, 
-                self.T_ncdm_high, 
-                self.fid['T_ncdm']*self.dstep)
+            self.dPdM_ncdm, self.dlogPdM_ncdm = cf.dPs_array(
+                self.M_ncdm_low, 
+                self.M_ncdm_high, 
+                self.M_ncdm_fid*self.dstep)
             self.dPdomega_ncdm = [
-                np.array(self.dPdT_ncdm[zidx]) 
-                / domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.m_ncdm_fid)
+                np.array(self.dPdM_ncdm[zidx]) 
+                * cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid)
                 for zidx in enumerate(self.z_steps)]
             self.dlogPdomega_ncdm = [
-                np.array(self.dlogPdT_ncdm[zidx]) 
-                / domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.m_ncdm_fid)
+                np.array(self.dlogPdM_ncdm[zidx]) 
+                * cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid)
                 for zidx, zval in enumerate(self.z_steps)]
  
     def gen_rsd(self, mu): 
         '''Given mu, creates len(z_steps) array. Each elem is len(k_table).'''
         if 'rsd' not in self.psterms: 
-            self.psterms.append('rsd') 
+            self.psterms.append('rsd')
+
+        if self.forecast=="neutrino": 
+            relic = False
+        elif self.forecast=="relic": 
+            relic = True
 
         fiducial = {'omega_b' : self.omega_b_fid, 
                     'omega_cdm' : self.omega_cdm_fid, 
                     'omega_ncdm' : self.omega_ncdm_fid,
                     'h' : self.h_fid, 
-                    #'b1L' : self.b1L_fid,
                     'b0' : self.b0_fid,
                     'alphak2' : self.alphak2_fid,
-                    'mu' : mu}
+                    'mu' : mu,
+                    'relic' : relic,
+                    "T_ncdm" : self.T_ncdm_fid}
 
         self.RSD = [[cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval,
             'D' : self.spectra_mid[zidx].D})) 
@@ -228,7 +231,7 @@ class forecast:
             for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogRSDdM_ncdm = (np.array(self.dlogRSDdomega_ncdm) 
-            / cf.NEUTRINO_SCALE_FACTOR)
+            / cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid))
 
         self.dlogRSDdh = [[cf.derivative(                                 
             cf.log_rsd,                                                         
@@ -289,7 +292,7 @@ class forecast:
             for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogFOGdM_ncdm = (np.array(self.dlogFOGdomega_ncdm) 
-            / cf.NEUTRINO_SCALE_FACTOR) 
+            / cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid)) 
 
         self.dlogFOGdh = [[cf.derivative(cf.log_fog, 'h', self.dstep,           
             **dict(fiducial, **{'z' : zval, 'k' :  kval}))                      
@@ -335,7 +338,7 @@ class forecast:
             for zidx, zval in enumerate(self.z_steps)]
 
         self.dlogAPdM_ncdm = (np.array(self.dlogAPdomega_ncdm) 
-            / cf.NEUTRINO_SCALE_FACTOR) 
+            / cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid)) 
 
         self.dlogAPdh = [[cf.derivative(cf.log_ap, 'h', self.dstep,             
             **dict(fiducial, **{'z' : zval, 'z_fid' : zval}))                   
@@ -506,7 +509,7 @@ class forecast:
         self.dlogCOVdomega_ncdm = (dlogPdk * dkdomegancdm 
             + dlogPdmu * dmudomegancdm)
         self.dlogCOVdM_ncdm = (np.array(self.dlogCOVdomega_ncdm)                
-            / cf.NEUTRINO_SCALE_FACTOR) 
+            / cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid)) 
         self.dlogCOVdh = (dlogPdk * dkdh 
             + dlogPdmu * dmudh)
     
@@ -697,7 +700,7 @@ class forecast:
 
                     dlogPdM_ncdm[zidx][kidx][muidx] = (
                         dlogPdomega_ncdm[zidx][kidx][muidx] 
-                        / cf.NEUTRINO_SCALE_FACTOR) 
+                        / cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid)) 
                     # ^^^Careful, this overwrites the earlier dP_g value. 
 
                     dlogPdsigmafog[zidx][kidx][muidx] = (                       
@@ -885,26 +888,54 @@ class forecast:
 
 
     def load_cmb_fisher(self, fisherpath=None): 
-        # Parameter ordering: omega_b, omega_cdm, n_s, A_s, tau_reio, H_0, 
-        # M_ncdm 
 
-        if fisherpath==None: 
-            fisherpath = os.path.join(cf.priors_directory(), 
-                "CMBS4_Fisher.dat")
+        if self.forecast=="neutrino":
+            # Parameter ordering: omega_b, omega_cdm, n_s, A_s, tau_reio, H_0,      
+            # M_ncdm
+            if fisherpath==None: 
+                fisherpath = os.path.join(cf.priors_directory(), 
+                    "CMBS4_Fisher_Neutrinos.dat")
 
-        fmat = pd.read_csv(fisherpath, sep='\t', header=0)
-        fmat.iloc[:,5] *= 100. # Change of variables H0->h
-        fmat.iloc[5,:] *= 100. # Change of variables H0->h
-        fmat.iloc[:,6] *= 3. # Change of variables M->m
-        fmat.iloc[6,:] *= 3. # Change of variables M->m
-        fmat = fmat.rename(index=str, columns={"H_0": "h", "M_ncdm": "m_ncdm"})
+            fmat = pd.read_csv(fisherpath, sep='\t', header=0)
+            fmat.iloc[:,5] *= 100. # Change of variables H0->h
+            fmat.iloc[5,:] *= 100. # Change of variables H0->h
+            fmat = fmat.rename(index=str, columns={"H_0": "h"})
 
-        self.numpy_cmb_fisher =  np.array(fmat)
-        self.pandas_cmb_fisher = fmat
+            fmat.iloc[:,6] *= 3. # Change of variables M->m
+            fmat.iloc[6,:] *= 3. # Change of variables M->m
+            fmat = fmat.rename(index=str, columns={"M_ncdm": "m_ncdm"})
 
-        self.numpy_cmb_covariance = np.linalg.inv(self.pandas_cmb_fisher)
-        self.pandas_cmb_covariance = pd.DataFrame(np.linalg.inv(                 
-            self.pandas_cmb_fisher), columns=self.pandas_cmb_fisher.columns) 
+            self.numpy_cmb_fisher =  np.array(fmat)
+            self.pandas_cmb_fisher = fmat
+
+            self.numpy_cmb_covariance = np.linalg.inv(self.pandas_cmb_fisher)
+            self.pandas_cmb_covariance = pd.DataFrame(np.linalg.inv(                 
+                self.pandas_cmb_fisher), 
+                columns=self.pandas_cmb_fisher.columns) 
+        
+        if self.forecast=="relic": 
+            # Parameter ordering: omega_b, omega_cdm, n_s, A_s, tau_reio, H_0,      
+            # omega_ncdm
+            if fisherpath==None:  
+                fisherpath = os.path.join(cf.priors_directory(), 
+                    "CMBS4_Fisher_Relic.dat") 
+            fmat = pd.read_csv(fisherpath, sep='\t', header=0)                  
+            fmat.iloc[:,5] *= 100. # Change of variables H0->h                  
+            fmat.iloc[5,:] *= 100. # Change of variables H0->h                  
+            fmat = fmat.rename(index=str, columns={"H_0": "h"})                 
+                                                                                
+            fmat.iloc[:,6] *= 3. # Change of variables M->m                     
+            fmat.iloc[6,:] *= 3. # Change of variables M->m                     
+            fmat = fmat.rename(index=str, columns={"M_ncdm": "m_ncdm"})         
+                                                                                
+            self.numpy_cmb_fisher =  np.array(fmat)                             
+            self.pandas_cmb_fisher = fmat                                       
+                                                                                
+            self.numpy_cmb_covariance = np.linalg.inv(self.pandas_cmb_fisher)   
+            self.pandas_cmb_covariance = pd.DataFrame(np.linalg.inv(             
+                self.pandas_cmb_fisher),                                        
+                columns=self.pandas_cmb_fisher.columns)        
+
 
         print("The following CMB Fisher matrix was loaded: ")
         print(self.pandas_cmb_fisher) 

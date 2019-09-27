@@ -181,8 +181,6 @@ def is_data(path, **kwargs):
             else: 
                 test = (key+' = '+str(val)+'\n')     
             if test not in text:
-                #print("NOT IN TEXT : " + test)
-                #print(text) 
                 check += 1                                                     
         if check > 0:                                                          
             return False                                                       

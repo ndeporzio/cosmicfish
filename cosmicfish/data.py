@@ -16,6 +16,7 @@ class spectrum:
         #
         self.dataconfig = correct_path(datadirectory + "/test_parameters.ini")
         self.datapath = correct_path(datadirectory + "/test_tk.dat")
+        self.ps_datapath = correct_path(datadirectory + "/test_pk.dat") 
         self.background_data = correct_path(datadirectory 
                                             + "/test_background.dat")
         self.fsky = fsky # Unitless  
@@ -36,7 +37,7 @@ class spectrum:
         self.T_cmb = None # Units of [K] 
         self.k_pivot = None # Units [Mpc^-1]
         #
-        # Values interptreted from CLASS output.
+        # Values interpreted from CLASS output.
         #
         self.rawdata = None
         self.b_interp_table = None # Unitless 
@@ -63,7 +64,8 @@ class spectrum:
             self.T_ncdm, 
             self.m_ncdm, 
             c=cf.C, 
-            fsky=self.fsky) #Units [Mpc^3]
+            fsky=self.fsky,
+            z_spacing=cf.DEFAULT_Z_BIN_SPACING) #Units [Mpc^3]
 
         if self.k_table is None:  
             self.k_table = cf.gen_k_table(
@@ -71,7 +73,8 @@ class spectrum:
                 z=self.z_pk, 
                 h=self.h, 
                 n_s=self.n_s, 
-                k_steps=100) #Units [Mpc^-1]
+                k_steps=cf.DEFAULT_K_TABLE_STEPS,
+                scaling='log') #Units [Mpc^-1]
         #
         #Derive power spectrum 
         #
@@ -79,17 +82,6 @@ class spectrum:
         self.gen_primordial_table()
         self.gen_power_spectrum()
 
-    def growthfactor(self): 
-        rawdata = pd.read_csv(self.background_data, 
-                              delim_whitespace=True, 
-                              skipinitialspace=True, 
-                              skiprows=4, 
-                              header=None, 
-                              usecols=[0,20], 
-                              names = ["z", "D"])
-        interpolator = scipy.interpolate.interp1d(rawdata['z'], rawdata['D'])
-        self.D = interpolator(self.z_pk)
-        #print(self.D) 
 
     def input(self): 
         with open(self.dataconfig) as f: 
@@ -121,22 +113,31 @@ class spectrum:
         self.rawdata = pd.read_csv(self.datapath, 
                                     skiprows=11, 
                                     skipinitialspace=True, 
-                                    #sep="     ", 
                                     delim_whitespace=True,
                                     usecols=[0, 2, 3], 
                                     header=None, 
                                     engine="python",
                                     names=["k (h/Mpc)", "d_b", "d_cdm"])
-        self.class_pk = pd.read_csv(self.datapath.replace("/test_tk.dat", 
-                                                          "/test_pk.dat"), 
+        self.class_pk = pd.read_csv(self.ps_datapath, 
                                     skiprows=4,
                                     skipinitialspace=True,
-                                    #sep="     ", 
                                     delim_whitespace=True,
                                     header=None,
                                     engine="python",
                                     names=["k (h/Mpc)", "P (Mpc/h)^3"])
         
+
+    def growthfactor(self):                                                     
+        rawdata = pd.read_csv(self.background_data,                             
+                              delim_whitespace=True,                            
+                              skipinitialspace=True,                            
+                              skiprows=4,                                       
+                              header=None,                                      
+                              usecols=[0,20],                                   
+                              names = ["z", "D"])                               
+        interpolator = scipy.interpolate.interp1d(rawdata['z'], rawdata['D'])   
+        self.D = interpolator(self.z_pk)                                        
+
 
     def interpolate(self):
         self.b_interpolator = scipy.interpolate.interp1d(

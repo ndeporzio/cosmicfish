@@ -3,8 +3,9 @@ import numpy as np
 def dPs_array(low, high, step):                                                 
     dPs = np.array([(high[zval].ps_table - low[zval].ps_table)/(2.*step)                 
            for zval in range(len(high))])                                        
-    dlogPs = np.array([(high[zval].log_ps_table - low[zval].log_ps_table)/(2.*step)      
-              for zval in range(len(high))])                                     
+    dlogPs = np.array([(high[zval].log_ps_table - low[zval].log_ps_table)
+            /(2.*step)      
+            for zval in range(len(high))])                                     
     return dPs, dlogPs    
 
 def dPs(fid_ps_table, var_ps_table, step, centered=False):                      
