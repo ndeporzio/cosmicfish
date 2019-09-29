@@ -7,7 +7,8 @@ from .io import correct_path
 
 class spectrum: 
    
-    def __init__(self, datadirectory, fsky=None, k_table=None): 
+    def __init__(self, datadirectory, fsky=None, k_table=None, 
+        forecast="neutrino"): 
 
         # While this spectrum is for a specific z value, how we bin z
         # in analysis determines V and thus range of k table. 
@@ -21,6 +22,7 @@ class spectrum:
                                             + "/test_background.dat")
         self.fsky = fsky # Unitless  
         self.k_table=k_table
+        self.forecast=forecast 
         #
         # Values read from CLASS output. 
         #
@@ -127,13 +129,17 @@ class spectrum:
                                     names=["k (h/Mpc)", "P (Mpc/h)^3"])
         
 
-    def growthfactor(self):                                                     
+    def growthfactor(self):    
+        if self.forecast=="neutrino":
+            colidx = 20
+        elif self.forecast=="relic": 
+            colidx = 16                                                 
         rawdata = pd.read_csv(self.background_data,                             
                               delim_whitespace=True,                            
                               skipinitialspace=True,                            
                               skiprows=4,                                       
                               header=None,                                      
-                              usecols=[0,20],                                   
+                              usecols=[0, colidx],                                   
                               names = ["z", "D"])                               
         interpolator = scipy.interpolate.interp1d(rawdata['z'], rawdata['D'])   
         self.D = interpolator(self.z_pk)                                        

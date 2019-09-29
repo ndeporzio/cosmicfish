@@ -13,16 +13,17 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
         m_ncdm = cf.m_ncdm(omega_ncdm, T_ncdm)
         k_fs = cf.kfs(m_ncdm, h, z) 
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
-    g = cf.ggrowth(z, k, kfs, h, omega_b, omega_cdm, omega_ncdm)                 
+    g = cf.ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm)                 
     bl = cf.bL(b0, D) 
     b1tilde = np.sqrt(1.+z) *  (1. + bl * g + alphak2 * np.power(k, 2.))  
                                                                                
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
     return R                                                                    
                                                                                 
-def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2):                 
+def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
+    relic=False, T_ncdm=None):                 
     return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, 
-        b0, D, alphak2))
+        b0, D, alphak2, relic, T_ncdm))
 
 def fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):              
     sigma_z = cf.SIGMA_Z                                                        
@@ -235,7 +236,7 @@ def fgrowth(omega_b, omega_cdm, h, z):
     f = np.power(inner, gamma)                                                  
     return f              
 
-def ggrowth(z, k, kfs, h, omega_b, omega_cdm, omega_ncdm):                           
+def ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm):                           
     """Returns g growth factor(?).                                              
                                                                                 
     Args:                                                                       
@@ -254,7 +255,7 @@ def ggrowth(z, k, kfs, h, omega_b, omega_cdm, omega_ncdm):
     """                                                                         
                                                                                 
     Delta_q = cf.RSD_DELTA_Q                                                               
-    q = cf.RSD_Q_NUMERATOR_FACTOR * k / kfs                                          
+    q = cf.RSD_Q_NUMERATOR_FACTOR * k / k_fs                                          
     Delta_L =  (cf.RSD_DELTA_L_NUMERATOR_FACTOR * omega_ncdm 
                 / (omega_b + omega_cdm))                         
     g = (cf.rlambdacdm(h, k)

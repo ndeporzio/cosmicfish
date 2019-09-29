@@ -1,0 +1,7 @@
+Parameter ordering for each Fisher information prior:  
+
+CMBS4_Fisher_Neutrinos: omega_b, omega_cdm, n_s, A_s, tau_reio, H_0, M_ncdm
+
+CMBS4_Fisher_Relic: omega_b, omega_cdm, n_s, A_s, tau_reio, h, T_ncdm
+
+Planck_Fisher_Relic: omega_b, omega_cdm, n_s, A_s, tau_reio, h, T_ncdm 
