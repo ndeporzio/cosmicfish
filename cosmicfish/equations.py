@@ -358,8 +358,14 @@ def set_sky_cover(fsky=None, fcoverage_deg=None):
         fdeg = cf.FULL_SKY_DEGREES
     return ffrac, fdeg
 
+def N_eff(forecast): 
+    if forecast=="neutrino": 
+        val = 3.046 - (3 * 1.0132)
+    
+    if forecast=="relic": 
+        val = 3.046
 
-
+    return val
 
 
 
