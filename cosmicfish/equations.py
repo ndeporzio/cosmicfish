@@ -147,39 +147,19 @@ def m_ncdm(omega_ncdm, T_ncdm):
         * np.power(cf.RELIC_TEMP_SCALE / T_ncdm, 3.))
     return val 
 
-def domega_ncdm_dT_ncdm(T_ncdm, m_ncdm):                                        
-    # RELICS ONLY?                                                              
-    """Returns derivative of omega_ncdm wrt T_ncdm.                             
-                                                                                
-    T_ncdm : relic temperature in units [K]                                     
-    m_ncdm : relic mass in units [eV]                                           
-                                                                                
-    deriv : derivative of relic abundance wrt relic temp in units [K]^(-1)      
-    """                                                                         
-                                                                                
-    deriv = ((3. * m_ncdm / cf.NEUTRINO_SCALE_FACTOR) 
-             * np.power(T_ncdm, 2.) 
-             * np.power(cf.RELIC_TEMP_SCALE, -3.))    
-    return deriv  
-
-def dT_ncdm_domega_ncdm(omega_ncdm, M_ncdm):                                    
-    # RELICS ONLY?                                                              
-    """Returns derivative of T_ncdm wrt  omega_ncdm.                            
-                                                                                
-    omega_ncdm : relative relic abundance. Unitless.                            
-    m_ncdm : relic mass in units [eV].                                          
-                                                                                
-    deriv : derivative of relic temp wrt relic abundance in units [K]           
-    """                                                                         
-                                                                                
-    deriv = ((cf.RELIC_TEMP_SCALE / 3)                                                         
-             * np.power(cf.NEUTRINO_SCALE_FACTOR / M_ncdm, 1./3.)                                    
-             * np.power(omega_ncdm, -2./3.))                                    
-    return deriv       
-
 def dM_ncdm_domega_ncdm(T_ncdm):
-    deriv = cf.NEUTRINO_SCALE_FACTOR * np.power(1.95 / T_ncdm, 3.) 
+    deriv = cf.NEUTRINO_SCALE_FACTOR * np.power(
+        cf.RELIC_TEMP_SCALE / T_ncdm, 3.) 
     return deriv 
+
+def domega_ncdm_dT_ncdm(T_ncdm, M_ncdm): 
+    deriv = (3 * np.power(T_ncdm, 2.) * np.power(cf.RELIC_TEMP_SCALE, -3.) 
+        * M_ncdm / cf.NEUTRINO_SCALE_FACTOR)
+    return deriv
+
+def dT_ncdm_domega_ncdm(T_ncdm, M_ncdm):  
+    derive = 1. /  cf.domega_ncdm_dT_ncdm(T_ncdm, M_ncdm)
+    return deriv
 
 def sigmafog(z, sigma_fog_0):                                                                
     """Returns sigma_fog as function of redshift.                               
@@ -362,8 +342,9 @@ def N_eff(forecast):
     if forecast=="neutrino": 
         val = 3.046 - (3 * 1.0132)
     
-    if forecast=="relic": 
-        val = 3.046
+    if forecast=="relic":
+        #val = 3.046 
+        val = 3.046 - (3 * 1.0132)
 
     return val
 
