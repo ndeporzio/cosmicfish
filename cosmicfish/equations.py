@@ -158,7 +158,7 @@ def domega_ncdm_dT_ncdm(T_ncdm, M_ncdm):
     return deriv
 
 def dT_ncdm_domega_ncdm(T_ncdm, M_ncdm):  
-    derive = 1. /  cf.domega_ncdm_dT_ncdm(T_ncdm, M_ncdm)
+    deriv = 1. /  cf.domega_ncdm_dT_ncdm(T_ncdm, M_ncdm)
     return deriv
 
 def sigmafog(z, sigma_fog_0):                                                                
