@@ -82,13 +82,9 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
                     replace_text(end_ini, '#'+key, key + ' = ' + str(value) 
                                                    + ", " + str(value) 
                                                    + ", " + str(value))
-                    neff = cf.N_eff('neutrino') 
-                    replace_text(end_ini, '#N_eff', 'N_eff = ' + str(neff)) 
                 if modify['N_ncdm']==1: # Light relics
                     print('#'+key+'-->'+ key + ' = ' + str(value))
                     replace_text(end_ini, '#'+key, key + ' = ' + str(value)) 
-                    neff = cf.N_eff('relic')
-                    replace_text(end_ini, '#N_eff', 'N_eff = ' + str(neff))                
             else: 
                 print('#'+key+'-->'+ key + ' = ' + str(value))
                 replace_text(end_ini, '#'+key, key + ' = ' + str(value))

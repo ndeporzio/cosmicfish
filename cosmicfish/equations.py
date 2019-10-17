@@ -8,7 +8,7 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
 
     if relic==False:             
         m_ncdm = cf.m_ncdm(omega_ncdm/3., cf.RELIC_TEMP_SCALE)     
-        k_fs = cf.kfs(m_ncdm, h,  z)
+        k_fs = cf.kfs(m_ncdm, h, z)
     else: 
         m_ncdm = cf.m_ncdm(omega_ncdm, T_ncdm)
         k_fs = cf.kfs(m_ncdm, h, z) 
@@ -147,6 +147,11 @@ def m_ncdm(omega_ncdm, T_ncdm):
         * np.power(cf.RELIC_TEMP_SCALE / T_ncdm, 3.))
     return val 
 
+def domega_ncdm_dM_ncdm(T_ncdm): 
+    deriv = (np.power(T_ncdm / cf.RELIC_TEMP_SCALE, 3.) 
+        / cf.NEUTRINO_SCALE_FACTOR)
+    return deriv 
+
 def dM_ncdm_domega_ncdm(T_ncdm):
     deriv = cf.NEUTRINO_SCALE_FACTOR * np.power(
         cf.RELIC_TEMP_SCALE / T_ncdm, 3.) 
@@ -158,7 +163,8 @@ def domega_ncdm_dT_ncdm(T_ncdm, M_ncdm):
     return deriv
 
 def dT_ncdm_domega_ncdm(T_ncdm, M_ncdm):  
-    deriv = 1. /  cf.domega_ncdm_dT_ncdm(T_ncdm, M_ncdm)
+    deriv = (np.power(cf.RELIC_TEMP_SCALE, 3.) * cf.NEUTRINO_SCALE_FACTOR /
+        (3. * np.power(T_ncdm, 2.) * M_ncdm))
     return deriv
 
 def sigmafog(z, sigma_fog_0):                                                                
@@ -338,20 +344,17 @@ def set_sky_cover(fsky=None, fcoverage_deg=None):
         fdeg = cf.FULL_SKY_DEGREES
     return ffrac, fdeg
 
-def N_eff(forecast): 
-    if forecast=="neutrino": 
-        val = 3.046 - (3 * 1.0132)
-    
-    if forecast=="relic":
-        #val = 3.046 
-        val = 3.046 - (3 * 1.0132)
+def k_pivot(h): 
+    kp = cf.KP_PREFACTOR * h
+    return kp  
 
-    return val
+def dlogPdAs(As_fid): 
+    val = 1. / As_fid
+    return val 
 
-
-
-
-
+def dlogPdns(k, kp): 
+    val = np.log(k / kp) 
+    return val 
 
 
 
