@@ -67,7 +67,7 @@ class forecast:
             self.omega_ncdm_fid = cf.omega_ncdm(None, 
                                                 self.m_ncdm_fid, 
                                                 "neutrino")
-        self.kp = cf.k_pivot(self.h_fid) # Units [Mpc^-1]
+        self.kp = cf.k_pivot() # Units [Mpc^-1]
 
         self.fsky, self.fcoverage_deg = cf.set_sky_cover(fsky, fcoverage_deg)
             
@@ -123,7 +123,12 @@ class forecast:
                     'm_ncdm')
             if self.relic_fix=="m_ncdm":                                        
                 self.T_ncdm_high, self.T_ncdm_low = self.generate_spectra(      
-                    'T_ncdm') 
+                    'T_ncdm', 
+                    manual_high = ((1. + self.dstep)
+                                    *(self.T_ncdm_fid / self.T_cmb_fid)), 
+                    manual_low = ((1. - self.dstep)                              
+                                    *(self.T_ncdm_fid / self.T_cmb_fid)), 
+                    ) 
 
         # Calculate centered derivatives about fiducial cosmo at each z 
 
@@ -212,6 +217,8 @@ class forecast:
                 print("m_ncdm fixed. dlogPmdTncdm: ", self.dlogPdT_ncdm)            
                 print("m_ncdm fixed. dTncdmdomegancdm: ", cf.dT_ncdm_domega_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))
                 print("m_ncdm fixed. dlogPmdomegancdm: ", self.dlogPdomega_ncdm)
+            print("T_ncdm_fid: ", self.T_ncdm_fid)
+            print("M_ncdm_fid: ", self.M_ncdm_fid) 
  
     def gen_rsd(self, mu): 
         '''Given mu, creates len(z_steps) array. Each elem is len(k_table).'''
@@ -880,12 +887,24 @@ class forecast:
                 print("Fisher element (", pidx1, ", ", pidx2,") calculated...") 
         self.fisher=fisher
 
-    def generate_spectra(self, param):                                          
+    def generate_spectra(
+        self,
+        param,
+        manual_high=None,
+        manual_low=None):
+
+        if (manual_high==None) and (manual_low==None): 
+            step_high = (1. + self.dstep) * self.fid[param]
+            step_low = (1. - self.dstep) * self.fid[param]
+        else: 
+            step_high = manual_high                         
+            step_low = manual_low    
+                                         
         spectra_high = [cf.spectrum(                                            
                             cf.generate_data(                                   
                                 dict(self.fid,                                  
                                      **{'z_pk' : zval,                             
-                                     param : (1.+self.dstep)*self.fid[param]}), 
+                                     param : step_high}), 
                                 self.classdir,                                  
                                 self.datastore)[0:-20],                         
                             self.fsky,
@@ -896,7 +915,7 @@ class forecast:
                             cf.generate_data(                                    
                                 dict(self.fid,                                   
                                     **{'z_pk' : zval,                              
-                                    param : (1.-self.dstep)*self.fid[param]}),  
+                                    param : step_low}),  
                                 self.classdir,                                   
                                 self.datastore)[0:-20],                          
                             self.fsky,
