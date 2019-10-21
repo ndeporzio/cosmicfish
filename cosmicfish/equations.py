@@ -4,14 +4,14 @@ from scipy.integrate import quad
 import cosmicfish as cf
 
 def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2, 
-    relic=False, T_ncdm=None):
+    relic, T_ncdm):
 
     if relic==False:             
         m_ncdm = cf.m_ncdm(omega_ncdm/3., cf.RELIC_TEMP_SCALE)     
-        k_fs = cf.kfs(m_ncdm, h, z)
-    else: 
+        k_fs = cf.kfs(m_ncdm, T_ncdm, h, z)
+    elif relic==True: 
         m_ncdm = cf.m_ncdm(omega_ncdm, T_ncdm)
-        k_fs = cf.kfs(m_ncdm, h, z) 
+        k_fs = cf.kfs(m_ncdm, T_ncdm, h, z) 
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
     g = cf.ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm)                 
     bl = cf.bL(b0, D) 
@@ -21,7 +21,7 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
     return R                                                                    
                                                                                 
 def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
-    relic=False, T_ncdm=None):                 
+    relic, T_ncdm):                 
     return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, 
         b0, D, alphak2, relic, T_ncdm))
 
@@ -105,10 +105,11 @@ def neff(ndens, Pg):
     n = np.power((ndens * Pg) / (ndens*Pg + 1.), 2.)                            
     return n 
 
-def kfs(m_ncdm, h, z):                                                      
-    k_fs = (
+def kfs(m_ncdm, T_ncdm, h, z):                                                      
+    k_fs = ((
         (cf.KFS_NUMERATOR_FACTOR * h * m_ncdm) 
-        / (cf.KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z)))            
+        / (cf.KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z))) 
+        * np.power(T_ncdm/cf.RELIC_TEMP_SCALE, -1.))           
     return k_fs 
 
 def omega_ncdm(T_ncdm, m_ncdm, forecast_type):                                  
