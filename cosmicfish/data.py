@@ -105,7 +105,7 @@ class spectrum:
                 if line.startswith("m_ncdm = "):
                     self.m_ncdm = float((line.split(' = ')[1]).split(',')[0])
                 if line.startswith("T_ncdm = "):
-                    self.T_ncdm = float(line.split(' = ')[1])
+                    self.T_ncdm = float((line.split(' = ')[1]).split(',')[0])
                 if line.startswith("N_ncdm = "):
                     self.N_ncdm = float(line.split(' = ')[1])
                 if line.startswith("T_cmb = "):
