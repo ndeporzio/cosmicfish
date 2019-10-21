@@ -344,8 +344,8 @@ def set_sky_cover(fsky=None, fcoverage_deg=None):
         fdeg = cf.FULL_SKY_DEGREES
     return ffrac, fdeg
 
-def k_pivot(h): 
-    kp = cf.KP_PREFACTOR * h
+def k_pivot(): 
+    kp = cf.KP_PREFACTOR 
     return kp  
 
 def dlogPdAs(As_fid): 
