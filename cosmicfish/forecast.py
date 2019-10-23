@@ -573,283 +573,256 @@ class forecast:
         self.dlogCOVdh = (dlogPdk * dkdh 
             + dlogPdmu * dmudh)
     
-    def gen_fisher(self, mu_step=0.05): # Really messy and inefficient
+    def gen_fisher(self, paramvec, mu_step=0.05, skipgen=False): #inefficient
 
-        if 'pm' not in self.psterms:                                        
-            self.gen_pm() 
-
-        mu_vals = np.arange(-1., 1., mu_step)
-        self.mu_table = mu_vals
-
-        Pg = np.zeros(
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
-        RSD = np.zeros(                                                          
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
-        FOG = np.zeros(                                                          
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
-        dlogPdA_s = np.zeros(
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
-        dlogPdn_s = np.zeros(   
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
-        dlogPdomega_b = np.zeros(
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
-        dlogPdomega_cdm = np.zeros(
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
-        dlogPdh = np.zeros(
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
-        dlogPdtau_reio = np.zeros(
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
-        dlogPdomega_ncdm = np.zeros(
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
-        dlogPdM_ncdm = np.zeros(                                            
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
-        dlogPdT_ncdm = np.zeros(                                                
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
-        dlogPdsigmafog = np.zeros(
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
-        dlogPdb0 = np.zeros(
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
-        dlogPdalphak2 = np.zeros(
-            (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))        
-
-        for muidx, muval in enumerate(mu_vals):
-            if self.use_rsd==True:  
-                self.gen_rsd(muval)
-            else:  
-                self.RSD = [[1. 
-                    for kidx, kval in enumerate(self.k_table[zidx])] 
-                    for zidx, zval in enumerate(self.z_steps)]
-                self.dlogRSDdomega_b = [[0.
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)] 
-                self.dlogRSDdomega_cdm = [[0.                                     
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)] 
-                self.dlogRSDdomega_ncdm = [[0.                 
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                     
-                self.dlogRSDdM_ncdm = [[0.                     
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]              
-                self.dlogRSDdT_ncdm = [[0.                                      
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]    
-                self.dlogRSDdh = [[0.                          
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]         
-                self.dlogRSDdb0 = [[0.                        
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]           
-                self.dlogRSDdalphak2 = [[0.                    
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]               
-
-            if self.use_fog==True:  
-                self.gen_fog(muval)
+        if skipgen==False: 
+            if 'pm' not in self.psterms:                                        
+                self.gen_pm() 
+    
+            mu_vals = np.arange(-1., 1., mu_step)
+            self.mu_table = mu_vals
+    
+            Pg = np.zeros(
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            RSD = np.zeros(                                                          
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+            FOG = np.zeros(                                                          
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+            dlogPdA_s = np.zeros(
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            dlogPdn_s = np.zeros(   
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            dlogPdomega_b = np.zeros(
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            dlogPdomega_cdm = np.zeros(
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            dlogPdh = np.zeros(
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            dlogPdtau_reio = np.zeros(
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            dlogPdomega_ncdm = np.zeros(
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            dlogPdM_ncdm = np.zeros(                                            
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+            dlogPdT_ncdm = np.zeros(                                                
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+            dlogPdsigmafog = np.zeros(
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            dlogPdb0 = np.zeros(
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            dlogPdalphak2 = np.zeros(
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))        
+    
+            for muidx, muval in enumerate(mu_vals):
+                if self.use_rsd==True:  
+                    self.gen_rsd(muval)
+                else:  
+                    self.RSD = [[1. 
+                        for kidx, kval in enumerate(self.k_table[zidx])] 
+                        for zidx, zval in enumerate(self.z_steps)]
+                    self.dlogRSDdomega_b = [[0.
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)] 
+                    self.dlogRSDdomega_cdm = [[0.                                     
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)] 
+                    self.dlogRSDdomega_ncdm = [[0.                 
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                     
+                    self.dlogRSDdM_ncdm = [[0.                     
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]              
+                    self.dlogRSDdT_ncdm = [[0.                                      
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]    
+                    self.dlogRSDdh = [[0.                          
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]         
+                    self.dlogRSDdb0 = [[0.                        
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]           
+                    self.dlogRSDdalphak2 = [[0.                    
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]               
+    
+                if self.use_fog==True:  
+                    self.gen_fog(muval)
+                else: 
+                    self.FOG = [[1.                                                 
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)] 
+                    self.dlogFOGdomega_b = [[0.                    
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                  
+                    self.dlogFOGdomega_cdm = [[0.                  
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                  
+                    self.dlogFOGdomega_ncdm = [[0.                 
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                  
+                    self.dlogFOGdM_ncdm = [[0.                     
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                  
+                    self.dlogFOGdT_ncdm = [[0.                                      
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)] 
+                    self.dlogFOGdh = [[0.                          
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                  
+                    self.dlogFOGdsigmafog0 = [[0.                  
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                    
+    
+                if self.use_ap==True: 
+                    self.gen_ap()
+                else: 
+                    self.AP = [[1.                                                 
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)] 
+                    self.dlogAPdomega_b = [[0.                     
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                 
+                    self.dlogAPdomega_cdm = [[0.                   
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                 
+                    self.dlogAPdomega_ncdm = [[0.                  
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                 
+                    self.dlogAPdM_ncdm = [[0.                      
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                 
+                    self.dlogAPdT_ncdm = [[0.                                       
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]   
+                    self.dlogAPdh = [[0.                           
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                 
+    
+                if self.use_cov==True: 
+                    self.gen_cov(muval)
+                else:
+                    self.COV = [[1.                                                 
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)] 
+                    self.dlogCOVdomega_b = [[0.                    
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                   
+                    self.dlogCOVdomega_cdm = [[0.                  
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                   
+                    self.dlogCOVdomega_ncdm = [[0.                 
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                   
+                    self.dlogCOVdM_ncdm = [[0.                     
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                   
+                    self.dlogCOVdT_ncdm = [[0.                                      
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]  
+                    self.dlogCOVdh = [[0.                          
+                        for kidx, kval in enumerate(self.k_table[zidx])]            
+                        for zidx, zval in enumerate(self.z_steps)]                   
+    
+                for zidx, zval in enumerate(self.z_steps): 
+                    for kidx, kval in enumerate(self.k_table[zidx]):
+    
+                        Pg[zidx][kidx][muidx] = ( 1.
+                            * self.spectra_mid[zidx].ps_table[kidx] 
+                            * self.RSD[zidx][kidx] 
+                            * self.FOG[zidx][kidx]
+                            * self.AP[zidx][kidx]
+                            * self.COV[zidx][kidx] #Just equals 1
+                            )
+                        RSD[zidx][kidx][muidx] = (self.RSD[zidx][kidx]) 
+                        FOG[zidx][kidx][muidx] = (self.FOG[zidx][kidx])
+                        dlogPdA_s[zidx][kidx][muidx] = (
+                            self.dlogPdA_s[zidx][kidx]
+                            )
+                        dlogPdn_s[zidx][kidx][muidx] = (
+                            self.dlogPdn_s[zidx][kidx]
+                            )
+                        dlogPdomega_b[zidx][kidx][muidx] = (
+                            self.dlogPdomega_b[zidx][kidx]
+                            + self.dlogRSDdomega_b[zidx][kidx]
+                            + self.dlogFOGdomega_b[zidx][kidx]
+                            + self.dlogAPdomega_b[zidx][kidx]
+                            + self.dlogCOVdomega_b[zidx][kidx]
+                            )
+                        dlogPdomega_cdm[zidx][kidx][muidx] = (
+                            self.dlogPdomega_cdm[zidx][kidx]
+                            + self.dlogRSDdomega_cdm[zidx][kidx]
+                            + self.dlogFOGdomega_cdm[zidx][kidx]
+                            + self.dlogAPdomega_cdm[zidx][kidx]
+                            + self.dlogCOVdomega_cdm[zidx][kidx]
+                            )
+                        dlogPdh[zidx][kidx][muidx] = (
+                            self.dlogPdh[zidx][kidx]
+                            + self.dlogRSDdh[zidx][kidx] 
+                            + self.dlogFOGdh[zidx][kidx]
+                            + self.dlogAPdh[zidx][kidx]
+                            + self.dlogCOVdh[zidx][kidx]
+                            )
+                        dlogPdtau_reio[zidx][kidx][muidx] = (
+                            self.dlogPdtau_reio[zidx][kidx]
+                            ) 
+                        dlogPdomega_ncdm[zidx][kidx][muidx] = (
+                            self.dlogPdomega_ncdm[zidx][kidx]
+                            + self.dlogRSDdomega_ncdm[zidx][kidx]
+                            + self.dlogFOGdomega_ncdm[zidx][kidx]
+                            + self.dlogAPdomega_ncdm[zidx][kidx]
+                            + self.dlogCOVdomega_ncdm[zidx][kidx]
+                            )
+    
+                        if self.relic_fix=="m_ncdm": 
+                            dlogPdT_ncdm[zidx][kidx][muidx] = (                     
+                                dlogPdomega_ncdm[zidx][kidx][muidx]                 
+                                * cf.domega_ncdm_dT_ncdm(
+                                    self.T_ncdm_fid, self.M_ncdm_fid)) 
+                        else: 
+                            dlogPdM_ncdm[zidx][kidx][muidx] = (
+                                dlogPdomega_ncdm[zidx][kidx][muidx] 
+                                * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid)) 
+                        # ^^^Careful, this overwrites the earlier dP_g value. 
+    
+                        dlogPdsigmafog[zidx][kidx][muidx] = (                       
+                            self.dlogFOGdsigmafog0[zidx][kidx]
+                            )
+    
+                        dlogPdb0[zidx][kidx][muidx] = (
+                            self.dlogRSDdb0[zidx][kidx]    
+                            )
+    
+                        dlogPdalphak2[zidx][kidx][muidx] = (                          
+                            self.dlogRSDdalphak2[zidx][kidx]                                                    
+                            )
+            self.Pg = Pg
+            self.RSD = RSD
+            self.FOG = FOG
+    
+            self.dlogPmdA_s = np.array(self.dlogPdA_s)
+            self.dlogPmdn_s = np.array(self.dlogPdn_s)
+            self.dlogPmdomega_b = np.array(self.dlogPdomega_b)
+            self.dlogPmdomega_cdm = np.array(self.dlogPdomega_cdm)
+            self.dlogPmdh = np.array(self.dlogPdh)
+            self.dlogPmdtau_reio = np.array(self.dlogPdtau_reio)
+            self.dlogPmdomega_ncdm = np.array(self.dlogPdomega_ncdm)
+            if self.relic_fix=="m_ncdm":  
+                self.dlogPmdT_ncdm  = np.array(self.dlogPdT_ncdm) 
             else: 
-                self.FOG = [[1.                                                 
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)] 
-                self.dlogFOGdomega_b = [[0.                    
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                  
-                self.dlogFOGdomega_cdm = [[0.                  
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                  
-                self.dlogFOGdomega_ncdm = [[0.                 
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                  
-                self.dlogFOGdM_ncdm = [[0.                     
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                  
-                self.dlogFOGdT_ncdm = [[0.                                      
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)] 
-                self.dlogFOGdh = [[0.                          
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                  
-                self.dlogFOGdsigmafog0 = [[0.                  
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                    
-
-            if self.use_ap==True: 
-                self.gen_ap()
-            else: 
-                self.AP = [[1.                                                 
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)] 
-                self.dlogAPdomega_b = [[0.                     
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                 
-                self.dlogAPdomega_cdm = [[0.                   
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                 
-                self.dlogAPdomega_ncdm = [[0.                  
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                 
-                self.dlogAPdM_ncdm = [[0.                      
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                 
-                self.dlogAPdT_ncdm = [[0.                                       
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]   
-                self.dlogAPdh = [[0.                           
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                 
-
-            if self.use_cov==True: 
-                self.gen_cov(muval)
-            else:
-                self.COV = [[1.                                                 
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)] 
-                self.dlogCOVdomega_b = [[0.                    
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                   
-                self.dlogCOVdomega_cdm = [[0.                  
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                   
-                self.dlogCOVdomega_ncdm = [[0.                 
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                   
-                self.dlogCOVdM_ncdm = [[0.                     
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                   
-                self.dlogCOVdT_ncdm = [[0.                                      
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]  
-                self.dlogCOVdh = [[0.                          
-                    for kidx, kval in enumerate(self.k_table[zidx])]            
-                    for zidx, zval in enumerate(self.z_steps)]                   
-
-            for zidx, zval in enumerate(self.z_steps): 
-                for kidx, kval in enumerate(self.k_table[zidx]):
-
-                    Pg[zidx][kidx][muidx] = ( 1.
-                        * self.spectra_mid[zidx].ps_table[kidx] 
-                        * self.RSD[zidx][kidx] 
-                        * self.FOG[zidx][kidx]
-                        * self.AP[zidx][kidx]
-                        * self.COV[zidx][kidx] #Just equals 1
-                        )
-                    RSD[zidx][kidx][muidx] = (self.RSD[zidx][kidx]) 
-                    FOG[zidx][kidx][muidx] = (self.FOG[zidx][kidx])
-                    dlogPdA_s[zidx][kidx][muidx] = (
-                        self.dlogPdA_s[zidx][kidx]
-                        )
-                    dlogPdn_s[zidx][kidx][muidx] = (
-                        self.dlogPdn_s[zidx][kidx]
-                        )
-                    dlogPdomega_b[zidx][kidx][muidx] = (
-                        self.dlogPdomega_b[zidx][kidx]
-                        + self.dlogRSDdomega_b[zidx][kidx]
-                        + self.dlogFOGdomega_b[zidx][kidx]
-                        + self.dlogAPdomega_b[zidx][kidx]
-                        + self.dlogCOVdomega_b[zidx][kidx]
-                        )
-                    dlogPdomega_cdm[zidx][kidx][muidx] = (
-                        self.dlogPdomega_cdm[zidx][kidx]
-                        + self.dlogRSDdomega_cdm[zidx][kidx]
-                        + self.dlogFOGdomega_cdm[zidx][kidx]
-                        + self.dlogAPdomega_cdm[zidx][kidx]
-                        + self.dlogCOVdomega_cdm[zidx][kidx]
-                        )
-                    dlogPdh[zidx][kidx][muidx] = (
-                        self.dlogPdh[zidx][kidx]
-                        + self.dlogRSDdh[zidx][kidx] 
-                        + self.dlogFOGdh[zidx][kidx]
-                        + self.dlogAPdh[zidx][kidx]
-                        + self.dlogCOVdh[zidx][kidx]
-                        )
-                    dlogPdtau_reio[zidx][kidx][muidx] = (
-                        self.dlogPdtau_reio[zidx][kidx]
-                        ) 
-                    dlogPdomega_ncdm[zidx][kidx][muidx] = (
-                        self.dlogPdomega_ncdm[zidx][kidx]
-                        + self.dlogRSDdomega_ncdm[zidx][kidx]
-                        + self.dlogFOGdomega_ncdm[zidx][kidx]
-                        + self.dlogAPdomega_ncdm[zidx][kidx]
-                        + self.dlogCOVdomega_ncdm[zidx][kidx]
-                        )
-
-                    if self.relic_fix=="m_ncdm": 
-                        dlogPdT_ncdm[zidx][kidx][muidx] = (                     
-                            dlogPdomega_ncdm[zidx][kidx][muidx]                 
-                            * cf.domega_ncdm_dT_ncdm(
-                                self.T_ncdm_fid, self.M_ncdm_fid)) 
-                    else: 
-                        dlogPdM_ncdm[zidx][kidx][muidx] = (
-                            dlogPdomega_ncdm[zidx][kidx][muidx] 
-                            * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid)) 
-                    # ^^^Careful, this overwrites the earlier dP_g value. 
-
-                    dlogPdsigmafog[zidx][kidx][muidx] = (                       
-                        self.dlogFOGdsigmafog0[zidx][kidx]
-                        )
-
-                    dlogPdb0[zidx][kidx][muidx] = (
-                        self.dlogRSDdb0[zidx][kidx]    
-                        )
-
-                    dlogPdalphak2[zidx][kidx][muidx] = (                          
-                        self.dlogRSDdalphak2[zidx][kidx]                                                    
-                        )
-        self.Pg = Pg
-        self.RSD = RSD
-        self.FOG = FOG
-
-        self.dlogPmdA_s = np.array(self.dlogPdA_s)
-        self.dlogPmdn_s = np.array(self.dlogPdn_s)
-        self.dlogPmdomega_b = np.array(self.dlogPdomega_b)
-        self.dlogPmdomega_cdm = np.array(self.dlogPdomega_cdm)
-        self.dlogPmdh = np.array(self.dlogPdh)
-        self.dlogPmdtau_reio = np.array(self.dlogPdtau_reio)
-        self.dlogPmdomega_ncdm = np.array(self.dlogPdomega_ncdm)
-        if self.relic_fix=="m_ncdm":  
-            self.dlogPmdT_ncdm  = np.array(self.dlogPdT_ncdm) 
-        else: 
-            self.dlogPmdM_ncdm = np.array(self.dlogPdM_ncdm)
-
-        self.dlogPgdA_s = np.array(dlogPdA_s)
-        self.dlogPgdn_s = np.array(dlogPdn_s)
-        self.dlogPgdomega_b  = np.array(dlogPdomega_b)
-        self.dlogPgdomega_cdm = np.array(dlogPdomega_cdm)
-        self.dlogPgdh = np.array(dlogPdh)
-        self.dlogPgdtau_reio = np.array(dlogPdtau_reio)
-        self.dlogPgdomega_ncdm = np.array(dlogPdomega_ncdm)
-        self.dlogPgdM_ncdm = np.array(dlogPdM_ncdm)
-        self.dlogPgdT_ncdm = np.array(dlogPdT_ncdm)
-        self.dlogPgdsigmafog = np.array(dlogPdsigmafog)
-        self.dlogPgdb0 = np.array(dlogPdb0)
-        self.dlogPgdalphak2 = np.array(dlogPdalphak2)       
-
-        if self.forecast=="neutrino": 
-            paramvec = [self.dlogPgdomega_b, 
-                        self.dlogPgdomega_cdm,  
-                        self.dlogPgdn_s, 
-                        self.dlogPgdA_s,
-                        self.dlogPgdtau_reio, 
-                        self.dlogPgdh, 
-                        self.dlogPgdM_ncdm,
-                        #self.dlogPgdomega_ncdm,
-                        self.dlogPgdsigmafog,
-                        self.dlogPgdb0,
-                        self.dlogPgdalphak2
-                        ]
-
-        elif self.forecast=="relic": 
-            paramvec = [self.dlogPgdomega_b, 
-                        self.dlogPgdomega_cdm,  
-                        self.dlogPgdn_s, 
-                        self.dlogPgdA_s,
-                        self.dlogPgdtau_reio, 
-                        self.dlogPgdh, 
-                        self.dlogPgdM_ncdm,
-                        #self.dlogPgdomega_ncdm, 
-                        self.dlogPgdsigmafog,
-                        self.dlogPgdb0, 
-                        self.dlogPgdalphak2
-                        ] 
+                self.dlogPmdM_ncdm = np.array(self.dlogPdM_ncdm)
+    
+            self.dlogPgdA_s = np.array(dlogPdA_s)
+            self.dlogPgdn_s = np.array(dlogPdn_s)
+            self.dlogPgdomega_b  = np.array(dlogPdomega_b)
+            self.dlogPgdomega_cdm = np.array(dlogPdomega_cdm)
+            self.dlogPgdh = np.array(dlogPdh)
+            self.dlogPgdtau_reio = np.array(dlogPdtau_reio)
+            self.dlogPgdomega_ncdm = np.array(dlogPdomega_ncdm)
+            self.dlogPgdM_ncdm = np.array(dlogPdM_ncdm)
+            self.dlogPgdT_ncdm = np.array(dlogPdT_ncdm)
+            self.dlogPgdsigmafog = np.array(dlogPdsigmafog)
+            self.dlogPgdb0 = np.array(dlogPdb0)
+            self.dlogPgdalphak2 = np.array(dlogPdalphak2)       
 
         fisher = np.zeros((len(paramvec), len(paramvec))) 
 
@@ -1162,155 +1135,164 @@ class forecast:
                 self.numpy_lss_covariance = np.array(np.linalg.inv(             
                     lssfisher.iloc[nonzeroidx, nonzeroidx]))  
 
-        if self.forecast=="neutrino":
-            if self.pandas_cmb_fisher is not None: 
-                fullfisher = np.zeros((10, 10))
-                for i in np.arange(10): 
-                    for j in np.arange(10):
-                        if (i<7) and (j<7): 
-                            fullfisher[i, j] = (self.numpy_lss_fisher[i, j] 
-                                + self.numpy_cmb_fisher[i, j]) 
-                        else:  
-                            fullfisher[i, j] = self.numpy_lss_fisher[i, j]
-
-            self.pandas_full_fisher = pd.DataFrame(fullfisher, columns=[              
-                    'omega_b',                                                      
-                    'omega_cdm',                                                    
-                    'n_s',                                                          
-                    'A_s',                                                          
-                    'tau_reio',                                                     
-                    'h',                                                            
-                    #'m_ncdm', 
-                    'M_ncdm',   
-                    'sigma_fog',                                                    
-                    'b0',                                                        
-                    'alpha_k2'])
-            self.numpy_full_fisher = fullfisher   
-        
-            self.pandas_full_covariance = pd.DataFrame(np.linalg.inv(
-                self.pandas_full_fisher.iloc[nonzeroidx, nonzeroidx]), 
-                columns = nonzeroparams)
-            self.numpy_full_covariance = np.linalg.inv(
-                self.numpy_full_fisher[np.ix_(nonzeroidx, nonzeroidx)])
-
-            print("Pandas Fisher Matrices: ")
-            print(self.pandas_cmb_fisher)                                            
-            print(self.pandas_lss_fisher)                                            
-            print(self.pandas_full_fisher)  
-                    
-            outnames=[
-                    '# omega_b',                                                    
-                    'omega_cdm',                                                    
-                    'n_s',                                                          
-                    'A_s',                                                          
-                    'tau_reio',                                                     
-                    'h',                                                            
-                    #'m_0'
-                    'M_0']
-            if self.use_fog==True:
-                outnames.append('sigma_fog')
-            if self.use_rsd==True:
-                outnames.append('b0')
-                outnames.append('alpha_k2') 
-
-            self.pandas_full_covariance.to_csv(
-                "~/Desktop/inv_fullfisher.mat", 
-                sep="\t", 
-                index=False,
-                header=outnames) 
-            self.pandas_cmb_covariance.to_csv(                                     
-                "~/Desktop/inv_cmbfisher.mat",                                     
-                sep="\t",                                                           
-                index=False,                                                        
-                header=[
-                    '# omega_b', 
-                    'omega_cdm', 
-                    'n_s', 
-                    'A_s', 
-                    'tau_reio', 
-                    'h', 
-                    #'m_0'
-                    'M_0'])
-            self.pandas_lss_covariance.to_csv(                                     
-                "~/Desktop/inv_lssfisher.mat",                                     
-                sep="\t",                                                           
-                index=False,                                                        
-                header=outnames)
-
-        if self.forecast=="relic":                                           
-            if self.pandas_cmb_fisher is not None:                              
-                fullfisher = np.zeros((10, 10))                                 
-                for i in np.arange(10):                                     
-                    for j in np.arange(10):                                 
-                        if (i<7) and (j<7):                                 
-                            fullfisher[i, j] = (self.numpy_lss_fisher[i, j] 
-                                + self.numpy_cmb_fisher[i, j])              
-                        else:                                               
-                            fullfisher[i, j] = self.numpy_lss_fisher[i, j]  
-                                                                                
-            self.pandas_full_fisher = pd.DataFrame(fullfisher, columns=[        
-                    'omega_b',                                                  
-                    'omega_cdm',                                                
-                    'n_s',                                                      
-                    'A_s',                                                      
-                    'tau_reio',                                                 
-                    'h',                                                        
-                    #'omega_ncdm',
-                    'M_ncdm',                                                   
-                    'sigma_fog',                                                
-                    'b0',                                                       
-                    'alpha_k2'])                                                
-            self.numpy_full_fisher = fullfisher                                 
-                                                                                
-            self.pandas_full_covariance = pd.DataFrame(np.linalg.inv(           
-                self.pandas_full_fisher.iloc[nonzeroidx, nonzeroidx]),          
-                columns = nonzeroparams)                                        
-            self.numpy_full_covariance = np.linalg.inv(                         
-                self.numpy_full_fisher[np.ix_(nonzeroidx, nonzeroidx)])         
-                                                                                
-            print("Pandas Fisher Matrices: ")                                   
-            print(self.pandas_cmb_fisher)                                       
-            print(self.pandas_lss_fisher)                                       
-            print(self.pandas_full_fisher)                                      
-                                                                                
-            outnames=[                                                          
-                    '# omega_b',                                                
-                    'omega_cdm',                                                
-                    'n_s',                                                      
-                    'A_s',                                                      
-                    'tau_reio',                                                 
-                    'h',                                                        
-                    #'omega_ncdm'
-                    'M_ncdm']                                                      
-            if self.use_fog==True:                                              
-                outnames.append('sigma_fog')                                    
-            if self.use_rsd==True:                                              
-                outnames.append('b0')                                           
-                outnames.append('alpha_k2')                                     
-                                                                                
-            self.pandas_full_covariance.to_csv(                                 
-                "~/Desktop/inv_fullfisher.mat",                                 
-                sep="\t",                                                       
-                index=False,                                                    
-                header=outnames)                                                
-            self.pandas_cmb_covariance.to_csv(                                  
-                "~/Desktop/inv_cmbfisher.mat",                                  
-                sep="\t",                                                       
-                index=False,                                                    
-                header=[
-                    '# omega_b', 
-                    'omega_cdm', 
-                    'n_s', 
-                    'A_s', 
-                    'tau_reio', 
-                    'h',
-                    #'omega_ncdm'
-                    'M_ncdm'])                                                     
-            self.pandas_lss_covariance.to_csv(                                  
-                "~/Desktop/inv_lssfisher.mat",                                  
-                sep="\t",                                                       
-                index=False,                                                    
-                header=outnames)
+            if self.forecast=="neutrino":
+                outnames=[                                                          
+                        '# omega_b',                                                
+                        'omega_cdm',                                                
+                        'n_s',                                                      
+                        'A_s',                                                      
+                        'tau_reio',                                                 
+                        'h',                                                        
+                        #'m_0'                                                      
+                        'M_0']                                                      
+                if self.use_fog==True:                                              
+                    outnames.append('sigma_fog')                                    
+                if self.use_rsd==True:                                              
+                    outnames.append('b0')                                           
+                    outnames.append('alpha_k2')
+    
+                if self.pandas_cmb_fisher is not None: 
+                    fullfisher = np.zeros((10, 10))
+                    for i in np.arange(10): 
+                        for j in np.arange(10):
+                            if (i<7) and (j<7): 
+                                fullfisher[i, j] = (self.numpy_lss_fisher[i, j] 
+                                    + self.numpy_cmb_fisher[i, j]) 
+                            else:  
+                                fullfisher[i, j] = self.numpy_lss_fisher[i, j]
+    
+                    self.pandas_full_fisher = pd.DataFrame(fullfisher, columns=[              
+                            'omega_b',                                                      
+                            'omega_cdm',                                                    
+                            'n_s',                                                          
+                            'A_s',                                                          
+                            'tau_reio',                                                     
+                            'h',                                                            
+                            #'m_ncdm', 
+                            'M_ncdm',   
+                            'sigma_fog',                                                    
+                            'b0',                                                        
+                            'alpha_k2'])
+                    self.numpy_full_fisher = fullfisher   
+            
+                    self.pandas_full_covariance = pd.DataFrame(np.linalg.inv(
+                        self.pandas_full_fisher.iloc[nonzeroidx, nonzeroidx]), 
+                        columns = nonzeroparams)
+                    self.numpy_full_covariance = np.linalg.inv(
+                        self.numpy_full_fisher[np.ix_(nonzeroidx, nonzeroidx)])
+    
+                    print("Pandas Fisher Matrices: ")
+                    print(self.pandas_cmb_fisher)                                            
+                    print(self.pandas_lss_fisher)                                            
+                    print(self.pandas_full_fisher)  
+                        
+                    self.pandas_full_covariance.to_csv(
+                        "~/Desktop/inv_fullfisher.mat", 
+                        sep="\t", 
+                        index=False,
+                        header=outnames) 
+                    self.pandas_cmb_covariance.to_csv(                                     
+                        "~/Desktop/inv_cmbfisher.mat",                                     
+                        sep="\t",                                                           
+                        index=False,                                                        
+                        header=[
+                            '# omega_b', 
+                            'omega_cdm', 
+                            'n_s', 
+                            'A_s', 
+                            'tau_reio', 
+                            'h', 
+                            #'m_0'
+                            'M_0'])
+    
+                else:
+                    print("Pandas Fisher Matrices: ")                               
+                    print(self.pandas_lss_fisher) 
+     
+                    self.pandas_lss_covariance.to_csv(                                     
+                        "~/Desktop/inv_lssfisher.mat",                                     
+                        sep="\t",                                                           
+                        index=False,                                                        
+                        header=outnames)
+    
+            if self.forecast=="relic":                                           
+                    outnames=[                                                      
+                        '# omega_b',                                            
+                        'omega_cdm',                                            
+                        'n_s',                                                  
+                        'A_s',                                                  
+                        'tau_reio',                                             
+                        'h',                                                    
+                        #'omega_ncdm'                                           
+                        'M_ncdm']                                               
+                    if self.use_fog==True:                                          
+                        outnames.append('sigma_fog')                                
+                    if self.use_rsd==True:                                          
+                        outnames.append('b0')                                       
+                        outnames.append('alpha_k2')   
+                if self.pandas_cmb_fisher is not None:                              
+                    fullfisher = np.zeros((10, 10))                                 
+                    for i in np.arange(10):                                     
+                        for j in np.arange(10):                                 
+                            if (i<7) and (j<7):                                 
+                                fullfisher[i, j] = (self.numpy_lss_fisher[i, j] 
+                                    + self.numpy_cmb_fisher[i, j])              
+                            else:                                               
+                                fullfisher[i, j] = self.numpy_lss_fisher[i, j]  
+                                                                                    
+                    self.pandas_full_fisher = pd.DataFrame(fullfisher, columns=[        
+                            'omega_b',                                                  
+                            'omega_cdm',                                                
+                            'n_s',                                                      
+                            'A_s',                                                      
+                            'tau_reio',                                                 
+                            'h',                                                        
+                            #'omega_ncdm',
+                            'M_ncdm',                                                   
+                            'sigma_fog',                                                
+                            'b0',                                                       
+                            'alpha_k2'])                                                
+                    self.numpy_full_fisher = fullfisher                                 
+                                                                                        
+                    self.pandas_full_covariance = pd.DataFrame(np.linalg.inv(           
+                        self.pandas_full_fisher.iloc[nonzeroidx, nonzeroidx]),          
+                        columns = nonzeroparams)                                        
+                    self.numpy_full_covariance = np.linalg.inv(                         
+                        self.numpy_full_fisher[np.ix_(nonzeroidx, nonzeroidx)])         
+                                                                                        
+                    print("Pandas Fisher Matrices: ")                                   
+                    print(self.pandas_cmb_fisher)                                       
+                    print(self.pandas_lss_fisher)                                       
+                    print(self.pandas_full_fisher)                                      
+                                                                                        
+                    self.pandas_full_covariance.to_csv(                                 
+                        "~/Desktop/inv_fullfisher.mat",                                 
+                        sep="\t",                                                       
+                        index=False,                                                    
+                        header=outnames)                                                
+                    self.pandas_cmb_covariance.to_csv(                                  
+                        "~/Desktop/inv_cmbfisher.mat",                                  
+                        sep="\t",                                                       
+                        index=False,                                                    
+                        header=[
+                            '# omega_b', 
+                            'omega_cdm', 
+                            'n_s', 
+                            'A_s', 
+                            'tau_reio', 
+                            'h',
+                            #'omega_ncdm'
+                            'M_ncdm'])                                                     
+    
+                else: 
+                    print("Pandas Fisher Matrices: ")                               
+                    print(self.pandas_lss_fisher)  
+    
+                    self.pandas_lss_covariance.to_csv(                                  
+                        "~/Desktop/inv_lssfisher.mat",                                  
+                        sep="\t",                                                       
+                        index=False,                                                    
+                        header=outnames)
 # Take care of singular matrix when you turn off RSD, FOG
 
  
