@@ -194,9 +194,9 @@ class forecast:
                     (np.array(self.dlogPdM_ncdm[zidx]) 
                         * cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid))
                     for zidx, zval in enumerate(self.z_steps)]
-                print("T_ncdm fixed. dlogPmdMncdm: ", self.dlogPdM_ncdm)
-                print("T_ncdm fixed. dMncdmdomegancdm: ", cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid))
-                print("T_ncdm fixed. dlogPmdomegancdm: ", self.dlogPdomega_ncdm)  
+                #print("T_ncdm fixed. dlogPmdMncdm: ", self.dlogPdM_ncdm)
+                #print("T_ncdm fixed. dMncdmdomegancdm: ", cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid))
+                #print("T_ncdm fixed. dlogPmdomegancdm: ", self.dlogPdomega_ncdm)  
             elif self.relic_fix=="m_ncdm": 
                 self.dPdT_ncdm, self.dlogPdT_ncdm = cf.dPs_array(               
                     self.T_ncdm_low,                                            
@@ -214,11 +214,11 @@ class forecast:
                             self.T_ncdm_fid, 
                             self.M_ncdm_fid))                   
                     for zidx, zval in enumerate(self.z_steps)] 
-                print("m_ncdm fixed. dlogPmdTncdm: ", self.dlogPdT_ncdm)            
-                print("m_ncdm fixed. dTncdmdomegancdm: ", cf.dT_ncdm_domega_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))
-                print("m_ncdm fixed. dlogPmdomegancdm: ", self.dlogPdomega_ncdm)
-            print("T_ncdm_fid: ", self.T_ncdm_fid)
-            print("M_ncdm_fid: ", self.M_ncdm_fid) 
+                #print("m_ncdm fixed. dlogPmdTncdm: ", self.dlogPdT_ncdm)            
+                #print("m_ncdm fixed. dTncdmdomegancdm: ", cf.dT_ncdm_domega_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))
+                #print("m_ncdm fixed. dlogPmdomegancdm: ", self.dlogPdomega_ncdm)
+            #print("T_ncdm_fid: ", self.T_ncdm_fid)
+            #print("M_ncdm_fid: ", self.M_ncdm_fid) 
  
     def gen_rsd(self, mu): 
         '''Given mu, creates len(z_steps) array. Each elem is len(k_table).'''
@@ -830,8 +830,8 @@ class forecast:
                         self.dlogPgdA_s,
                         self.dlogPgdtau_reio, 
                         self.dlogPgdh, 
-                        #self.dlogPgdM_ncdm,
-                        self.dlogPgdomega_ncdm,
+                        self.dlogPgdM_ncdm,
+                        #self.dlogPgdomega_ncdm,
                         self.dlogPgdsigmafog,
                         self.dlogPgdb0,
                         self.dlogPgdalphak2
@@ -844,7 +844,8 @@ class forecast:
                         self.dlogPgdA_s,
                         self.dlogPgdtau_reio, 
                         self.dlogPgdh, 
-                        self.dlogPgdomega_ncdm, 
+                        self.dlogPgdM_ncdm,
+                        #self.dlogPgdomega_ncdm, 
                         self.dlogPgdsigmafog,
                         self.dlogPgdb0, 
                         self.dlogPgdalphak2
@@ -884,7 +885,7 @@ class forecast:
                                     -self.k_table[zidx][kidx]))
                     integral[zidx] = val  
                 fisher[pidx1][pidx2] = np.sum(integral)
-                print("Fisher element (", pidx1, ", ", pidx2,") calculated...") 
+                #print("Fisher element (", pidx1, ", ", pidx2,") calculated...") 
         self.fisher=fisher
 
     def generate_spectra(
@@ -1010,9 +1011,9 @@ class forecast:
             fmat.iloc[5,:] *= 100. # Change of variables H0->h
             fmat = fmat.rename(index=str, columns={"H_0": "h"})
 
-            fmat.iloc[:,6] *= 3. # Change of variables M->m
-            fmat.iloc[6,:] *= 3. # Change of variables M->m
-            fmat = fmat.rename(index=str, columns={"M_ncdm": "m_ncdm"})
+            #fmat.iloc[:,6] *= 3. # Change of variables M->m
+            #fmat.iloc[6,:] *= 3. # Change of variables M->m
+            #fmat = fmat.rename(index=str, columns={"M_ncdm": "m_ncdm"})
 
             self.numpy_cmb_fisher =  np.array(fmat)
             self.pandas_cmb_fisher = fmat
@@ -1029,13 +1030,16 @@ class forecast:
                 fisherpath = os.path.join(cf.priors_directory(), 
                     "CMBS4_Fisher_Relic.dat") 
             fmat = pd.read_csv(fisherpath, sep='\t', header=0)                  
+            fmat.iloc[:,5] *= 100. # Change of variables H0->h                  
+            fmat.iloc[5,:] *= 100. # Change of variables H0->h                  
+            fmat = fmat.rename(index=str, columns={"H_0": "h"})  
 
-            dT_ncdm_domega_ncdm = cf.dT_ncdm_domega_ncdm(
-                self.T_ncdm_fid, self.M_ncdm_fid) 
+            #dT_ncdm_domega_ncdm = cf.dT_ncdm_domega_ncdm(
+            #    self.T_ncdm_fid, self.M_ncdm_fid) 
             # Change of variables T_ncdm -> omega_ncdm
-            fmat.iloc[:,6] *= dT_ncdm_domega_ncdm                    
-            fmat.iloc[6,:] *= dT_ncdm_domega_ncdm                     
-            fmat = fmat.rename(index=str, columns={"T_ncdm": "omega_ncdm"})         
+            #fmat.iloc[:,6] *= dT_ncdm_domega_ncdm                    
+            #fmat.iloc[6,:] *= dT_ncdm_domega_ncdm                     
+            #fmat = fmat.rename(index=str, columns={"T_ncdm": "omega_ncdm"})         
                                                                                 
             self.numpy_cmb_fisher =  np.array(fmat)                             
             self.pandas_cmb_fisher = fmat                                       
@@ -1062,8 +1066,8 @@ class forecast:
                     'A_s', 
                     'tau_reio', 
                     'h', 
-                    #'M_ncdm', 
-                    'omega_ncdm', 
+                    'M_ncdm', 
+                    #'omega_ncdm', 
                     'sigma_fog', 
                     'b0',              
                     'alpha_k2'])
@@ -1087,7 +1091,8 @@ class forecast:
                     'tau_reio',                                                     
                     'h',                                                            
                     #'m_ncdm',   
-                    'omega_ncdm',                                                     
+                    'M_ncdm', 
+                    #'omega_ncdm',                                                     
                     'sigma_fog',                                                    
                     'b0',                                                        
                     'alpha_k2']
@@ -1116,7 +1121,8 @@ class forecast:
                     'A_s',                                                      
                     'tau_reio',                                                 
                     'h',                                                        
-                    'omega_ncdm',                                                   
+                    #'omega_ncdm',  
+                    'M_ncdm',                                                  
                     'sigma_fog',                                                
                     'b0',                                                       
                     'alpha_k2'])                                                
@@ -1134,7 +1140,8 @@ class forecast:
                     'A_s',                                                      
                     'tau_reio',                                                 
                     'h',                                                        
-                    'omega_ncdm',                                                   
+                    #'omega_ncdm',
+                    'M_ncdm',                                                   
                     'sigma_fog',                                                
                     'b0',                                                       
                     'alpha_k2']                                                 
@@ -1173,7 +1180,8 @@ class forecast:
                     'A_s',                                                          
                     'tau_reio',                                                     
                     'h',                                                            
-                    'm_ncdm',    
+                    #'m_ncdm', 
+                    'M_ncdm',   
                     'sigma_fog',                                                    
                     'b0',                                                        
                     'alpha_k2'])
@@ -1197,7 +1205,8 @@ class forecast:
                     'A_s',                                                          
                     'tau_reio',                                                     
                     'h',                                                            
-                    'm_0']
+                    #'m_0'
+                    'M_0']
             if self.use_fog==True:
                 outnames.append('sigma_fog')
             if self.use_rsd==True:
@@ -1213,8 +1222,15 @@ class forecast:
                 "~/Desktop/inv_cmbfisher.mat",                                     
                 sep="\t",                                                           
                 index=False,                                                        
-                header=['# omega_b', 'omega_cdm', 'n_s', 'A_s', 'tau_reio', 'h', 
-                    'm_0'])
+                header=[
+                    '# omega_b', 
+                    'omega_cdm', 
+                    'n_s', 
+                    'A_s', 
+                    'tau_reio', 
+                    'h', 
+                    #'m_0'
+                    'M_0'])
             self.pandas_lss_covariance.to_csv(                                     
                 "~/Desktop/inv_lssfisher.mat",                                     
                 sep="\t",                                                           
@@ -1239,7 +1255,8 @@ class forecast:
                     'A_s',                                                      
                     'tau_reio',                                                 
                     'h',                                                        
-                    'omega_ncdm',                                                   
+                    #'omega_ncdm',
+                    'M_ncdm',                                                   
                     'sigma_fog',                                                
                     'b0',                                                       
                     'alpha_k2'])                                                
@@ -1263,7 +1280,8 @@ class forecast:
                     'A_s',                                                      
                     'tau_reio',                                                 
                     'h',                                                        
-                    'omega_ncdm']                                                      
+                    #'omega_ncdm'
+                    'M_ncdm']                                                      
             if self.use_fog==True:                                              
                 outnames.append('sigma_fog')                                    
             if self.use_rsd==True:                                              
@@ -1279,8 +1297,15 @@ class forecast:
                 "~/Desktop/inv_cmbfisher.mat",                                  
                 sep="\t",                                                       
                 index=False,                                                    
-                header=['# omega_b', 'omega_cdm', 'n_s', 'A_s', 'tau_reio', 'h',
-                    'omega_ncdm'])                                                     
+                header=[
+                    '# omega_b', 
+                    'omega_cdm', 
+                    'n_s', 
+                    'A_s', 
+                    'tau_reio', 
+                    'h',
+                    #'omega_ncdm'
+                    'M_ncdm'])                                                     
             self.pandas_lss_covariance.to_csv(                                  
                 "~/Desktop/inv_lssfisher.mat",                                  
                 sep="\t",                                                       
