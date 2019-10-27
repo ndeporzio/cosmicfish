@@ -20,6 +20,7 @@ class convergence:
         FOG=True,
         AP=True,
         COV=True,
+        mu_step=0.5,
         parameters=[],
         varyfactors=[]):  
                 
@@ -38,7 +39,7 @@ class convergence:
         self.params = parameters
         self.varyfactors = varyfactors
 
-        self.mu_step = 0.5
+        self.mu_step = mu_step
         self.plotparams = [
             'A_s',
             'n_s',
