@@ -573,7 +573,7 @@ class forecast:
         self.dlogCOVdh = (dlogPdk * dkdh 
             + dlogPdmu * dmudh)
     
-    def gen_fisher(self, paramvec, mu_step=0.05, skipgen=False): #inefficient
+    def gen_fisher(self, mu_step=0.05, skipgen=False): #inefficient
 
         if skipgen==False: 
             if 'pm' not in self.psterms:                                        
@@ -824,6 +824,34 @@ class forecast:
             self.dlogPgdb0 = np.array(dlogPdb0)
             self.dlogPgdalphak2 = np.array(dlogPdalphak2)       
 
+        if self.forecast=="neutrino": 
+            paramvec = [self.dlogPgdomega_b, 
+                        self.dlogPgdomega_cdm,  
+                        self.dlogPgdn_s, 
+                        self.dlogPgdA_s,
+                        self.dlogPgdtau_reio, 
+                        self.dlogPgdh, 
+                        #self.dlogPgdM_ncdm,
+                        self.dlogPgdomega_ncdm,
+                        self.dlogPgdsigmafog,
+                        self.dlogPgdb0,
+                        self.dlogPgdalphak2
+                        ]
+
+        elif self.forecast=="relic": 
+            paramvec = [self.dlogPgdomega_b, 
+                        self.dlogPgdomega_cdm,  
+                        self.dlogPgdn_s, 
+                        self.dlogPgdA_s,
+                        self.dlogPgdtau_reio, 
+                        self.dlogPgdh, 
+                        #self.dlogPgdM_ncdm,
+                        self.dlogPgdomega_ncdm, 
+                        self.dlogPgdsigmafog,
+                        self.dlogPgdb0, 
+                        self.dlogPgdalphak2
+                        ]
+
         fisher = np.zeros((len(paramvec), len(paramvec))) 
 
         # Highly inefficient set of loops 
@@ -858,7 +886,7 @@ class forecast:
                                     -self.k_table[zidx][kidx]))
                     integral[zidx] = val  
                 fisher[pidx1][pidx2] = np.sum(integral)
-                #print("Fisher element (", pidx1, ", ", pidx2,") calculated...") 
+                print("Fisher element (", pidx1, ", ", pidx2,") calculated...") 
         self.fisher=fisher
 
     def generate_spectra(
@@ -984,6 +1012,11 @@ class forecast:
             fmat.iloc[5,:] *= 100. # Change of variables H0->h
             fmat = fmat.rename(index=str, columns={"H_0": "h"})
 
+            dM_ncdm_domega_ncdm = cf.dM_ncdm_domega_ncdm(cf.RELIC_TEMP_SCALE)
+            fmat.iloc[:,6] *= dM_ncdm_domega_ncdm # Change of variables M->omega_ncdm                    
+            fmat.iloc[6,:] *= dM_ncdm_domega_ncdm # Change of variables M->omega_ncdm                    
+            fmat = fmat.rename(index=str, columns={"M_ncdm": "omega_ncdm"}) 
+
             #fmat.iloc[:,6] *= 3. # Change of variables M->m
             #fmat.iloc[6,:] *= 3. # Change of variables M->m
             #fmat = fmat.rename(index=str, columns={"M_ncdm": "m_ncdm"})
@@ -998,11 +1031,12 @@ class forecast:
         
         if self.forecast=="relic": 
             # Parameter ordering: omega_b, omega_cdm, n_s, A_s, tau_reio, h,      
-            # T_ncdm
+            # M_ncdm
             if fisherpath==None:  
                 fisherpath = os.path.join(cf.priors_directory(), 
                     "CMBS4_Fisher_Relic.dat") 
             fmat = pd.read_csv(fisherpath, sep='\t', header=0)                  
+
             fmat.iloc[:,5] *= 100. # Change of variables H0->h                  
             fmat.iloc[5,:] *= 100. # Change of variables H0->h                  
             fmat = fmat.rename(index=str, columns={"H_0": "h"})  
@@ -1014,6 +1048,11 @@ class forecast:
             #fmat.iloc[6,:] *= dT_ncdm_domega_ncdm                     
             #fmat = fmat.rename(index=str, columns={"T_ncdm": "omega_ncdm"})         
                                                                                 
+            dM_ncdm_domega_ncdm = cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid)   
+            fmat.iloc[:,6] *= dM_ncdm_domega_ncdm # Change of variables M->omega_ncdm                    
+            fmat.iloc[6,:] *= dM_ncdm_domega_ncdm # Change of variables M->omega_ncdm                    
+            fmat = fmat.rename(index=str, columns={"M_ncdm": "omega_ncdm"}) 
+
             self.numpy_cmb_fisher =  np.array(fmat)                             
             self.pandas_cmb_fisher = fmat                                       
                                                                                 
@@ -1039,8 +1078,8 @@ class forecast:
                     'A_s', 
                     'tau_reio', 
                     'h', 
-                    'M_ncdm', 
-                    #'omega_ncdm', 
+                    #'M_ncdm', 
+                    'omega_ncdm', 
                     'sigma_fog', 
                     'b0',              
                     'alpha_k2'])
@@ -1064,8 +1103,8 @@ class forecast:
                     'tau_reio',                                                     
                     'h',                                                            
                     #'m_ncdm',   
-                    'M_ncdm', 
-                    #'omega_ncdm',                                                     
+                    #'M_ncdm', 
+                    'omega_ncdm',                                                     
                     'sigma_fog',                                                    
                     'b0',                                                        
                     'alpha_k2']
@@ -1094,8 +1133,8 @@ class forecast:
                     'A_s',                                                      
                     'tau_reio',                                                 
                     'h',                                                        
-                    #'omega_ncdm',  
-                    'M_ncdm',                                                  
+                    'omega_ncdm',  
+                    #'M_ncdm',                                                  
                     'sigma_fog',                                                
                     'b0',                                                       
                     'alpha_k2'])                                                
@@ -1113,8 +1152,8 @@ class forecast:
                     'A_s',                                                      
                     'tau_reio',                                                 
                     'h',                                                        
-                    #'omega_ncdm',
-                    'M_ncdm',                                                   
+                    'omega_ncdm',
+                    #'M_ncdm',                                                   
                     'sigma_fog',                                                
                     'b0',                                                       
                     'alpha_k2']                                                 
@@ -1143,8 +1182,9 @@ class forecast:
                         'A_s',                                                      
                         'tau_reio',                                                 
                         'h',                                                        
-                        #'m_0'                                                      
-                        'M_0']                                                      
+                        #'m_0',                                                      
+                        #'M_0',
+                        'omega_ncdm']                                                      
                 if self.use_fog==True:                                              
                     outnames.append('sigma_fog')                                    
                 if self.use_rsd==True:                                              
@@ -1169,7 +1209,8 @@ class forecast:
                             'tau_reio',                                                     
                             'h',                                                            
                             #'m_ncdm', 
-                            'M_ncdm',   
+                            #'M_ncdm',
+                            'omega_ncdm',   
                             'sigma_fog',                                                    
                             'b0',                                                        
                             'alpha_k2'])
@@ -1203,7 +1244,8 @@ class forecast:
                             'tau_reio', 
                             'h', 
                             #'m_0'
-                            'M_0'])
+                            #'M_0'
+                            'omega_ncdm'])
     
                 else:
                     print("Pandas Fisher Matrices: ")                               
@@ -1216,20 +1258,22 @@ class forecast:
                         header=outnames)
     
             if self.forecast=="relic":                                           
-                    outnames=[                                                      
-                        '# omega_b',                                            
-                        'omega_cdm',                                            
-                        'n_s',                                                  
-                        'A_s',                                                  
-                        'tau_reio',                                             
-                        'h',                                                    
-                        #'omega_ncdm'                                           
-                        'M_ncdm']                                               
-                    if self.use_fog==True:                                          
-                        outnames.append('sigma_fog')                                
-                    if self.use_rsd==True:                                          
-                        outnames.append('b0')                                       
-                        outnames.append('alpha_k2')   
+
+                outnames=[                                                      
+                    '# omega_b',                                            
+                    'omega_cdm',                                            
+                    'n_s',                                                  
+                    'A_s',                                                  
+                    'tau_reio',                                             
+                    'h',                                                    
+                    'omega_ncdm']                                           
+                    #'M_ncdm']                                               
+                if self.use_fog==True:                                          
+                    outnames.append('sigma_fog')                                
+                if self.use_rsd==True:                                          
+                    outnames.append('b0')                                       
+                    outnames.append('alpha_k2')   
+
                 if self.pandas_cmb_fisher is not None:                              
                     fullfisher = np.zeros((10, 10))                                 
                     for i in np.arange(10):                                     
@@ -1240,15 +1284,16 @@ class forecast:
                             else:                                               
                                 fullfisher[i, j] = self.numpy_lss_fisher[i, j]  
                                                                                     
-                    self.pandas_full_fisher = pd.DataFrame(fullfisher, columns=[        
+                    self.pandas_full_fisher = pd.DataFrame(fullfisher, 
+                        columns=[        
                             'omega_b',                                                  
                             'omega_cdm',                                                
                             'n_s',                                                      
                             'A_s',                                                      
                             'tau_reio',                                                 
                             'h',                                                        
-                            #'omega_ncdm',
-                            'M_ncdm',                                                   
+                            'omega_ncdm',
+                            #'M_ncdm',                                                   
                             'sigma_fog',                                                
                             'b0',                                                       
                             'alpha_k2'])                                                
@@ -1281,8 +1326,9 @@ class forecast:
                             'A_s', 
                             'tau_reio', 
                             'h',
-                            #'omega_ncdm'
-                            'M_ncdm'])                                                     
+                            'omega_ncdm'
+                            #'M_ncdm'
+                            ])                                                     
     
                 else: 
                     print("Pandas Fisher Matrices: ")                               
