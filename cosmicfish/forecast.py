@@ -845,8 +845,8 @@ class forecast:
                         self.dlogPgdA_s,
                         self.dlogPgdtau_reio, 
                         self.dlogPgdh, 
-                        #self.dlogPgdM_ncdm,
-                        self.dlogPgdomega_ncdm, 
+                        self.dlogPgdM_ncdm,
+                        #self.dlogPgdomega_ncdm, 
                         self.dlogPgdsigmafog,
                         self.dlogPgdb0, 
                         self.dlogPgdalphak2
@@ -1031,15 +1031,15 @@ class forecast:
         
         if self.forecast=="relic": 
             # Parameter ordering: omega_b, omega_cdm, n_s, A_s, tau_reio, h,      
-            # M_ncdm
+            # T_ncdm
             if fisherpath==None:  
                 fisherpath = os.path.join(cf.priors_directory(), 
                     "CMBS4_Fisher_Relic.dat") 
             fmat = pd.read_csv(fisherpath, sep='\t', header=0)                  
 
-            fmat.iloc[:,5] *= 100. # Change of variables H0->h                  
-            fmat.iloc[5,:] *= 100. # Change of variables H0->h                  
-            fmat = fmat.rename(index=str, columns={"H_0": "h"})  
+            #fmat.iloc[:,5] *= 100. # Change of variables H0->h                  
+            #fmat.iloc[5,:] *= 100. # Change of variables H0->h                  
+            #fmat = fmat.rename(index=str, columns={"H_0": "h"})  
 
             #dT_ncdm_domega_ncdm = cf.dT_ncdm_domega_ncdm(
             #    self.T_ncdm_fid, self.M_ncdm_fid) 
@@ -1048,10 +1048,10 @@ class forecast:
             #fmat.iloc[6,:] *= dT_ncdm_domega_ncdm                     
             #fmat = fmat.rename(index=str, columns={"T_ncdm": "omega_ncdm"})         
                                                                                 
-            dM_ncdm_domega_ncdm = cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid)   
-            fmat.iloc[:,6] *= dM_ncdm_domega_ncdm # Change of variables M->omega_ncdm                    
-            fmat.iloc[6,:] *= dM_ncdm_domega_ncdm # Change of variables M->omega_ncdm                    
-            fmat = fmat.rename(index=str, columns={"M_ncdm": "omega_ncdm"}) 
+            #dM_ncdm_domega_ncdm = cf.dM_ncdm_domega_ncdm(self.T_ncdm_fid)   
+            #fmat.iloc[:,6] *= dM_ncdm_domega_ncdm # Change of variables M->omega_ncdm                    
+            #fmat.iloc[6,:] *= dM_ncdm_domega_ncdm # Change of variables M->omega_ncdm                    
+            #fmat = fmat.rename(index=str, columns={"M_ncdm": "omega_ncdm"}) 
 
             self.numpy_cmb_fisher =  np.array(fmat)                             
             self.pandas_cmb_fisher = fmat                                       
@@ -1132,8 +1132,9 @@ class forecast:
                     'n_s',                                                      
                     'A_s',                                                      
                     'tau_reio',                                                 
-                    'h',                                                        
-                    'omega_ncdm',  
+                    'h',
+                    'T_ncdm',                                                        
+                    #'omega_ncdm',  
                     #'M_ncdm',                                                  
                     'sigma_fog',                                                
                     'b0',                                                       
@@ -1151,8 +1152,9 @@ class forecast:
                     'n_s',                                                      
                     'A_s',                                                      
                     'tau_reio',                                                 
-                    'h',                                                        
-                    'omega_ncdm',
+                    'h',
+                    'T_ncdm',                                                        
+                    #'omega_ncdm',
                     #'M_ncdm',                                                   
                     'sigma_fog',                                                
                     'b0',                                                       
@@ -1265,8 +1267,9 @@ class forecast:
                     'n_s',                                                  
                     'A_s',                                                  
                     'tau_reio',                                             
-                    'h',                                                    
-                    'omega_ncdm']                                           
+                    'h',
+                    'T_ncdm']                                                    
+                    #'omega_ncdm']                                           
                     #'M_ncdm']                                               
                 if self.use_fog==True:                                          
                     outnames.append('sigma_fog')                                
@@ -1291,8 +1294,9 @@ class forecast:
                             'n_s',                                                      
                             'A_s',                                                      
                             'tau_reio',                                                 
-                            'h',                                                        
-                            'omega_ncdm',
+                            'h',
+                            'T_ncdm',                                                        
+                            #'omega_ncdm',
                             #'M_ncdm',                                                   
                             'sigma_fog',                                                
                             'b0',                                                       
@@ -1326,7 +1330,8 @@ class forecast:
                             'A_s', 
                             'tau_reio', 
                             'h',
-                            'omega_ncdm'
+                            'T_ncdm'
+                            #'omega_ncdm'
                             #'M_ncdm'
                             ])                                                     
     
