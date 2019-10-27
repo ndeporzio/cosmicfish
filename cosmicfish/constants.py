@@ -25,6 +25,7 @@ RSD_DELTA_L_NUMERATOR_FACTOR = 0.6
 RELIC_TEMP_SCALE = 1.95
 KP_PREFACTOR = 0.05
 
+
 DB_ELG = 0.84
 
 K_MAX_PREFACTOR = 0.2
@@ -35,3 +36,6 @@ ANALYTIC_N_S = True
 RSD_DELTA_LAMBDACDM = 4.8e-3                                                    
 RSD_ALPHA = 4.                                                                  
 RSD_KEQ_PREFACTOR = 0.015   
+
+DEFAULT_K_TABLE_STEPS = 100
+DEFAULT_Z_BIN_SPACING = 0.1

@@ -73,7 +73,7 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
         end_ini = os.path.join(config_directory(),"in.ini")
         os.system('cp ' + start_ini + ' ' + end_ini)
         for key, value in modify.items():
-            if key=='m_ncdm':
+            if (key=='m_ncdm') or (key=='T_ncdm') :
                 if modify['N_ncdm']==3: # Degenerate neutrinos
                     print('#'+key+'-->'
                           + key + ' = ' + str(value) 
@@ -84,7 +84,7 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
                                                    + ", " + str(value))
                 if modify['N_ncdm']==1: # Light relics
                     print('#'+key+'-->'+ key + ' = ' + str(value))
-                    replace_text(end_ini, '#'+key, key + ' = ' + str(value))                
+                    replace_text(end_ini, '#'+key, key + ' = ' + str(value)) 
             else: 
                 print('#'+key+'-->'+ key + ' = ' + str(value))
                 replace_text(end_ini, '#'+key, key + ' = ' + str(value))
@@ -167,8 +167,8 @@ def is_data(path, **kwargs):
         text = open(correct_path(path)).read()                                 
         # Check if it contains provided parameter values                       
         for key, val in kwargs.items():
-            if key=='m_ncdm':
-                if kwargs['N_ncdm']==3: 
+            if (key=='m_ncdm') or (key=="T_ncdm"):
+                if (kwargs['N_ncdm']==3): 
                     test = ('\n'
                             + key 
                             + ' = '
@@ -181,8 +181,6 @@ def is_data(path, **kwargs):
             else: 
                 test = (key+' = '+str(val)+'\n')     
             if test not in text:
-                #print("NOT IN TEXT : " + test)
-                #print(text) 
                 check += 1                                                     
         if check > 0:                                                          
             return False                                                       

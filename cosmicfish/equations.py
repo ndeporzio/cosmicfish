@@ -3,20 +3,27 @@ import scipy
 from scipy.integrate import quad
 import cosmicfish as cf
 
-def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2):                     
-    k_fs = cf.kfs(omega_ncdm, h,  z)
+def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2, 
+    relic, T_ncdm):
+
+    if relic==False:             
+        m_ncdm = cf.m_ncdm(omega_ncdm/3., cf.RELIC_TEMP_SCALE)     
+        k_fs = cf.kfs(m_ncdm, T_ncdm, h, z)
+    elif relic==True: 
+        m_ncdm = cf.m_ncdm(omega_ncdm, T_ncdm)
+        k_fs = cf.kfs(m_ncdm, T_ncdm, h, z) 
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
-    g = cf.ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm)                 
+    g = cf.ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm)                 
     bl = cf.bL(b0, D) 
-    #b1tilde = np.sqrt(1.+z) *  (1. + b1L * g + alphak2 * np.power(k, 2.)) 
     b1tilde = np.sqrt(1.+z) *  (1. + bl * g + alphak2 * np.power(k, 2.))  
                                                                                
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
     return R                                                                    
                                                                                 
-def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2):                 
+def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
+    relic, T_ncdm):                 
     return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, 
-        b0, D, alphak2))
+        b0, D, alphak2, relic, T_ncdm))
 
 def fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):              
     sigma_z = cf.SIGMA_Z                                                        
@@ -98,9 +105,11 @@ def neff(ndens, Pg):
     n = np.power((ndens * Pg) / (ndens*Pg + 1.), 2.)                            
     return n 
 
-def kfs(omega_ncdm, h, z):                                                      
-    k_fs = ((cf.KFS_NUMERATOR_FACTOR * h * (cf.NEUTRINO_SCALE_FACTOR 
-        * omega_ncdm / 3.)) / (cf.KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z)))            
+def kfs(m_ncdm, T_ncdm, h, z):                                                      
+    k_fs = ((
+        (cf.KFS_NUMERATOR_FACTOR * h * m_ncdm) 
+        / (cf.KFS_DENOMINATOR_FACTOR * np.sqrt(1. + z))) 
+        * np.power(T_ncdm/cf.RELIC_TEMP_SCALE, -1.))           
     return k_fs 
 
 def omega_ncdm(T_ncdm, m_ncdm, forecast_type):                                  
@@ -132,35 +141,32 @@ def T_ncdm(omega_ncdm, m_ncdm):
               * cf.RELIC_TEMP_SCALE)                  
     return T_ncdm
 
-def domega_ncdm_dT_ncdm(T_ncdm, m_ncdm):                                        
-    # RELICS ONLY?                                                              
-    """Returns derivative of omega_ncdm wrt T_ncdm.                             
-                                                                                
-    T_ncdm : relic temperature in units [K]                                     
-    m_ncdm : relic mass in units [eV]                                           
-                                                                                
-    deriv : derivative of relic abundance wrt relic temp in units [K]^(-1)      
-    """                                                                         
-                                                                                
-    deriv = ((3. * m_ncdm / cf.NEUTRINO_SCALE_FACTOR) 
-             * np.power(T_ncdm, 2.) 
-             * np.power(cf.RELIC_TEMP_SCALE, -3.))    
-    return deriv  
+def m_ncdm(omega_ncdm, T_ncdm): 
+    val = (
+        cf.NEUTRINO_SCALE_FACTOR 
+        * omega_ncdm 
+        * np.power(cf.RELIC_TEMP_SCALE / T_ncdm, 3.))
+    return val 
 
-def dT_ncdm_domega_ncdm(omega_ncdm, m_ncdm):                                    
-    # RELICS ONLY?                                                              
-    """Returns derivative of T_ncdm wrt  omega_ncdm.                            
-                                                                                
-    omega_ncdm : relative relic abundance. Unitless.                            
-    m_ncdm : relic mass in units [eV].                                          
-                                                                                
-    deriv : derivative of relic temp wrt relic abundance in units [K]           
-    """                                                                         
-                                                                                
-    deriv = ((cf.RELIC_TEMP_SCALE / 3)                                                         
-             * np.power(cf.NEUTRINO_SCALE_FACTOR / m_ncdm, 1./3.)                                    
-             * np.power(omega_ncdm, -2./3.))                                    
-    return deriv       
+def domega_ncdm_dM_ncdm(T_ncdm): 
+    deriv = (np.power(T_ncdm / cf.RELIC_TEMP_SCALE, 3.) 
+        / cf.NEUTRINO_SCALE_FACTOR)
+    return deriv 
+
+def dM_ncdm_domega_ncdm(T_ncdm):
+    deriv = cf.NEUTRINO_SCALE_FACTOR * np.power(
+        cf.RELIC_TEMP_SCALE / T_ncdm, 3.) 
+    return deriv 
+
+def domega_ncdm_dT_ncdm(T_ncdm, M_ncdm): 
+    deriv = (3 * np.power(T_ncdm, 2.) * np.power(cf.RELIC_TEMP_SCALE, -3.) 
+        * M_ncdm / cf.NEUTRINO_SCALE_FACTOR)
+    return deriv
+
+def dT_ncdm_domega_ncdm(T_ncdm, M_ncdm):  
+    deriv = (np.power(cf.RELIC_TEMP_SCALE, 3.) * cf.NEUTRINO_SCALE_FACTOR /
+        (3. * np.power(T_ncdm, 2.) * M_ncdm))
+    return deriv
 
 def sigmafog(z, sigma_fog_0):                                                                
     """Returns sigma_fog as function of redshift.                               
@@ -217,7 +223,7 @@ def fgrowth(omega_b, omega_cdm, h, z):
     f = np.power(inner, gamma)                                                  
     return f              
 
-def ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm):                           
+def ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm):                           
     """Returns g growth factor(?).                                              
                                                                                 
     Args:                                                                       
@@ -236,7 +242,7 @@ def ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm):
     """                                                                         
                                                                                 
     Delta_q = cf.RSD_DELTA_Q                                                               
-    q = cf.RSD_Q_NUMERATOR_FACTOR * k / cf.kfs(omega_ncdm, h, z)                                          
+    q = cf.RSD_Q_NUMERATOR_FACTOR * k / k_fs                                          
     Delta_L =  (cf.RSD_DELTA_L_NUMERATOR_FACTOR * omega_ncdm 
                 / (omega_b + omega_cdm))                         
     g = (cf.rlambdacdm(h, k)
@@ -257,7 +263,7 @@ def bL(b0, D):
 #    return btilde 
 
 def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,        
-          c=cf.C, fsky=None, z_spacing=0.1):                                               
+          c=cf.C, fsky=None, z_spacing=cf.DEFAULT_Z_BIN_SPACING):                                               
     # T_ncdm in units of [K]                                                    
     # m_ncdm in units of [eV]                                                   
     # c in units of [m*s^-1]                                                    
@@ -268,12 +274,11 @@ def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,
     H = 1000. * 100. * h # H has units of [m*s^-1*Mpc^-1]                       
     if m_ncdm is not None:                                                      
         if N_ncdm==3.: # Degenerate neutrinos CAUTION                                  
-            omega_chi = 3. * (m_ncdm/ cf.NEUTRINO_SCALE_FACTOR)                                     
+            omega_chi = cf.omega_ncdm(T_ncdm, m_ncdm, "neutrino")                                   
         elif N_ncdm==1.: # Light relic CAUTION                                         
-            omega_chi = (np.power(T_ncdm/cf.RELIC_TEMP_SCALE, 3.) 
-                         * (m_ncdm / cf.NETURINO_SCALE_FACTOR))                
+            omega_chi = omega_ncdm(T_ncdm, m_ncdm, "relic")               
         else:                                                                   
-            print("ERROR")                                                      
+            print("N_ncdm must be 1 (relics) or 3 (degenerate neutrinos).")
     else:                                                                       
         omega_chi = 0                                                           
     omega_m = omega_b + omega_cdm + omega_chi # Unitless                        
@@ -312,7 +317,7 @@ def gen_k_table(volume, z, h, n_s, k_steps, scaling='log'):
     #                      k_max,                                                
     #                      k_steps)       
 
-    kmin = h * np.power(volume, -1./3.) 
+    kmin = np.pi * np.power(volume, -1./3.) 
     kmax = cf.K_MAX_PREFACTOR * np.power(1.+z, 2./(2.+n_s)) * h                                   
 
     if scaling=='linear': 
@@ -340,13 +345,17 @@ def set_sky_cover(fsky=None, fcoverage_deg=None):
         fdeg = cf.FULL_SKY_DEGREES
     return ffrac, fdeg
 
+def k_pivot(): 
+    kp = cf.KP_PREFACTOR 
+    return kp  
 
+def dlogPdAs(As_fid): 
+    val = 1. / As_fid
+    return val 
 
-
-
-
-
-
+def dlogPdns(k, kp): 
+    val = np.log(k / kp) 
+    return val 
 
 
 
