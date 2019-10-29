@@ -845,7 +845,8 @@ class forecast:
                         self.dlogPgdA_s,
                         self.dlogPgdtau_reio, 
                         self.dlogPgdh, 
-                        self.dlogPgdM_ncdm,
+                        self.dlogPgdT_ncdm,
+                        #self.dlogPgdM_ncdm,
                         #self.dlogPgdomega_ncdm, 
                         self.dlogPgdsigmafog,
                         self.dlogPgdb0, 
@@ -1248,7 +1249,12 @@ class forecast:
                             #'m_0'
                             #'M_0'
                             'omega_ncdm'])
-    
+                    self.pandas_lss_covariance.to_csv(                          
+                        "~/Desktop/inv_lssfisher.mat",                          
+                        sep="\t",                                               
+                        index=False,                                            
+                        header=outnames)
+
                 else:
                     print("Pandas Fisher Matrices: ")                               
                     print(self.pandas_lss_fisher) 
@@ -1333,7 +1339,12 @@ class forecast:
                             'T_ncdm'
                             #'omega_ncdm'
                             #'M_ncdm'
-                            ])                                                     
+                            ])    
+                    self.pandas_lss_covariance.to_csv(                          
+                        "~/Desktop/inv_lssfisher.mat",                          
+                        sep="\t",                                               
+                        index=False,                                            
+                        header=outnames)                                                  
     
                 else: 
                     print("Pandas Fisher Matrices: ")                               
