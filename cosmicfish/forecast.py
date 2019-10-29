@@ -1157,7 +1157,7 @@ class forecast:
                 for pidx1, pval1 in enumerate(self.fisher_order): 
                     for pidx2, pval2 in enumerate(self.fisher_order):
                         if ((pval1 in self.pandas_cmb_fisher.columns) and 
-                            (pval2 in self.pandas_cmb_fisher.columns):
+                            (pval2 in self.pandas_cmb_fisher.columns)):
                             fullfisher[pidx1, pidx2] = (
                                 self.numpy_lss_fisher[pidx1, pidx2]
                                 + self.numpy_cmb_fisher[pidx1, pidx2])   
@@ -1177,7 +1177,7 @@ class forecast:
                     index=False,                                            
                     header=self.fisher_order)                                        
                 self.pandas_cmb_covariance.to_csv(                          
-                    os.join(path, "inv_cmbfisher.mat",                          
+                    os.join(path, "inv_cmbfisher.mat"),                          
                     sep="\t",                                               
                     index=False,                                            
                     header=self.pandas_cmb_fisher.columns)
