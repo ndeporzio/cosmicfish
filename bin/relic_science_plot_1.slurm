@@ -33,10 +33,13 @@ cd ~/projects/cosmicfish/
 ## LOAD REQUIRED MODULES/ENVIRONMENT ##
 module load centos6/0.0.1-fasrc01
 module load virtualenv
+module load gcc/4.9.0-fasrc01
 source activate ./py36 
 
 ## RUN PROGRAM ##
-python "$SLURM_SUBMIT_DIR/relic_science_plot_1.py" >> relic_science_plot_1.out
+#python "$SLURM_SUBMIT_DIR/relic_science_plot_1.py" >> relic_science_plot_1.out
+PROJECT_DIR = "/n/home02/ndeporzio/projects/cosmicfish/cosmicfish/bin/relic_science_plot_1.py"
+python $PROJECT_DIR  >> relic_science_plot_1.out
 ##output=relic_science_plot_1_output.csv
 
 ## COPY OUTPUT TO SECURE STORAGE ##
