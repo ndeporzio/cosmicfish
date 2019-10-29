@@ -115,7 +115,7 @@ class convergence:
         plt.figure(figsize=(15, 7.5))                                           
                                                                                 
         for idx, fcst in enumerate(self.forecasts):                             
-            data = np.array(getattr(fcst, 'dlogPd'+paramname))                                            
+            data = np.array(getattr(fcst, 'dlogPgd'+paramname))                                            
             plotlabel = (r'$\Delta $' + str(100.*self.varyfactors[idx]) + r'%') 
             plt.plot(fcst.k_table[z_index], data[z_index, :, mu_index], 
                 label=plotlabel) 
@@ -139,9 +139,9 @@ class convergence:
                                                                                 
         for idx, fcst in enumerate(self.forecasts[0:-1]):
             datahigh = np.array(
-                getattr(self.forecasts[idx+1], 'dlogPd'+paramname))                             
+                getattr(self.forecasts[idx+1], 'dlogPgd'+paramname))                             
             datalow = np.array(
-                getattr(self.forecasts[idx], 'dlogPd'+paramname)) 
+                getattr(self.forecasts[idx], 'dlogPgd'+paramname)) 
             data = datahigh - datalow                               
             plotlabel = (r'$\Delta$' + str(100.*self.varyfactors[idx]) + r'%') 
             plt.plot(fcst.k_table[z_index], data[z_index, :, mu_index], 
