@@ -1128,7 +1128,7 @@ class forecast:
             lssfisher = pd.DataFrame(self.fisher, columns=self.fisher_order)
 
             if self.use_fog==True: 
-                fogindex = lssfisher.columns.get_loc['sigma_fog']               
+                fogindex = lssfisher.columns.get_loc('sigma_fog')               
                 lssfisher.iloc[:, fogindex] *= 1e3 #To correct units on sigma_fog
                 lssfisher.iloc[fogindex ,:] *= 1e3 #To correct units on sigam_fog
 
@@ -1146,12 +1146,12 @@ class forecast:
                 #    "M_ncdm": "m_ncdm"})
             
             self.pandas_lss_covariance.to_csv(                          
-                os.join(path, "inv_lssfisher.mat"),                          
+                os.path.join(path, "inv_lssfisher.mat"),                          
                 sep="\t",                                               
                 index=False,                                            
                 header=self.fisher_order)
 
-            if self.hasattr(self.pandas_cmb_fisher): 
+            if hasattr(self, "pandas_cmb_fisher"): 
 
                 size = len(self.fisher_order)
                 fullfisher = np.zeros((size, size))
@@ -1162,7 +1162,10 @@ class forecast:
                             (pval2 in self.pandas_cmb_fisher.columns)):
                             fullfisher[pidx1, pidx2] = (
                                 self.numpy_lss_fisher[pidx1, pidx2]
-                                + self.numpy_cmb_fisher[pidx1, pidx2])   
+                                + self.numpy_cmb_fisher[pidx1, pidx2])
+                        else: 
+                            fullfisher[pidx1, pidx2] = (
+                                self.numpy_lss_fisher[pidx1, pidx2])   
                 self.pandas_full_fisher = pd.DataFrame(
                     fullfisher, columns=self.fisher_order) 
                 self.numpy_full_fisher = fullfisher
@@ -1174,12 +1177,12 @@ class forecast:
                     self.numpy_full_fisher)
    
                 self.pandas_full_covariance.to_csv(                         
-                    os.join(path, "inv_fullfisher.mat"),                         
+                    os.path.join(path, "inv_fullfisher.mat"),                         
                     sep="\t",                                               
                     index=False,                                            
                     header=self.fisher_order)                                        
                 self.pandas_cmb_covariance.to_csv(                          
-                    os.join(path, "inv_cmbfisher.mat"),                          
+                    os.path.join(path, "inv_cmbfisher.mat"),                          
                     sep="\t",                                               
                     index=False,                                            
                     header=self.pandas_cmb_fisher.columns)
