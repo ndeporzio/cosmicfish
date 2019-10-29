@@ -1,7 +1,62 @@
 Parameter ordering for each Fisher information prior:  
 
-CMBS4_Fisher_Neutrinos: omega_b, omega_cdm, n_s, A_s, tau_reio, H_0, M_ncdm
+CMBS4_Fisher_Neutrinos: 
+	Parameter Order: omega_b, omega_cdm, n_s, A_s, tau_reio, H_0, M_ncdm
+	Fiducial Vals: 
+		omega_b = 0.02226
+		omega_cdm = 0.11271
+		n_s = 0.96659
+		A_s = 2.2321e-9
+		tau_reio = 0.059888
+		H_0 = 70.148
+		N_ncdm = 1
+		T_cmb = 2.726
+		N_eff = 3.15
+		M_ncdm = 0.06 [eV] ???
+		
+	Notes: 
+		A different Fisher matrix exists for each fiducial value of 
+		m_ncdm between 10^{-1.0}, 10^{-0.9}, ..., 10^{0.9},  10^{1.0}. 
+		The 10^{-1.0} value corresponds to filename 
+		'CMBS4_Fisher_Neutrinos_1' and each increment upwards of the 
+		end integer corresponds to the next larger value of m_ncdm. 
+		
 
-CMBS4_Fisher_Relic: omega_b, omega_cdm, n_s, A_s, tau_reio, h, T_ncdm
+CMBS4_Fisher_Relic_*.dat: 
+	Parameter Order: omega_b, omega_cdm, n_s, A_s, tau_reio, h, T_ncdm
+	Fiducial Vals: 
+		omega_b = 0.02226
+		omega_cdm = 0.11271
+		n_s = 0.96659
+		A_s = 2.2321e-9
+		tau_reio = 0.059888
+		H_0 = 70.148
+		N_ncdm = 1
+		T_cmb = 2.726
+		N_eff = 3.15
+		T_ncdm = 1.5
+		
+	Notes: 
+		Forecasted matrix using CMBS4 experiment parameters. 
 
-Planck_Fisher_Relic: omega_b, omega_cdm, n_s, A_s, tau_reio, h, T_ncdm 
+Planck_Fisher_Relic_*.dat: 
+	Parameter Order: omega_b, omega_cdm, n_s, A_s, tau_reio, h, T_ncdm 
+	Fiducial Vals: 
+		omega_b = 0.02226
+		omega_cdm = 0.11271
+		n_s = 0.96659
+		A_s = 2.2321e-9
+		tau_reio = 0.059888
+		H_0 = 70.148
+		N_ncdm = 1
+		T_cmb = 2.726
+		N_eff = 3.15
+		T_ncdm = 1.5
+		
+	Notes: 
+		A different Fisher matrix exists for each fiducial value of 
+		m_ncdm between 10^{-1.0}, 10^{-0.9}, ..., 10^{0.9},  10^{1.0}. 
+		The 10^{-1.0} value corresponds to filename 
+		'CMBS4_Fisher_Neutrinos_1' and each increment upwards of the 
+		end integer corresponds to the next larger value of m_ncdm. 
+		Forecasted matrix using Planck experiment parameters. 
