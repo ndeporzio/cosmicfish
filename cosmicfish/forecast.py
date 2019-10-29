@@ -1098,8 +1098,10 @@ class forecast:
                         fmat = fmat.rename(                                     
                             index=str, columns={"omega_ncdm": "M_ncdm"})
 
-        for pidx, pval in enumerate(fisher_order): 
-            if pval is not fmat.columns[pidx]: 
+        for pidx, pval in enumerate(fmat.columns): 
+            if pval != self.fisher_order[pidx]:
+                print(fmat.columns)
+                print(self.fisher_order)  
                 print("Parameters in input file don't match requested \
                     ordering and parameter re-ordering hasn't yet been \
                     implemented for prior matrix loading. Please manually \
