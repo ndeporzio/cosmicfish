@@ -14,6 +14,7 @@ class convergence:
         fiducialcosmology,
         z_steps, 
         dNdz,
+        fisher_order,
         fsky=None,
         fcoverage_deg=None,
         RSD=True,
@@ -22,7 +23,11 @@ class convergence:
         COV=True,
         mu_step=0.5,
         parameters=[],
-        varyfactors=[]):  
+        varyfactors=[],
+        showplots=True,
+        saveplots=False,
+        savepath=None,
+        plotparams=None):  
                 
 
         self.classdir = classdir
@@ -38,20 +43,25 @@ class convergence:
         self.use_cov = COV
         self.params = parameters
         self.varyfactors = varyfactors
+        self.showplots = showplots
+        self.saveplots = saveplots
+        self.savepath = savepath
 
         self.mu_step = mu_step
-        self.plotparams = [
-            'A_s',
-            'n_s',
-            'omega_b',
-            'omega_cdm',
-            'h',
-            'tau_reio',
-            'omega_ncdm',
-            'M_ncdm',
-            'sigmafog',
-            'b0',
-            'alphak2'] 
+        self.plotparams = plotparams
+
+        if self.plotparams==None: 
+            self.plotparams = [
+                'A_s',
+                'n_s',
+                'omega_b',
+                'omega_cdm',
+                'h',
+                'tau_reio',
+                'omega_ncdm',
+                'sigmafog',
+                'b0',
+                'alphak2'] 
             
 
         # Calculate fiducial spectra
@@ -71,7 +81,10 @@ class convergence:
                             for vidx, vfactor in enumerate(self.varyfactors)]
 
         for fcst in self.forecasts: 
-            fcst.gen_fisher(mu_step=self.mu_step) 
+            fcst.gen_fisher(
+                fisher_order,
+                mu_step=self.mu_step,
+                skipgen=False) 
                             
 
     def plot_ps(self, z_index=0, mu_index=0, xscale='linear', plotdata=False):
@@ -105,7 +118,10 @@ class convergence:
         ax2.legend()                                                            
         ax2.set_xscale(xscale) 
 
-        plt.show()
+        if self.saveplots==True:
+            plt.savefig(self.savepath + "/Convergence_Pg.png")
+        if self.showplots==True:
+            plt.show()
 
     def plot_dps(self, paramname, z_index=0, mu_index=0, xscale='linear', 
         plotdata=False):  
@@ -128,7 +144,11 @@ class convergence:
         plt.legend()                                                            
         plt.xscale(xscale)                                                  
                                                                                 
-        plt.show() 
+        if self.saveplots==True:                                                
+            plt.savefig(self.savepath + "/Convergence_dlogPgd" + paramname 
+                + ".png")                  
+        if self.showplots==True:                                                
+            plt.show()
 
     def plot_delta_dps(self, paramname, z_index=0, mu_index=0, xscale='linear',       
         plotdata=False):                                                        
@@ -155,7 +175,11 @@ class convergence:
         plt.legend()                                                            
         plt.xscale(xscale)                                                      
                                                                                 
-        plt.show()
+        if self.saveplots==True:                                                
+            plt.savefig(self.savepath + "/Convergence_Delta_dlogPgd" 
+                + paramnmae + ".png")                  
+        if self.showplots==True:                                                
+            plt.show()
 
     def gen_all_plots(self, z_index=0, mu_index=0, xscale='linear', 
         plotdata=False):
