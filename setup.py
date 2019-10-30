@@ -17,6 +17,8 @@ setup(name='cosmicfish',
       scripts=[
         'bin/test-script',
         'bin/install_class.sh',  
+        'bin/relic_science_plot_1.slurm',
+        'bin/relic_science_plot_1.py'
       ], 
       install_requires=[
           'numpy',
