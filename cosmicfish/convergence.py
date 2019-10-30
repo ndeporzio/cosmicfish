@@ -177,7 +177,7 @@ class convergence:
                                                                                 
         if self.saveplots==True:                                                
             plt.savefig(self.savepath + "/Convergence_Delta_dlogPgd" 
-                + paramnmae + ".png")                  
+                + paramname + ".png")                  
         if self.showplots==True:                                                
             plt.show()
 
