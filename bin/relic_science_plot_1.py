@@ -42,6 +42,20 @@ fiducial = {
         "relic_fix" : "m_ncdm" # Fix T_ncdm or m_ncdm 
         }
 
+#Fisher parameter ordering
+fishorder = [
+    'omega_b',                                    
+    'omega_cdm',                                  
+    'n_s',                                        
+    'A_s',                                        
+    'tau_reio',                                   
+    'h',                                          
+    #'M_ncdm',                                    
+    'T_ncdm',                                 
+    'sigma_fog',                                   
+    'b0',                                         
+    'alpha_k2']
+
 convergencetest = cf.convergence(
     classpath, # Path to CLASS installation
     datastore, # Path to directory holding CLASS output data
@@ -49,67 +63,31 @@ convergencetest = cf.convergence(
     fiducial, # The fiducial cosmology 
     z_table, # Redshift steps in observation
     dNdz, # Redshift noise in observation
+    fisher_order=fishorder
     fcoverage_deg=14000, # Sky coverage in observation
     RSD=True, # Use RSD correction to Pm
     FOG=True, # Use FOG correction to Pm
     AP=True, # Use AP correction to PM
     COV=True, #Use AP Change of Variables correction to PM
     mu_step=mu_integral_step,
-    varyfactors=[0.003, 0.005, 0.007] # Relative factors used to compute convergence
+    varyfactors=[0.003, 0.005, 0.007], # Relative factors used to compute convergence
+    saveplots=True,
+    showplots=False,
+    savepath="/n/home02/ndeporzio/projects/cosmicfish/results",
+    plotparams=[
+        'omega_b',                                    
+        'omega_cdm',                                  
+        'n_s',                                        
+        'A_s',                                        
+        'tau_reio',                                   
+        'h',                                          
+        'omega_ncdm',                                    
+        'T_ncdm',                                 
+        'sigmafog',                                   
+        'b0',                                         
+        'alpha_k2']
     )
-
-plotparams = [                                                     
-            'A_s',                                                              
-            'n_s',                                                              
-            'omega_b',                                                          
-            'omega_cdm',                                                        
-            'h',                                                                
-            'tau_reio',                                                         
-            'omega_ncdm',                                                       
-            'T_ncdm',                                                           
-            'sigmafog',                                                         
-            'b0',                                                               
-            'alphak2']
-z_index = 0
-mu_index = 0
-xscale = 'linear'
-
-for paramname in plotparams: 
-    sns.set()                                                               
-    sns.set_palette("Blues_d", n_colors=len(convergencetest.varyfactors)+1)            
-    plt.figure(figsize=(15, 7.5))                                                                                                                       
-    for idx, fcst in enumerate(convergencetest.forecasts):                             
-        data = np.array(getattr(fcst, 'dlogPgd'+paramname))                  
-        plotlabel = (r'$\Delta $' + str(100.*convergencetest.varyfactors[idx]) + r'%') 
-        plt.plot(fcst.k_table[z_index], data[z_index, :, mu_index],                   
-            label=plotlabel)   
-    plt.title((r'$dlogP_g/d$'                                               
-        +paramname))                      
-    plt.xlabel(r'k [Mpc$^{-1}$]')                                           
-    plt.ylabel(r'$dlogP_g/d$'+paramname+r' [Mpc$^3$]')                      
-    plt.legend()                                                            
-    plt.xscale(xscale) 
-    plt.savefig(os.path.join(projectdir, "results", "convergence_"+paramname+"_1.png")   
- 
-    sns.set()                                                               
-    sns.set_palette("Blues_d", n_colors=len(convergencetest.varyfactors)+1)            
-    plt.figure(figsize=(15, 7.5))                                                                                                                       
-    for idx, fcst in enumerate(convergencetest.forecasts[0:-1]):                       
-        datahigh = np.array(                                                
-            getattr(convergencetest.forecasts[idx+1], 'dlogPgd'+paramname))            
-        datalow = np.array(                                                 
-            getattr(convergencetest.forecasts[idx], 'dlogPgd'+paramname))              
-        data = datahigh - datalow                                           
-        plotlabel = (r'$\Delta$' + str(100.*convergencetest.varyfactors[idx]) + r'%')  
-        plt.plot(fcst.k_table[z_index], data[z_index, :, mu_index],         
-            label=plotlabel)                                                
-    plt.title((r'$\Delta$ $dlogP_g/d$'                                      
-        +paramname))                      
-    plt.xlabel(r'k [Mpc$^{-1}$]')                                           
-    plt.ylabel(r'\Delta $dlogP_g/d$'+paramname+r' [Mpc$^3$]')               
-    plt.legend()                                                            
-    plt.xscale(xscale) 
-    plt.savefig(os.path.join(projectdir, "results", "convergence_"+paramname+"_2.png")
+convergencetest.gen_all_plots()
 
 masses = np.geomspace(0.1, 10.0, 21) 
 fiducialset = [dict(fiducial, **{'m_ncdm': masses[midx]}) for midx, mval in enumerate(masses)]
@@ -142,7 +120,7 @@ for fidx, fcst in enumerate(forecastset):
             'sigma_fog',                                   
             'b0',                                         
             'alpha_k2'],
-        mu_integral_step, 
+        mu_step=mu_integral_step, 
         skipgen=False)
     
     print("Relic Forecast ", fidx, " complete...")
