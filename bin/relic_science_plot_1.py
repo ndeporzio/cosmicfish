@@ -56,40 +56,40 @@ fishorder = [
     'b0',                                         
     'alpha_k2']
 
-convergencetest = cf.convergence(
-    classpath, # Path to CLASS installation
-    datastore, # Path to directory holding CLASS output data
-    'relic', # 'relic' or 'neutrino' forecasting scheme 
-    fiducial, # The fiducial cosmology 
-    z_table, # Redshift steps in observation
-    dNdz, # Redshift noise in observation
-    fisher_order=fishorder
-    fcoverage_deg=14000, # Sky coverage in observation
-    RSD=True, # Use RSD correction to Pm
-    FOG=True, # Use FOG correction to Pm
-    AP=True, # Use AP correction to PM
-    COV=True, #Use AP Change of Variables correction to PM
-    mu_step=mu_integral_step,
-    varyfactors=[0.003, 0.005, 0.007], # Relative factors used to compute convergence
-    saveplots=True,
-    showplots=False,
-    savepath="/n/home02/ndeporzio/projects/cosmicfish/results",
-    plotparams=[
-        'omega_b',                                    
-        'omega_cdm',                                  
-        'n_s',                                        
-        'A_s',                                        
-        'tau_reio',                                   
-        'h',                                          
-        'omega_ncdm',                                    
-        'T_ncdm',                                 
-        'sigmafog',                                   
-        'b0',                                         
-        'alpha_k2']
-    )
-convergencetest.gen_all_plots()
+#convergencetest = cf.convergence(
+#    classpath, # Path to CLASS installation
+#    datastore, # Path to directory holding CLASS output data
+#    'relic', # 'relic' or 'neutrino' forecasting scheme 
+#    fiducial, # The fiducial cosmology 
+#    z_table, # Redshift steps in observation
+#    dNdz, # Redshift noise in observation
+#    fisher_order=fishorder
+#    fcoverage_deg=14000, # Sky coverage in observation
+#    RSD=True, # Use RSD correction to Pm
+#    FOG=True, # Use FOG correction to Pm
+#    AP=True, # Use AP correction to PM
+#    COV=True, #Use AP Change of Variables correction to PM
+#    mu_step=mu_integral_step,
+#    varyfactors=[0.003, 0.005, 0.007], # Relative factors used to compute convergence
+#    saveplots=True,
+#    showplots=False,
+#    savepath="/n/home02/ndeporzio/projects/cosmicfish/results",
+#    plotparams=[
+#        'omega_b',                                    
+#        'omega_cdm',                                  
+#        'n_s',                                        
+#        'A_s',                                        
+#        'tau_reio',                                   
+#        'h',                                          
+#        'omega_ncdm',                                    
+#        'T_ncdm',                                 
+#        'sigmafog',                                   
+#        'b0',                                         
+#        'alpha_k2']
+#    )
+#convergencetest.gen_all_plots()
 
-masses = np.geomspace(0.1, 10.0, 21) 
+masses = np.geomspace(0.1, 10.0, 1) 
 fiducialset = [dict(fiducial, **{'m_ncdm': masses[midx]}) for midx, mval in enumerate(masses)]
 
 forecastset = [cf.forecast(
@@ -127,7 +127,8 @@ for fidx, fcst in enumerate(forecastset):
 
 inpath = os.path.join(cf.priors_directory(), "CMBS4_Fisher_Relic_")
 for fidx, fval in enumerate(forecastset):
-    outpath = os.path.join(projectdir, "results", str(fidx+1))
+#    outpath = os.path.join(projectdir, "results", str(fidx+1))
+    outpath = os.path.join(projectdir, "results", "test")  
     fval.load_cmb_fisher(
         fisher_order=[
             'omega_b',                                    

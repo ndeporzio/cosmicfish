@@ -28,7 +28,7 @@ export SLURM_STEP_NUM_TASKS
 mkdir $STORAGE_DIR
 
 ## COPY INPUT FILES AND MOVE TO WORKING DIR ##
-cd ~/projects/cosmicfish/
+cd /n/home02/ndeporzio/projects/cosmicfish/
 
 ## LOAD REQUIRED MODULES/ENVIRONMENT ##
 module load centos6/0.0.1-fasrc01
