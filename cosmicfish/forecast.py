@@ -53,7 +53,6 @@ class forecast:
         self.alphak2_fid = self.fid['alphak2'] 
 
         self.n_densities = np.zeros(len(self.dNdz))
-        self.pandas_cmb_fisher = None
 
         if self.forecast=="relic":
             self.M_ncdm_fid = self.m_ncdm_fid 
@@ -844,7 +843,7 @@ class forecast:
 
         paramvec =  [] 
 
-        for parameter in fisher_order: 
+        for parameter in self.fisher_order: 
             paramvec.append(param_dict[parameter])
             
         fisher = np.zeros((len(paramvec), len(paramvec))) 
@@ -881,7 +880,8 @@ class forecast:
                                     -self.k_table[zidx][kidx]))
                     integral[zidx] = val  
                 fisher[pidx1][pidx2] = np.sum(integral)
-                print("Fisher element (", pidx1, ", ", pidx2,") calculated...") 
+                print("Fisher element (", pidx1, ", ", pidx2,") calculated...")
+                print(fisher[pidx1][pidx2]) 
         self.fisher=fisher
 
     def generate_spectra(
@@ -1125,7 +1125,8 @@ class forecast:
             print("No LSS Fisher matrix has been generated. Please execute \
                     the `forecast.gen_fisher()` function.`") 
         else:  
-            lssfisher = pd.DataFrame(self.fisher, columns=self.fisher_order)
+            lssfisher = pd.DataFrame(np.array(self.fisher), 
+                columns=self.fisher_order)
 
             if self.use_fog==True: 
                 fogindex = lssfisher.columns.get_loc('sigma_fog')               
@@ -1167,7 +1168,7 @@ class forecast:
                             fullfisher[pidx1, pidx2] = (
                                 self.numpy_lss_fisher[pidx1, pidx2])   
                 self.pandas_full_fisher = pd.DataFrame(
-                    fullfisher, columns=self.fisher_order) 
+                    np.array(fullfisher), columns=self.fisher_order) 
                 self.numpy_full_fisher = fullfisher
 
                 self.pandas_full_covariance = pd.DataFrame(np.linalg.inv(   
