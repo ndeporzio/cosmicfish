@@ -79,11 +79,11 @@ def log_cov():
     return np.log(cf.cov())
 
 def cov_dkdH(omega_b, omega_cdm, omega_ncdm, h, z, mu, k):
-    return  (2. * k * np.power(mu, 2.) 
+    return  (k * np.power(mu, 2.) 
         / cf.H(omega_b, omega_cdm, omega_ncdm, h, z)) 
 
 def cov_dkdDa(omega_b, omega_cdm, omega_ncdm, h, z, mu, k):
-    return (-2. * k * (1. - np.power(mu, 2.)) 
+    return (-1. * k * (1. - np.power(mu, 2.)) 
         / cf.Da(omega_b, omega_cdm, omega_ncdm, h, z)) 
 
 def H(omega_b, omega_cdm, omega_ncdm, h, z):                                    
