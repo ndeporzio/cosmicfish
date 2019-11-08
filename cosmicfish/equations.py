@@ -4,7 +4,7 @@ from scipy.integrate import quad
 import cosmicfish as cf
 
 def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2, 
-    relic, T_ncdm):
+    relic, T_ncdm, step=True):
 
     if relic==False:             
         m_ncdm = cf.m_ncdm(omega_ncdm/3., cf.RELIC_TEMP_SCALE)     
@@ -13,7 +13,7 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
         m_ncdm = cf.m_ncdm(omega_ncdm, T_ncdm)
         k_fs = cf.kfs(m_ncdm, T_ncdm, h, z) 
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
-    g = cf.ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm)                 
+    g = cf.ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step)                 
     bl = cf.bL(b0, D) 
     b1tilde = np.sqrt(1.+z) *  (1. + bl * g + alphak2 * np.power(k, 2.))  
                                                                                
@@ -21,9 +21,9 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
     return R                                                                    
                                                                                 
 def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
-    relic, T_ncdm):                 
+    relic, T_ncdm, step=True):                 
     return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, 
-        b0, D, alphak2, relic, T_ncdm))
+        b0, D, alphak2, relic, T_ncdm, step))
 
 def fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):              
     sigma_z = cf.SIGMA_Z                                                        
@@ -223,7 +223,7 @@ def fgrowth(omega_b, omega_cdm, h, z):
     f = np.power(inner, gamma)                                                  
     return f              
 
-def ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm):                           
+def ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step=True):                           
     """Returns g growth factor(?).                                              
                                                                                 
     Args:                                                                       
@@ -240,10 +240,15 @@ def ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm):
     Returns:                                                                    
         Growth factor (?) g                                                     
     """                                                                         
+    
+    if step==True:  
+        delta_L_numerator = cf.RSD_DELTA_L_NUMERATOR_FACTOR
+    else: 
+        delt_L_numerator = 0. 
                                                                                 
     Delta_q = cf.RSD_DELTA_Q                                                               
     q = cf.RSD_Q_NUMERATOR_FACTOR * k / k_fs                                          
-    Delta_L =  (cf.RSD_DELTA_L_NUMERATOR_FACTOR * omega_ncdm 
+    Delta_L =  (delta_L_numerator * omega_ncdm 
                 / (omega_b + omega_cdm))                         
     g = (cf.rlambdacdm(h, k)
         * (1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))))               
