@@ -244,7 +244,7 @@ def ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step=True):
     if step==True:  
         delta_L_numerator = cf.RSD_DELTA_L_NUMERATOR_FACTOR
     else: 
-        delt_L_numerator = 0. 
+        delta_L_numerator = 0. 
                                                                                 
     Delta_q = cf.RSD_DELTA_Q                                                               
     q = cf.RSD_Q_NUMERATOR_FACTOR * k / k_fs                                          
