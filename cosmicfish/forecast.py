@@ -780,9 +780,10 @@ class forecast:
                             )
                         RSD[zidx][kidx][muidx] = (self.RSD[zidx][kidx]) 
                         FOG[zidx][kidx][muidx] = (self.FOG[zidx][kidx])
-                        D_Amp[zidx][kidx][muidx] = (
+                        D_Amp[zidx][kidx][muidx] = ((
                             Pg[zidx][kidx][muidx]
-                            - Pg_norelicstep[zidx][kidx][muidx])                         
+                            - Pg_norelicstep[zidx][kidx][muidx])
+                            / Pg[zidx][kidx][muidx])                         
                         dlogPdA_s[zidx][kidx][muidx] = (
                             self.dlogPdA_s[zidx][kidx]
                             )
