@@ -844,6 +844,7 @@ class forecast:
                             self.dlogRSDdalphak2[zidx][kidx]                                                    
                             )
             self.Pg = Pg
+            self.Pg_norelicstep = Pg_norelicstep
             self.RSD = RSD
             self.FOG = FOG
             self.D_Amp = D_Amp
