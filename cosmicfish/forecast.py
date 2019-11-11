@@ -256,6 +256,12 @@ class forecast:
                 'D' : self.spectra_mid[zidx].D})) 
                 for kidx, kval in enumerate(self.k_table[zidx])] 
                 for zidx, zval in enumerate(self.z_steps)]   
+
+            self.RSD_norelicstep = [[
+                cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval,     
+                'D' : self.spectra_mid[zidx].D, "step" : False}))                               
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
     
             self.dlogRSDdomega_b = [[cf.derivative(
                 cf.log_rsd, 
@@ -320,7 +326,10 @@ class forecast:
         else:
             self.RSD = [[1. 
                 for kidx, kval in enumerate(self.k_table[zidx])]                
-                for zidx, zval in enumerate(self.z_steps)]    
+                for zidx, zval in enumerate(self.z_steps)]   
+            self.RSD_norelicstep = [[1.                                                     
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]  
             self.dlogRSDdomega_b = [[0.
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]
@@ -713,9 +722,13 @@ class forecast:
     
             Pg = np.zeros(
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            Pg_norelicstep = np.zeros(                                                      
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
             RSD = np.zeros(                                                          
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
             FOG = np.zeros(                                                          
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+            D_Amp =  np.zeros(                                                     
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
             dlogPdA_s = np.zeros(
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
@@ -758,8 +771,19 @@ class forecast:
                             * self.AP[zidx][kidx]
                             * self.COV[zidx][kidx]
                             )
+                        Pg_norelicstep[zidx][kidx][muidx] = ( 1.                            
+                            * self.spectra_mid[zidx].ps_table[kidx]             
+                            * self.RSD_norelicstep[zidx][kidx]                              
+                            * self.FOG[zidx][kidx]                              
+                            * self.AP[zidx][kidx]                               
+                            * self.COV[zidx][kidx]                              
+                            )
                         RSD[zidx][kidx][muidx] = (self.RSD[zidx][kidx]) 
                         FOG[zidx][kidx][muidx] = (self.FOG[zidx][kidx])
+                        D_Amp[zidx][kidx][muidx] = ((
+                            Pg[zidx][kidx][muidx]
+                            - Pg_norelicstep[zidx][kidx][muidx])
+                            / Pg[zidx][kidx][muidx])                         
                         dlogPdA_s[zidx][kidx][muidx] = (
                             self.dlogPdA_s[zidx][kidx]
                             )
@@ -821,8 +845,10 @@ class forecast:
                             self.dlogRSDdalphak2[zidx][kidx]                                                    
                             )
             self.Pg = Pg
+            self.Pg_norelicstep = Pg_norelicstep
             self.RSD = RSD
             self.FOG = FOG
+            self.D_Amp = D_Amp
     
             self.dlogPmdA_s = np.array(self.dlogPdA_s)
             self.dlogPmdn_s = np.array(self.dlogPdn_s)
@@ -863,7 +889,8 @@ class forecast:
             'T_ncdm' : self.dlogPgdT_ncdm,
             'sigma_fog' : self.dlogPgdsigmafog,
             'b0' : self.dlogPgdb0,
-            'alpha_k2' : self.dlogPgdalphak2}
+            'alpha_k2' : self.dlogPgdalphak2,
+            'D_Amp' : self.D_Amp}
 
         paramvec =  [] 
 
