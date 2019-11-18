@@ -725,6 +725,8 @@ class forecast:
             Pg_norelicstep = np.zeros(                                                      
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
             RSD = np.zeros(                                                          
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            RSD_norelicstep = np.zeros(                                                     
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
             FOG = np.zeros(                                                          
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
@@ -779,6 +781,8 @@ class forecast:
                             * self.COV[zidx][kidx]                              
                             )
                         RSD[zidx][kidx][muidx] = (self.RSD[zidx][kidx]) 
+                        RSD_norelicstep[zidx][kidx][muidx] = (
+                            self.RSD_norelicstep[zidx][kidx])   
                         FOG[zidx][kidx][muidx] = (self.FOG[zidx][kidx])
                         D_Amp[zidx][kidx][muidx] = ((
                             Pg[zidx][kidx][muidx]
@@ -847,6 +851,7 @@ class forecast:
             self.Pg = Pg
             self.Pg_norelicstep = Pg_norelicstep
             self.RSD = RSD
+            self.RSD_norelicstep = RSD_norelicstep
             self.FOG = FOG
             self.D_Amp = D_Amp
     
