@@ -13,9 +13,13 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
         m_ncdm = cf.m_ncdm(omega_ncdm, T_ncdm)
         k_fs = cf.kfs(m_ncdm, T_ncdm, h, z) 
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
-    g = cf.ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step)                 
+    g_unnormalized = cf.ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, 
+        step)  
+    g_normalization_factor = cf.ggrowth(0.1, k_fs, h, omega_b, omega_cdm, 
+        omega_ncdm, step)                
+    g = g_unnormalized / g_normalization_factor
     bl = cf.bL(b0, D) 
-    b1tilde = np.sqrt(1.+z) *  (1. + bl * g + alphak2 * np.power(k, 2.))  
+    b1tilde =  (1. + bl * g + alphak2 * np.power(k, 2.))  
                                                                                
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
     return R                                                                    
@@ -223,7 +227,7 @@ def fgrowth(omega_b, omega_cdm, h, z):
     f = np.power(inner, gamma)                                                  
     return f              
 
-def ggrowth(z, k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step=True):                           
+def ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step=True):                           
     """Returns g growth factor(?).                                              
                                                                                 
     Args:                                                                       
