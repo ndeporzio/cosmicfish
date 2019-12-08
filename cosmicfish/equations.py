@@ -15,8 +15,8 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
     g_unnormalized = cf.ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, 
         step)  
-    g_normalization_factor = cf.ggrowth(0.1, k_fs, h, omega_b, omega_cdm, 
-        omega_ncdm, step)                
+    g_normalization_factor = cf.ggrowth(cf.BIAS_NORMALIZATION_SCALE*h, k_fs, h, 
+        omega_b, omega_cdm, omega_ncdm, step)                
     g = g_unnormalized / g_normalization_factor
     bl = cf.bL(b0, D) 
     b1tilde =  (1. + bl * g + alphak2 * np.power(k, 2.))  
@@ -247,14 +247,16 @@ def ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step=True):
     
     if step==True:  
         delta_L_numerator = cf.RSD_DELTA_L_NUMERATOR_FACTOR
+        rlambdacdm = cf.rlambdacdm(h, k)
     else: 
         delta_L_numerator = 0. 
+        rlambdacdm = 1.
                                                                                 
     Delta_q = cf.RSD_DELTA_Q                                                               
     q = cf.RSD_Q_NUMERATOR_FACTOR * k / k_fs                                          
     Delta_L =  (delta_L_numerator * omega_ncdm 
                 / (omega_b + omega_cdm))                         
-    g = (cf.rlambdacdm(h, k)
+    g = (rlambdacdm
         * (1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))))               
     return g
 
@@ -327,6 +329,7 @@ def gen_k_table(volume, z, h, n_s, k_steps, scaling='log'):
     #                      k_steps)       
 
     kmin = np.pi * np.power(volume, -1./3.) 
+    #kmin = np.power(10., -4) * h
     kmax = cf.K_MAX_PREFACTOR * np.power(1.+z, 2./(2.+n_s)) * h                                   
 
     if scaling=='linear': 

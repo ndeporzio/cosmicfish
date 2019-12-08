@@ -3,6 +3,7 @@ from .constants import (CLASSVARS, C, FULL_SKY_DEGREES, NEUTRINO_SCALE_FACTOR,
     RSD_DELTA_Q, RSD_Q_NUMERATOR_FACTOR, RSD_DELTA_L_NUMERATOR_FACTOR,
     RELIC_TEMP_SCALE, KP_PREFACTOR, DB_ELG, K_MAX_PREFACTOR, ANALYTIC_A_S,
     ANALYTIC_N_S, RSD_DELTA_LAMBDACDM, RSD_ALPHA, RSD_KEQ_PREFACTOR,
+    BIAS_NORMALIZATION_SCALE,
     DEFAULT_K_TABLE_STEPS, DEFAULT_Z_BIN_SPACING)
 from .equations import (H, Da, neff, fog, log_fog, kfs, rsd, log_rsd, 
     omega_ncdm, T_ncdm, domega_ncdm_dT_ncdm, dT_ncdm_domega_ncdm, sigmafog, 
