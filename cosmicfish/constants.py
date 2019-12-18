@@ -22,7 +22,6 @@ RSD_GAMMA = 0.55
 RSD_DELTA_Q = 1.6
 RSD_Q_NUMERATOR_FACTOR = 5.
 RSD_DELTA_L_NUMERATOR_FACTOR = 0.6
-#RSD_DELTA_L_NUMERATOR_FACTOR = 0.
 RELIC_TEMP_SCALE = 1.95
 KP_PREFACTOR = 0.05
 
@@ -35,7 +34,6 @@ ANALYTIC_A_S = True
 ANALYTIC_N_S = True
 
 RSD_DELTA_LAMBDACDM = 4.8e-3                                                    
-#RSD_DELTA_LAMBDACDM = 0.
 RSD_ALPHA = 4.                                                                  
 RSD_KEQ_PREFACTOR = 0.015  
 BIAS_NORMALIZATION_SCALE = 1.e-5 
