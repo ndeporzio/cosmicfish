@@ -21,8 +21,7 @@ class convergence:
         FOG=True,
         AP=True,
         COV=True,
-        mu_step=0.5,
-        parameters=[],
+        mu_step=0.05,
         varyfactors=[],
         showplots=True,
         saveplots=False,
@@ -41,7 +40,6 @@ class convergence:
         self.use_fog = FOG
         self.use_ap = AP
         self.use_cov = COV
-        self.params = parameters
         self.varyfactors = varyfactors
         self.showplots = showplots
         self.saveplots = saveplots
