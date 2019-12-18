@@ -4,7 +4,7 @@ from scipy.integrate import quad
 import cosmicfish as cf
 
 def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2, 
-    relic, T_ncdm, step=True):
+    relic, T_ncdm, step=True, delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR):
 
     if relic==False:             
         m_ncdm = cf.m_ncdm(omega_ncdm/3., cf.RELIC_TEMP_SCALE)     
@@ -14,9 +14,9 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
         k_fs = cf.kfs(m_ncdm, T_ncdm, h, z) 
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
     g_unnormalized = cf.ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, 
-        step)  
+        step, delta_L)  
     g_normalization_factor = cf.ggrowth(cf.BIAS_NORMALIZATION_SCALE*h, k_fs, h, 
-        omega_b, omega_cdm, omega_ncdm, step)                
+        omega_b, omega_cdm, omega_ncdm, step, delta_L)                
     g = g_unnormalized / g_normalization_factor
     bl = cf.bL(b0, D) 
     b1tilde =  (1. + bl * g + alphak2 * np.power(k, 2.))  
@@ -25,9 +25,9 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
     return R                                                                    
                                                                                 
 def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
-    relic, T_ncdm, step=True):                 
+    relic, T_ncdm, step=True, delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR):                 
     return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, 
-        b0, D, alphak2, relic, T_ncdm, step))
+        b0, D, alphak2, relic, T_ncdm, step, delta_L))
 
 def fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):              
     sigma_z = cf.SIGMA_Z                                                        
@@ -227,7 +227,8 @@ def fgrowth(omega_b, omega_cdm, h, z):
     f = np.power(inner, gamma)                                                  
     return f              
 
-def ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step=True):                           
+def ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step=True, 
+    delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR):                           
     """Returns g growth factor(?).                                              
                                                                                 
     Args:                                                                       
@@ -246,7 +247,7 @@ def ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step=True):
     """                                                                         
     
     if step==True:  
-        delta_L_numerator = cf.RSD_DELTA_L_NUMERATOR_FACTOR
+        delta_L_numerator = delta_L 
         rlambdacdm = cf.rlambdacdm(h, k)
     else: 
         delta_L_numerator = 0. 
@@ -260,18 +261,11 @@ def ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step=True):
         * (1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))))               
     return g
 
+
 def bL(b0, D): 
     val = (b0 / D) - 1.
     return val 
     
-
-#def btildebias(z, k, h, omega_b, omega_cdm, omega_ncdm, bLbar, alpha_2):        
-#    btilde = (1.                                                                
-#              + (bLbar                                                          
-#                 * fgrowth(omega_b, omega_cdm, h, z)                            
-#                 * ggrowth(z, k, h, omega_b, omega_cdm, omega_ncdm))            
-#              + (alpha_2 * np.power(k, 2.)))                                    
-#    return btilde 
 
 def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,        
           c=cf.C, fsky=None, z_spacing=cf.DEFAULT_Z_BIN_SPACING):                                               
@@ -318,6 +312,7 @@ def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,
     v = (v_max - v_min) * fsky                     
     # Incorporate fsky into volume calculation.                                 
     return v # Units [Mpc^3]                                                    
+
                                                                                 
 def gen_k_table(volume, z, h, n_s, k_steps, scaling='log'):                                     
     # volume in units of [Mpc^3]                                                
@@ -338,6 +333,7 @@ def gen_k_table(volume, z, h, n_s, k_steps, scaling='log'):
         k_table = np.geomspace(kmin, kmax, k_steps)
     return k_table #Units [Mpc^-1]
 
+
 def set_sky_cover(fsky=None, fcoverage_deg=None): 
     if (fsky is None) and (fcoverage_deg is not None):                      
         fdeg = fcoverage_deg                                  
@@ -357,13 +353,16 @@ def set_sky_cover(fsky=None, fcoverage_deg=None):
         fdeg = cf.FULL_SKY_DEGREES
     return ffrac, fdeg
 
+
 def k_pivot(): 
     kp = cf.KP_PREFACTOR 
     return kp  
 
+
 def dlogPdAs(As_fid): 
     val = 1. / As_fid
     return val 
+
 
 def dlogPdns(k, kp): 
     val = np.log(k / kp) 
