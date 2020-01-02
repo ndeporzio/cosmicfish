@@ -873,14 +873,13 @@ class forecast:
                             self.RSD_specialb[zidx][kidx])
                         RSD_specialb_high[zidx][kidx][muidx] = ( #FOR DEBUGGING. DELETE LATER.                  
                             self.RSD_specialb_high[zidx][kidx]) 
-                        RSD_specialb[zidx][kidx][muidx] = ( #FOR DEBUGGING. DELETE LATER.                  
-                            self.RSD_specialb_high[zidx][kidx]) 
+                        RSD_specialb_low[zidx][kidx][muidx] = ( #FOR DEBUGGING. DELETE LATER.                  
+                            self.RSD_specialb_low[zidx][kidx]) 
 
                         FOG[zidx][kidx][muidx] = (self.FOG[zidx][kidx])
-                        D_Amp[zidx][kidx][muidx] = ((
-                            Pg[zidx][kidx][muidx]
-                            - Pg_norelicstep[zidx][kidx][muidx])
-                            / Pg[zidx][kidx][muidx])                         
+                        D_Amp[zidx][kidx][muidx] = (
+                            np.log(Pg[zidx][kidx][muidx])
+                            - np.log(Pg_norelicstep[zidx][kidx][muidx]))       
 
 
 #                        b_Amp[zidx][kidx][muidx] = ((  #FOR DEBUGGING. DELETE LATER.                         
@@ -969,8 +968,8 @@ class forecast:
             self.RSD_norelicstep = RSD_norelicstep
 
             self.RSD_specialb = RSD_specialb #FOR DEBUGGING. DELETE LATER.
-            self.RSD_specialb = RSD_specialb_high #FOR DEBUGGING. DELETE LATER.
-            self.RSD_specialb = RSD_specialb_low #FOR DEBUGGING. DELETE LATER.
+            self.RSD_specialb_high = RSD_specialb_high #FOR DEBUGGING. DELETE LATER.
+            self.RSD_specialb_low = RSD_specialb_low #FOR DEBUGGING. DELETE LATER.
 
             self.FOG = FOG
             self.D_Amp = D_Amp
@@ -1336,10 +1335,10 @@ class forecast:
             lssfisher = pd.DataFrame(np.array(self.fisher), 
                 columns=self.fisher_order)
 
-            if self.use_fog==True: 
-                fogindex = lssfisher.columns.get_loc('sigma_fog')               
-                lssfisher.iloc[:, fogindex] *= 1e3 #To correct units on sigma_fog
-                lssfisher.iloc[fogindex ,:] *= 1e3 #To correct units on sigam_fog
+#            if self.use_fog==True: 
+#                fogindex = lssfisher.columns.get_loc('sigma_fog')               
+#                lssfisher.iloc[:, fogindex] *= 1e3 #To correct units on sigma_fog
+#                lssfisher.iloc[fogindex ,:] *= 1e3 #To correct units on sigam_fog
 
             self.pandas_lss_fisher = lssfisher                              
             self.numpy_lss_fisher = np.array(lssfisher)
@@ -1364,7 +1363,13 @@ class forecast:
 
                 size = len(self.fisher_order)
                 fullfisher = np.zeros((size, size))
-            
+
+                tau_idx = self.fisher_order.index('tau_reio')     
+                self.pandas_lss_fisher.iloc[:, tau_idx] = 0. 
+                self.pandas_lss_fisher.iloc[tau_idx, :] = 0. 
+                self.numpy_lss_fisher[:, tau_idx] = 0. 
+                self.numpy_lss_fisher[tau_idx, :] = 0. 
+        
                 for pidx1, pval1 in enumerate(self.fisher_order): 
                     for pidx2, pval2 in enumerate(self.fisher_order):
                         if ((pval1 in self.pandas_cmb_fisher.columns) and 
