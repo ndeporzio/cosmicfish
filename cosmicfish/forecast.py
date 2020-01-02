@@ -46,7 +46,7 @@ class forecast:
         self.m_ncdm_fid = self.fid['m_ncdm'] # Unit [eV]   
         self.N_eff_fid = self.fid['N_eff'] 
         self.relic_fix = self.fid['relic_fix']   
-        self.T_cmb_fid = self.fid['T_cmb']              
+        self.T_cmb_fid = self.fid['T_cmb']
 
         if self.use_rsd==True:
             if 'b0' in self.fid:
@@ -56,7 +56,12 @@ class forecast:
             if 'alphak2' in self.fid:
                 self.alphak2_fid = self.fid['alphak2'] 
             else:
-                print("Error: Must specify fiducial alphak2 to compute RSD.")   
+                print("Error: Must specify fiducial alphak2 to compute RSD.")
+            if 'delta_L' in self.fid:
+                self.delta_L_fid = self.fid['delta_L']  
+            else: 
+                self.delta_L_fid = cf.RSD_DELTA_L_NUMERATOR_FACTOR
+ 
         if self.use_fog==True:
             if 'sigma_fog_0' in self.fid:                                       
                 self.sigma_fog_0_fid = self.fid['sigma_fog_0']                  
@@ -224,11 +229,6 @@ class forecast:
                             self.T_ncdm_fid, 
                             self.M_ncdm_fid))                   
                     for zidx, zval in enumerate(self.z_steps)] 
-                #print("m_ncdm fixed. dlogPmdTncdm: ", self.dlogPdT_ncdm)            
-                #print("m_ncdm fixed. dTncdmdomegancdm: ", cf.dT_ncdm_domega_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))
-                #print("m_ncdm fixed. dlogPmdomegancdm: ", self.dlogPdomega_ncdm)
-            #print("T_ncdm_fid: ", self.T_ncdm_fid)
-            #print("M_ncdm_fid: ", self.M_ncdm_fid) 
  
     def gen_rsd(self, mu): 
         '''Given mu, creates len(z_steps) array. Each elem is len(k_table).'''
@@ -250,7 +250,8 @@ class forecast:
                         'alphak2' : self.alphak2_fid,
                         'mu' : mu,
                         'relic' : relic,
-                        "T_ncdm" : self.T_ncdm_fid}
+                        'T_ncdm' : self.T_ncdm_fid,
+                        'delta_L' : self.delta_L_fid}
     
             self.RSD = [[cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval,
                 'D' : self.spectra_mid[zidx].D})) 
@@ -260,6 +261,23 @@ class forecast:
             self.RSD_norelicstep = [[
                 cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval,     
                 'D' : self.spectra_mid[zidx].D, "step" : False}))                               
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]
+
+            # FOR DEBUGGING. DELETE LATER.  
+            self.RSD_specialb = [[                                           
+                cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval,              
+                'D' : self.spectra_mid[zidx].D, "b0" : 1.001}))               
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]
+            self.RSD_specialb_high = [[                                              
+                cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval,              
+                'D' : self.spectra_mid[zidx].D, "b0" : 1.0005}))                 
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]
+            self.RSD_specialb_low = [[                                              
+                cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval,              
+                'D' : self.spectra_mid[zidx].D, "b0" : 0.9995}))                 
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)] 
     
@@ -282,7 +300,7 @@ class forecast:
                 for zidx, zval in enumerate(self.z_steps)]
     
             self.dlogRSDdomega_ncdm = [[cf.derivative(                                  
-                cf.log_rsd,                                                         
+               cf.log_rsd,                                                         
                 'omega_ncdm',                                                        
                 self.dstep,                                                         
                 **dict(fiducial, **{'z' : zval, 'k' :  kval,
@@ -322,6 +340,16 @@ class forecast:
                 **dict(fiducial, **{'z' : zval, 'k' :  kval,
                     'D' : self.spectra_mid[zidx].D}))                                                  
                 for kidx, kval in enumerate(self.k_table[zidx])]                                           
+                for zidx, zval in enumerate(self.z_steps)]
+        
+            self.dlogRSDddeltaL = [[cf.derivative(
+                cf.log_rsd,
+                'delta_L',
+                self.dstep,
+                **dict(fiducial, **{'z' : zval, 'k' :  kval,                    
+                    'D' : self.spectra_mid[zidx].D, 
+                    'delta_L' : self.delta_L_fid}))                           
+                for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]  
         else:
             self.RSD = [[1. 
@@ -330,6 +358,17 @@ class forecast:
             self.RSD_norelicstep = [[1.                                                     
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]  
+
+            self.RSD_specialb = [[1.    #FOR DEBUGGING. DELETE LATER.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]
+            self.RSD_specialb_high = [[1.    #FOR DEBUGGING. DELETE LATER.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
+            self.RSD_specialb_low = [[1.    #FOR DEBUGGING. DELETE LATER.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
+
             self.dlogRSDdomega_b = [[0.
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]
@@ -354,6 +393,9 @@ class forecast:
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]
             self.dlogRSDdalphak2 = [[0.
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]
+            self.dlogRSDddeltaL = [[0.                                         
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]
 
@@ -724,12 +766,32 @@ class forecast:
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
             Pg_norelicstep = np.zeros(                                                      
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+
+            Pg_specialb = np.zeros(  #FOR DEBUGGING. DELETE LATER.                                        
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            Pg_specialb_high = np.zeros(  #FOR DEBUGGING. DELETE LATER.                                        
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            Pg_specialb_low = np.zeros(  #FOR DEBUGGING. DELETE LATER.                                        
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+
             RSD = np.zeros(                                                          
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            RSD_norelicstep = np.zeros(                                                     
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+
+            RSD_specialb = np.zeros(  #FOR DEBUGGING. DELETE LATER.                                        
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            RSD_specialb_high = np.zeros(  #FOR DEBUGGING. DELETE LATER.                                        
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+            RSD_specialb_low = np.zeros(  #FOR DEBUGGING. DELETE LATER.                                        
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+
             FOG = np.zeros(                                                          
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
             D_Amp =  np.zeros(                                                     
-                (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
+            b_Amp =  np.zeros(    #FOR DEBUGGING. DELETE LATER.                                              
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))  
             dlogPdA_s = np.zeros(
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
             dlogPdn_s = np.zeros(   
@@ -754,6 +816,8 @@ class forecast:
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
             dlogPdalphak2 = np.zeros(
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))        
+            dlogPddeltaL = np.zeros(                                           
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
     
             for muidx, muval in enumerate(mu_vals):
                 self.gen_rsd(muval)
@@ -778,12 +842,58 @@ class forecast:
                             * self.AP[zidx][kidx]                               
                             * self.COV[zidx][kidx]                              
                             )
+
+                        Pg_specialb[zidx][kidx][muidx] = ( 1. #FOR DEBUGGING. DELETE LATER.               
+                            * self.spectra_mid[zidx].ps_table[kidx]             
+                            * self.RSD_specialb[zidx][kidx]                  
+                            * self.FOG[zidx][kidx]                              
+                            * self.AP[zidx][kidx]                               
+                            * self.COV[zidx][kidx]                              
+                            )
+                        Pg_specialb_high[zidx][kidx][muidx] = ( 1. #FOR DEBUGGING. DELETE LATER.               
+                            * self.spectra_mid[zidx].ps_table[kidx]             
+                            * self.RSD_specialb_high[zidx][kidx]                     
+                            * self.FOG[zidx][kidx]                              
+                            * self.AP[zidx][kidx]                               
+                            * self.COV[zidx][kidx]                              
+                            )
+                        Pg_specialb_low[zidx][kidx][muidx] = ( 1. #FOR DEBUGGING. DELETE LATER.               
+                            * self.spectra_mid[zidx].ps_table[kidx]             
+                            * self.RSD_specialb_low[zidx][kidx]                     
+                            * self.FOG[zidx][kidx]                              
+                            * self.AP[zidx][kidx]                               
+                            * self.COV[zidx][kidx]                              
+                            )
+
                         RSD[zidx][kidx][muidx] = (self.RSD[zidx][kidx]) 
+                        RSD_norelicstep[zidx][kidx][muidx] = (
+                            self.RSD_norelicstep[zidx][kidx])   
+
+                        RSD_specialb[zidx][kidx][muidx] = ( #FOR DEBUGGING. DELETE LATER.                  
+                            self.RSD_specialb[zidx][kidx])
+                        RSD_specialb_high[zidx][kidx][muidx] = ( #FOR DEBUGGING. DELETE LATER.                  
+                            self.RSD_specialb_high[zidx][kidx]) 
+                        RSD_specialb_low[zidx][kidx][muidx] = ( #FOR DEBUGGING. DELETE LATER.                  
+                            self.RSD_specialb_low[zidx][kidx]) 
+
                         FOG[zidx][kidx][muidx] = (self.FOG[zidx][kidx])
-                        D_Amp[zidx][kidx][muidx] = ((
-                            Pg[zidx][kidx][muidx]
-                            - Pg_norelicstep[zidx][kidx][muidx])
-                            / Pg[zidx][kidx][muidx])                         
+                        D_Amp[zidx][kidx][muidx] = (
+                            np.log(Pg[zidx][kidx][muidx])
+                            - np.log(Pg_norelicstep[zidx][kidx][muidx]))       
+
+
+#                        b_Amp[zidx][kidx][muidx] = ((  #FOR DEBUGGING. DELETE LATER.                         
+#                            Pg[zidx][kidx][muidx]                               
+#                            - Pg_specialb[zidx][kidx][muidx])                
+#                            / Pg[zidx][kidx][muidx])
+#                        b_Amp[zidx][kidx][muidx] = (
+#                            np.log(Pg_specialb[zidx][kidx][muidx]) 
+#                            - np.log(Pg[zidx][kidx][muidx]))
+                        b_Amp[zidx][kidx][muidx] = ((
+                            np.log(Pg_specialb_high[zidx][kidx][muidx])
+                            - np.log(Pg_specialb_low[zidx][kidx][muidx])
+                            ))
+
                         dlogPdA_s[zidx][kidx][muidx] = (
                             self.dlogPdA_s[zidx][kidx]
                             )
@@ -844,11 +954,26 @@ class forecast:
                         dlogPdalphak2[zidx][kidx][muidx] = (                          
                             self.dlogRSDdalphak2[zidx][kidx]                                                    
                             )
+                        dlogPddeltaL[zidx][kidx][muidx] = (                    
+                            self.dlogRSDddeltaL[zidx][kidx]                    
+                            ) 
             self.Pg = Pg
             self.Pg_norelicstep = Pg_norelicstep
+
+            self.Pg_specialb = Pg_specialb #FOR DEBUGGING. DELETE LATER.
+            self.Pg_specialb_high = Pg_specialb_high #FOR DEBUGGING. DELETE LATER.
+            self.Pg_specialb_low = Pg_specialb_low #FOR DEBUGGING. DELETE LATER.
+
             self.RSD = RSD
+            self.RSD_norelicstep = RSD_norelicstep
+
+            self.RSD_specialb = RSD_specialb #FOR DEBUGGING. DELETE LATER.
+            self.RSD_specialb_high = RSD_specialb_high #FOR DEBUGGING. DELETE LATER.
+            self.RSD_specialb_low = RSD_specialb_low #FOR DEBUGGING. DELETE LATER.
+
             self.FOG = FOG
             self.D_Amp = D_Amp
+            self.b_Amp = b_Amp #FOR DEBUGGING. DELETE LATER. 
     
             self.dlogPmdA_s = np.array(self.dlogPdA_s)
             self.dlogPmdn_s = np.array(self.dlogPdn_s)
@@ -875,6 +1000,7 @@ class forecast:
             self.dlogPgdsigmafog = np.array(dlogPdsigmafog)
             self.dlogPgdb0 = np.array(dlogPdb0)
             self.dlogPgdalphak2 = np.array(dlogPdalphak2)       
+            self.dlogPgddeltaL = np.array(dlogPddeltaL) 
 
         param_dict = {
             'omega_b' : self.dlogPgdomega_b,
@@ -890,7 +1016,9 @@ class forecast:
             'sigma_fog' : self.dlogPgdsigmafog,
             'b0' : self.dlogPgdb0,
             'alpha_k2' : self.dlogPgdalphak2,
-            'D_Amp' : self.D_Amp}
+            'D_Amp' : self.D_Amp,
+            'b_Amp' : self.b_Amp,
+            'delta_L' : self.dlogPgddeltaL}
 
         paramvec =  [] 
 
@@ -907,6 +1035,12 @@ class forecast:
                 else: 
                     print("RSD not requested. Can't forecast alpha_k2.")
                     self.fisher_order.remove('alpha_k2')
+            elif parameter=='delta_L':                                         
+                if self.use_rsd==True:                                          
+                    paramvec.append(param_dict[parameter])                      
+                else:                                                           
+                    print("RSD not requested. Can't forecast delta_L.")        
+                    self.fisher_order.remove('delta_L')
             elif parameter=='sigma_fog':
                 if self.use_fog==True:
                     paramvec.append(param_dict[parameter])
@@ -920,7 +1054,7 @@ class forecast:
 
         # Highly inefficient set of loops 
         for pidx1, p1 in enumerate(paramvec): 
-            for pidx2, p2 in enumerate(paramvec):
+            for pidx2, p2 in enumerate(paramvec[pidx1:]):
                 integrand = np.zeros((len(self.z_steps), len(self.k_table[0])))
                 integral = np.zeros(len(self.z_steps))
                 for zidx, zval in enumerate(self.z_steps):
@@ -931,7 +1065,7 @@ class forecast:
                         integrand[zidx][kidx] = np.sum( #Perform mu integral
                             mu_step 
                             * paramvec[pidx1][zidx][kidx]
-                            * paramvec[pidx2][zidx][kidx]
+                            * paramvec[pidx1+pidx2][zidx][kidx]
                             * np.power(kval, 2.)
                             * (1. / (8.  * np.power(np.pi, 2)))
                             * cf.neff(self.n_densities[zidx], 
@@ -949,9 +1083,12 @@ class forecast:
                                 * (self.k_table[zidx][kidx+1]
                                     -self.k_table[zidx][kidx]))
                     integral[zidx] = val  
-                fisher[pidx1][pidx2] = np.sum(integral)
-                print("Fisher element (", pidx1, ", ", pidx2,") calculated...")
-                print(fisher[pidx1][pidx2]) 
+                fisher[pidx1][pidx2+pidx1] = np.sum(integral)
+                fisher[pidx2+pidx1][pidx1] = np.float(
+                    fisher[pidx1][pidx2+pidx1])
+                print("Fisher element (", pidx1, ", ", (pidx2+pidx1),"), (", 
+                    (pidx2+pidx1), ", ", pidx1,") calculated...")
+#                print(fisher[pidx1][pidx1+pidx2]) 
         self.fisher=fisher
 
     def generate_spectra(
@@ -1198,10 +1335,10 @@ class forecast:
             lssfisher = pd.DataFrame(np.array(self.fisher), 
                 columns=self.fisher_order)
 
-            if self.use_fog==True: 
-                fogindex = lssfisher.columns.get_loc('sigma_fog')               
-                lssfisher.iloc[:, fogindex] *= 1e3 #To correct units on sigma_fog
-                lssfisher.iloc[fogindex ,:] *= 1e3 #To correct units on sigam_fog
+#            if self.use_fog==True: 
+#                fogindex = lssfisher.columns.get_loc('sigma_fog')               
+#                lssfisher.iloc[:, fogindex] *= 1e3 #To correct units on sigma_fog
+#                lssfisher.iloc[fogindex ,:] *= 1e3 #To correct units on sigam_fog
 
             self.pandas_lss_fisher = lssfisher                              
             self.numpy_lss_fisher = np.array(lssfisher)
@@ -1226,7 +1363,13 @@ class forecast:
 
                 size = len(self.fisher_order)
                 fullfisher = np.zeros((size, size))
-            
+
+                tau_idx = self.fisher_order.index('tau_reio')     
+                self.pandas_lss_fisher.iloc[:, tau_idx] = 0. 
+                self.pandas_lss_fisher.iloc[tau_idx, :] = 0. 
+                self.numpy_lss_fisher[:, tau_idx] = 0. 
+                self.numpy_lss_fisher[tau_idx, :] = 0. 
+        
                 for pidx1, pval1 in enumerate(self.fisher_order): 
                     for pidx2, pval2 in enumerate(self.fisher_order):
                         if ((pval1 in self.pandas_cmb_fisher.columns) and 

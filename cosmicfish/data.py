@@ -15,6 +15,7 @@ class spectrum:
         # 
         # Instantiation variables
         #
+        self.datadirectory = correct_path(datadirectory)
         self.dataconfig = correct_path(datadirectory + "/test_parameters.ini")
         self.datapath = correct_path(datadirectory + "/test_tk.dat")
         self.ps_datapath = correct_path(datadirectory + "/test_pk.dat") 
