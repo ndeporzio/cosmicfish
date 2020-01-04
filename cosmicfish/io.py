@@ -257,6 +257,13 @@ def citation():
         for line in text: 
             print(line)  
 
+def makedirectory(path): 
+    try: 
+        os.stat(path)
+    except:
+        os.makedirs(path, exist_ok=True)
+    return 
+
 if __name__ == '__main__':
     # Actions to perform only if this module, 'io.py', is called
     # directly (e.g. '$ python io.py'). These actions aren't 

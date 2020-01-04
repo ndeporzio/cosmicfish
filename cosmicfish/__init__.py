@@ -16,5 +16,6 @@ from .convergence import (convergence)
 from .forecast import (forecast) 
 from .data import (spectrum)
 from .io import (install_class, generate_data, check_data, is_data, 
-    correct_path, config_directory, replace_text, priors_directory, citation)
+    correct_path, config_directory, replace_text, priors_directory, citation,
+    makedirectory)
 
