@@ -1200,7 +1200,7 @@ class forecast:
                     self.Pg[zidx][k_index][mu_index]))
 
 
-    def load_cmb_fisher(self, fisher_order, fisherpath): 
+    def load_cmb_fisher(self, fisher_order, fisherpath, colnames=None): 
 
         valid_params = [
             'omega_b', 
@@ -1212,6 +1212,7 @@ class forecast:
             'M_ncdm', 
             'h', 
             'T_ncdm',
+            'T_ncdm[gamma]', 
             'omega_ncdm']
 
         for parameter in fisher_order: 
@@ -1220,11 +1221,27 @@ class forecast:
                 print("No information loaded...")  
                 return
 
-        fmat = pd.read_csv(fisherpath, sep='\t', header=0)
+        fmat = pd.read_csv(fisherpath, sep='\t', header=None, names=colnames)
 
         for pidx, pval in enumerate(fisher_order): 
             if pval not in fmat.columns: 
-                if (pval=='h') and ('H_0' in fmat.columns): 
+                if (pval=='T_ncdm') and ('T_ncdm[gamma]' in fmat.columns): 
+                    # Change of variable T[CMB] -> T[K] 
+                    print('Converting T[CMB] --> T[K]') 
+                    index =  fmat.columns.get_loc('T_ncdm[gamma]') 
+                    fmat.iloc[:, index] *= 1./self.T_cmb_fid 
+                    fmat.iloc[index, :] *= 1./self.T_cmb_fid
+                    fmat = fmat.rename(index=str, 
+                        columns={"T_ncdm[gamma]": "T_ncdm"}) 
+                elif (pval=='T_ncdm[gamma]') and ('T_ncdm' in fmat.columns):      
+                    # Change of variable T[K] -> T[CMB]                         
+                    print('Converting T[K] --> T[CMB]')                         
+                    index =  fmat.columns.get_loc('T_ncdm')              
+                    fmat.iloc[:, index] *= self.T_cmb_fid                    
+                    fmat.iloc[index, :] *= self.T_cmb_fid
+                    fmat = fmat.rename(index=str,                               
+                        columns={"T_ncdm": "T_ncdm[gamma]"}) 
+                elif (pval=='h') and ('H_0' in fmat.columns): 
                     # Change of variables H0->h
                     print('Converting H_0 --> h...') 
                     index = fmat.columns.get_loc('H_0') 
