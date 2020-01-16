@@ -25,5 +25,6 @@ setup(name='cosmicfish',
           'matplotlib',
           'pandas',
           'seaborn', 
-          'scipy'
+          'scipy',
+          'dill'
       ])
