@@ -1,11 +1,11 @@
 import os
 import shutil
-import dill
 import numpy as np
 import pandas as pd
 import seaborn as sns 
 import cosmicfish as cf 
 import matplotlib.pyplot as plt
+import dill
 
 
 # Instruct pyplot to use seaborn 
@@ -18,7 +18,7 @@ classpath = os.path.join(projectdir, "class")
 
 # Specify resolution of numerical integrals
 derivative_step = 0.008 # How much to vary parameter to calculate numerical derivative
-mu_integral_step = 0.05 # For calculating numerical integral wrt mu between -1 and 1
+mu_integral_step = 0.05 # For calculating numerical integral wrt mu between -1 and 1 
 
 # Generate output paths  
 ps6_resultsdir = os.path.join(projectdir, 'results', 'ps6')
@@ -39,6 +39,8 @@ ps6_fid = {
         "T_ncdm" : (1.50/2.726), # Units [T_cmb]. We choose this temp, 1.5 K, because that's what our CMBS4 priors are calculated at.
         "m_ncdm" : 0.03, # Units [eV]
         "b0" : 1.0, 
+        "beta0" : 1.7, 
+        "beta1" : 1.0,
         "alphak2" : 1.0,
         "sigma_fog_0" : 250000, #Units [m s^-2]
         "N_eff" : 3.046, #We allow relativistic neutrinos in addition to our DM relic
@@ -58,6 +60,7 @@ skycover = 0.3636 # Sky coverage of survey in fraction
 #    'relic', # 'relic' or 'neutrino' forecasting scheme 
 #    ps6_fid, # The fiducial cosmology 
 #    z_table, # Redshift steps in observation
+#    "EUCLID",
 #    dNdz, # Redshift noise in observation
 #    fisher_order=[
 #        'omega_b',                                    
@@ -90,7 +93,8 @@ skycover = 0.3636 # Sky coverage of survey in fraction
 #                'omega_ncdm',
 #                'M_ncdm',
 #                'sigmafog',                                                     
-#                'b0',                                                           
+#                'beta0',
+#                'beta1',
 #                'alphak2'] 
 #    )
 #ps6_convergencetest.gen_all_plots()
@@ -106,6 +110,7 @@ ps6_forecastset = [cf.forecast(
     'relic', 
     fidval, 
     z_table, 
+    "EUCLID",
     dNdz, 
     fsky=skycover, 
     dstep=derivative_step,
@@ -125,7 +130,8 @@ for fidx, fcst in enumerate(ps6_forecastset):
             'h',                                                                             
             'T_ncdm',                                 
             'sigma_fog',                                   
-            'b0',                                         
+            'beta0',
+            'beta1',
             'alpha_k2'],
         mu_step=mu_integral_step, 
         skipgen=False)
@@ -136,7 +142,7 @@ dill.dump_session(os.path.join(ps6_resultsdir, 'ps6.db'))
 # Save results 
 #inpath = "/Users/nicholasdeporzio/Documents/Academic/Research/Projects/cosmicfish/cosmicfish/priors/New_Relic_CMB_Fisher_Matrices/FisherCMBS4_bin"
 inpath = "/Users/nicholasdeporzio/Documents/Academic/Research/Projects/cosmicfish/cosmicfish/priors/New_Relic_CMB_Fisher_Matrices/FisherPlanck_bin"
-head = 'omega_b \t omega_cdm \t n_s \t A_s \t tau_reio \t h \t T_ncdm \t sigma_fog \t b_0 \t alpha_k2'
+head = 'omega_b \t omega_cdm \t n_s \t A_s \t tau_reio \t h \t T_ncdm \t sigma_fog \t beta0 \t beta1 \t alpha_k2'
 for fidx, fval in enumerate(ps6_forecastset[0:-1]):
     fval.load_cmb_fisher(
         fisher_order=[
@@ -160,4 +166,4 @@ for fidx, fval in enumerate(ps6_forecastset[0:-1]):
     outdir=os.path.join(ps6_resultsdir, 'M'+str(fidx))
     cf.makedirectory(outdir)
     fval.export_matrices(outdir)
-    np.savetxt(outdir + 'Full_Fisher.dat', fval.numpy_full_fisher, delimiter='\t', header=head) 
+    np.savetxt(outdir + 'Full_Fisher.dat', fval.numpy_full_fisher, delimiter='\t', header=head)

@@ -1,11 +1,11 @@
 import os
 import shutil
-import dill
 import numpy as np
 import pandas as pd
 import seaborn as sns 
 import cosmicfish as cf 
 import matplotlib.pyplot as plt
+import dill
 
 
 # Instruct pyplot to use seaborn 
@@ -36,9 +36,11 @@ ps7_fid = {
         "h" : 0.70,
         "T_cmb" : 2.726, # Units [K]
         "N_ncdm" : 1., 
-        "T_ncdm" : (1.1/2.726), # Units [T_cmb]. We choose this temp, 1.5 K, because that's what our CMBS4 priors are calculated at.
+        "T_ncdm" : (1.1/2.726), # Units [T_cmb]. We choose this temp, 1.1 K, because that's what our CMBS4 priors are calculated at.
         "m_ncdm" : 0.03, # Units [eV]
         "b0" : 1.0, 
+        "beta0" : 1.7, 
+        "beta1" : 1.0,
         "alphak2" : 1.0,
         "sigma_fog_0" : 250000, #Units [m s^-2]
         "N_eff" : 3.046, #We allow relativistic neutrinos in addition to our DM relic
@@ -51,13 +53,14 @@ dNdz = np.array([2434.280, 4364.812, 4728.559, 4825.798, 4728.797, 4507.625, 426
     2308.975, 1514.831, 1474.707, 893.716, 497.613])
 skycover = 0.3636 # Sky coverage of survey in fraction
 
-#Demonstrate Convergence
+# Demonstrate Convergence
 #ps7_convergencetest = cf.convergence(
 #    classpath, # Path to CLASS installation
 #    datastore, # Path to directory holding CLASS output data
 #    'relic', # 'relic' or 'neutrino' forecasting scheme 
 #    ps7_fid, # The fiducial cosmology 
 #    z_table, # Redshift steps in observation
+#    "EUCLID",
 #    dNdz, # Redshift noise in observation
 #    fisher_order=[
 #        'omega_b',                                    
@@ -90,7 +93,8 @@ skycover = 0.3636 # Sky coverage of survey in fraction
 #                'omega_ncdm',
 #                'M_ncdm',
 #                'sigmafog',                                                     
-#                'b0',                                                           
+#                'beta0',
+#                'beta1',
 #                'alphak2'] 
 #    )
 #ps7_convergencetest.gen_all_plots()
@@ -106,6 +110,7 @@ ps7_forecastset = [cf.forecast(
     'relic', 
     fidval, 
     z_table, 
+    "EUCLID",
     dNdz, 
     fsky=skycover, 
     dstep=derivative_step,
@@ -125,7 +130,8 @@ for fidx, fcst in enumerate(ps7_forecastset):
             'h',                                                                             
             'T_ncdm',                                 
             'sigma_fog',                                   
-            'b0',                                         
+            'beta0',
+            'beta1',
             'alpha_k2'],
         mu_step=mu_integral_step, 
         skipgen=False)
@@ -136,7 +142,7 @@ dill.dump_session(os.path.join(ps7_resultsdir, 'ps7.db'))
 # Save results 
 #inpath = "/Users/nicholasdeporzio/Documents/Academic/Research/Projects/cosmicfish/cosmicfish/priors/New_Relic_CMB_Fisher_Matrices/FisherCMBS4_bin"
 inpath = "/Users/nicholasdeporzio/Documents/Academic/Research/Projects/cosmicfish/cosmicfish/priors/New_Relic_CMB_Fisher_Matrices/FisherPlanck_bin"
-head = 'omega_b \t omega_cdm \t n_s \t A_s \t tau_reio \t h \t T_ncdm \t sigma_fog \t b_0 \t alpha_k2'
+head = 'omega_b \t omega_cdm \t n_s \t A_s \t tau_reio \t h \t T_ncdm \t sigma_fog \t beta0 \t beta1 \t alpha_k2'
 for fidx, fval in enumerate(ps7_forecastset[0:-1]):
     fval.load_cmb_fisher(
         fisher_order=[
