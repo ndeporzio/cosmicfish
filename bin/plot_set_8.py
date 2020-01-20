@@ -110,7 +110,7 @@ ps8_forecastset = [cf.forecast(
     'relic',                                                                    
     fidval,                                                                     
     z_table, 
-    "DESI",
+    "EUCLID",
     dNdz,                                                                       
     fcoverage_deg=skycover,                                                     
     dstep=derivative_step,                                                      
