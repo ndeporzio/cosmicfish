@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH -J plot_set_9         ##Job name
-#SBATCH -o plot_set_9.out     ##Write stdout to this file
-#SBATCH -e plot_set_9.err     ##Write error messages to this file
+#SBATCH -J plot_set_8         ##Job name
+#SBATCH -o plot_set_8.out     ##Write stdout to this file
+#SBATCH -e plot_set_8.err     ##Write error messages to this file
 #SBATCH --open-mode=append              ##Not sure
 #SBATCH -p shared               ##Use the 'shared' partition 
 #SBATCH -t 2-0:00                       ##Run up to 2 days, 0 hours, 0 minutes
@@ -15,7 +15,7 @@
 ####  #SBATCH --test-only
 
 ## SETUP STORAGE ##
-STORAGE_DIR="/n/home02/ndeporzio/projects/cosmicfish/results/ps9/${SLURM_JOB_ID}"
+STORAGE_DIR="/n/home02/ndeporzio/projects/cosmicfish/results/ps8/${SLURM_JOB_ID}"
 DATASTORE_DIR="/n/home02/ndeporzio/projects/cosmicfish/datastore/"
 CLASS_DIR="/n/home02/ndeporzio/projects/cosmicfish/class/"
 PRIORS_DIR="/n/home02/ndeporzio/projects/cosmicfish/cosmicfish/cosmicfish/priors/"
@@ -48,9 +48,9 @@ module load gcc/4.9.0-fasrc01
 source activate ./py36 
 
 ## RUN PROGRAM ##
-PROJECT_DIR="/n/home02/ndeporzio/projects/cosmicfish/cosmicfish/bin/plot_set_9.py"
-python $PROJECT_DIR >> ~/plot_set_9.out
+PROJECT_DIR="/n/home02/ndeporzio/projects/cosmicfish/cosmicfish/bin/plot_set_8.py"
+python $PROJECT_DIR >> ~/plot_set_8.out
 
 ## COPY OUTPUT TO SECURE STORAGE ##
-mv ~/plot_set_9.out $STORAGE_DIR
-mv ~/plot_set_9.err $STORAGE_DIR 
+mv ~/plot_set_8.out $STORAGE_DIR
+mv ~/plot_set_8.err $STORAGE_DIR 
