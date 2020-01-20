@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH -J plot_set_4         ##Job name
-#SBATCH -o plot_set_4.out     ##Write stdout to this file
-#SBATCH -e plot_set_4.err     ##Write error messages to this file
+#SBATCH -J plot_set_9         ##Job name
+#SBATCH -o plot_set_9.out     ##Write stdout to this file
+#SBATCH -e plot_set_9.err     ##Write error messages to this file
 #SBATCH --open-mode=append              ##Not sure
 #SBATCH -p shared               ##Use the 'shared' partition 
-#SBATCH -t 0-0:15                       ##Run up to 2 days, 0 hours, 0 minutes
-#SBATCH -n 4                            ##Number of cores 
+#SBATCH -t 2-0:00                       ##Run up to 2 days, 0 hours, 0 minutes
+#SBATCH -n 1                            ##Number of cores 
 #SBATCH --mem=2000                      ##Use no more than 6Gb RAM 
 #SBATCH -N 1                            ##Use no more than 1 compute node
 #SBATCH --account=dvorkin_lab
@@ -48,8 +48,8 @@ module load gcc/4.9.0-fasrc01
 source activate ./py36 
 
 ## RUN PROGRAM ##
-PROJECT_DIR = "/n/home02/ndeporzio/projects/cosmicfish/cosmicfish/bin/plot_set_4.py"
-OUTPUT_FILE = "${STORAGE_DIR}/plot_set_4.py"
+PROJECT_DIR="/n/home02/ndeporzio/projects/cosmicfish/cosmicfish/bin/plot_set_9.py"
+OUTPUT_FILE="${STORAGE_DIR}/plot_set_9.py"
 python $PROJECT_DIR >> $OUTPUT_FILE 
 
 ## COPY OUTPUT TO SECURE STORAGE ##

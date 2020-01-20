@@ -12,9 +12,11 @@ import matplotlib.pyplot as plt
 sns.set()                                                                       
                                                                                 
 # Set project, data, CLASS directories                                          
-projectdir = cf.correct_path("/Users/nicholasdeporzio/Desktop/cfworkspace/")    
-datastore = cf.correct_path("/Users/nicholasdeporzio/Desktop/cfworkspace/data.nosync/")
-classpath = os.path.join(projectdir, "class")                                   
+#projectdir = cf.correct_path("/Users/nicholasdeporzio/Desktop/cfworkspace/")    
+projectdir = os.environ['STORAGE_DIR']
+#datastore = cf.correct_path("/Users/nicholasdeporzio/Desktop/cfworkspace/data.nosync/")
+datastore = os.environ['DATASTORE_DIR']
+classpath = os.environ['CLASS_DIR']                                 
                                                                                 
 # Specify resolution of numerical integrals                                     
 derivative_step = 0.008 # How much to vary parameter to calculate numerical derivative
@@ -141,7 +143,8 @@ dill.dump_session(os.path.join(ps9_resultsdir, 'ps9.db'))
 
 # Save results                                                                  
 #inpath = "/Users/nicholasdeporzio/Documents/Academic/Research/Projects/cosmicfish/cosmicfish/priors/New_Relic_CMB_Fisher_Matrices/FisherCMBS4_bin"
-inpath = "/Users/nicholasdeporzio/Documents/Academic/Research/Projects/cosmicfish/cosmicfish/priors/New_Relic_CMB_Fisher_Matrices/FisherPlanck_bin"
+#inpath = "/Users/nicholasdeporzio/Documents/Academic/Research/Projects/cosmicfish/cosmicfish/priors/New_Relic_CMB_Fisher_Matrices/FisherPlanck_bin"
+inpath = (os.environ['PRIORS_DIR'] + "New_Relic_CMB_Fisher_Matrices/FisherPlanck_bin") 
 head = 'omega_b \t omega_cdm \t n_s \t A_s \t tau_reio \t h \t T_ncdm \t sigma_fog \t beta0 \t beta1 \t alpha_k2'
 for fidx, fval in enumerate(ps9_forecastset[0:-1]):                     
     fval.load_cmb_fisher(                                                       
