@@ -1217,8 +1217,8 @@ class forecast:
         omega_lambda = np.power(self.h_fid, 2.) - omega_m                       
         zmax = self.z_steps[zidx]+(0.5 *  delta_z)                                              
         zmin = self.z_steps[zidx]-(0.5 *  delta_z)                                                
-        zsteps = 100.                                                           
-        dz = zmin / zsteps                                                      
+        zsteps = 100.
+        dz = ((zmin+zmax)/2.) / zsteps    
         z_table_max = np.arange(0., zmax, dz)                                   
         z_table_min = np.arange(0., zmin, dz)                                   
         z_integrand_max = ((self.h_fid * dz)                                    

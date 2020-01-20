@@ -302,7 +302,7 @@ def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,
     zmax = z + (0.5 * z_spacing)                                                          
     zmin = z - (0.5 * z_spacing)                                                            
     zsteps = 10000.                                                               
-    dz = zmin / zsteps                                                          
+    dz = ((zmin+zmax)/2.) / zsteps                                                          
     z_table_max = np.arange(0., zmax, dz)                                       
     z_table_min = np.arange(0., zmin, dz)                                       
     z_integrand_max = (h * dz) /  np.sqrt(omega_m                               
