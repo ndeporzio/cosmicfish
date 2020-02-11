@@ -335,6 +335,8 @@ def gen_k_table(volume, z, h, n_s, k_steps, scaling='log'):
 
     kmin = np.pi * np.power(volume, -1./3.) 
     #kmin = np.power(10., -4) * h
+    #kmin = 1. / (160. * np.power(h, -1.)) #SDSS analysis 
+    #kmax = 1. / (20. * np.power(h, -1.)) #SDSS analysis
     #kmax = cf.K_MAX_PREFACTOR * np.power(1.+z, 2./(2.+n_s)) * h                                   
     kmax = cf.K_MAX_PREFACTOR * h 
 

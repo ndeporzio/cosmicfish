@@ -68,9 +68,10 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
 
     if check==False:
         datastore = correct_path(datastore)
-        classdir = correct_path(classdir) 
+        classdir = correct_path(classdir)
+        tstamp=str(time.time()) 
         start_ini = os.path.join(config_directory(),"prime.ini")
-        end_ini = os.path.join(config_directory(),"in.ini")
+        end_ini = os.path.join(config_directory(), tstamp+".ini")
         os.system('cp ' + start_ini + ' ' + end_ini)
         for key, value in modify.items():
             if (key=='m_ncdm') or (key=='T_ncdm') :
