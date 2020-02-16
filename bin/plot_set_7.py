@@ -13,7 +13,7 @@ sns.set()
 
 # Set project, data, CLASS directories 
 projectdir = cf.correct_path("/Users/nicholasdeporzio/Desktop/cfworkspace/")
-datastore = cf.correct_path("/Users/nicholasdeporzio/Desktop/cfworkspace/data.nosync/")
+datastore = cf.correct_path("/Users/nicholasdeporzio/Desktop/cfworkspace/data.nosync7/")
 classpath = os.path.join(projectdir, "class")
 
 # Specify resolution of numerical integrals
@@ -26,18 +26,18 @@ ps7_convergencedir = os.path.join(ps7_resultsdir, 'convergence')
 cf.makedirectory(ps7_resultsdir)
 cf.makedirectory(ps7_convergencedir) 
 
-# Set fiducial cosmology 
+# Linda Fiducial Cosmology 
 ps7_fid = {
-        "A_s" : 2.22e-9, 
-        "n_s" : 0.965,
-        "omega_b" : 0.02222,
-        "omega_cdm" : 0.1120,
-        "tau_reio" : 0.06,
-        "h" : 0.70,
+        "A_s" : 2.2321e-9, 
+        "n_s" : 0.967,
+        "omega_b" : 0.02226,
+        "omega_cdm" : 0.1127,
+        "tau_reio" : 0.0598,
+        "h" : 0.701,
         "T_cmb" : 2.726, # Units [K]
         "N_ncdm" : 1., 
-        "T_ncdm" : (1.1/2.726), # Units [T_cmb]. We choose this temp, 1.1 K, because that's what our CMBS4 priors are calculated at.
-        "m_ncdm" : 0.03, # Units [eV]
+        "T_ncdm" : (0.9052/2.726), # Units [T_cmb]. 
+        "m_ncdm" : 0.0328, # Units [eV]
         "b0" : 1.0, 
         "beta0" : 1.7, 
         "beta1" : 1.0,
@@ -53,54 +53,9 @@ dNdz = np.array([2434.280, 4364.812, 4728.559, 4825.798, 4728.797, 4507.625, 426
     2308.975, 1514.831, 1474.707, 893.716, 497.613])
 skycover = 0.3636 # Sky coverage of survey in fraction
 
-# Demonstrate Convergence
-#ps7_convergencetest = cf.convergence(
-#    classpath, # Path to CLASS installation
-#    datastore, # Path to directory holding CLASS output data
-#    'relic', # 'relic' or 'neutrino' forecasting scheme 
-#    ps7_fid, # The fiducial cosmology 
-#    z_table, # Redshift steps in observation
-#    "EUCLID",
-#    dNdz, # Redshift noise in observation
-#    fisher_order=[
-#        'omega_b',                                    
-#        'omega_cdm',                                  
-#        'n_s',                                        
-#        'A_s',                                        
-#        'tau_reio',                                   
-#        'h',                                          
-#        'T_ncdm', 
-#        'sigma_fog',                                   
-#        'b0',                                         
-#        'alpha_k2'
-#    ],
-#    fsky=skycover, # Sky coverage in observation
-#    RSD=True, # Use RSD correction to Pm
-#    FOG=True, # Use FOG correction to Pm
-#    AP=True, # Use AP correction to PM
-#    COV=True, #Use AP Change of Variables correction to PM
-#    mu_step=mu_integral_step,
-#    varyfactors=[0.006, 0.007, 0.008, 0.009, 0.010], # Relative factors used to compute convergence
-#    showplots=True,
-#    saveplots=True,
-#    savepath=ps7_convergencedir, 
-#    plotparams= ['A_s',                                                          
-#                'n_s',                                                          
-#                'omega_b',                                                      
-#                'omega_cdm',                                                    
-#                'h',                                                            
-#                'tau_reio',                                                     
-#                'omega_ncdm',
-#                'M_ncdm',
-#                'sigmafog',                                                     
-#                'beta0',
-#                'beta1',
-#                'alphak2'] 
-#    )
-#ps7_convergencetest.gen_all_plots()
-
 # Run Fisher Forecast
-masses = np.geomspace(0.1, 22.0, 25) 
+masses = np.append(np.array([0.001, 0.01]), np.geomspace(0.1, 22.0, 25))
+
 omegacdm_set = ps7_fid['omega_cdm'] - ((masses/cf.NEUTRINO_SCALE_FACTOR)*np.power(ps7_fid['T_ncdm']*2.726 / 1.95, 3.))                                     
 ps7_fiducialset = [dict(ps7_fid, **{'m_ncdm' : masses[midx], 'omega_cdm' : omegacdm_set[midx]}) 
                for midx, mval in enumerate(masses)]
@@ -121,29 +76,30 @@ ps7_forecastset = [cf.forecast(
 for fidx, fcst in enumerate(ps7_forecastset): 
     fcst.gen_pm()
     fcst.gen_fisher(
-        fisher_order=[
-            'omega_b',                                    
-            'omega_cdm',                                  
-            'n_s',                                        
-            'A_s',                                        
-            'tau_reio',                                   
-            'h',                                                                             
-            'T_ncdm',                                 
-            'sigma_fog',                                   
+        fisher_order=[                                                          
+            'omega_b',                                                          
+            'omega_cdm',                                                        
+            'n_s',                                                              
+            'A_s',                                                              
+            'tau_reio',                                                         
+            'h',                                                                
+            'T_ncdm',                                                           
+            'sigma_fog',                                                        
             'beta0',
             'beta1',
             'alpha_k2'],
         mu_step=mu_integral_step, 
-        skipgen=False)
+        skipgen=False
+    )
     print("Relic Forecast ", fidx, " complete...")
 
 dill.dump_session(os.path.join(ps7_resultsdir, 'ps7.db'))
 
 # Save results 
-#inpath = "/Users/nicholasdeporzio/Documents/Academic/Research/Projects/cosmicfish/cosmicfish/priors/New_Relic_CMB_Fisher_Matrices/FisherCMBS4_bin"
-inpath = "/Users/nicholasdeporzio/Documents/Academic/Research/Projects/cosmicfish/cosmicfish/priors/New_Relic_CMB_Fisher_Matrices/FisherPlanck_bin"
+inpath = "/Users/nicholasdeporzio/Documents/Academic/Research/Projects/cosmicfish/cosmicfish/priors/New_Relic_CMB_Fisher_Matrices/FisherCMBS4_bin"
+#inpath = "/Users/nicholasdeporzio/Documents/Academic/Research/Projects/cosmicfish/cosmicfish/priors/New_Relic_CMB_Fisher_Matrices/FisherPlanck_bin"
 head = 'omega_b \t omega_cdm \t n_s \t A_s \t tau_reio \t h \t T_ncdm \t sigma_fog \t beta0 \t beta1 \t alpha_k2'
-for fidx, fval in enumerate(ps7_forecastset[0:-1]):
+for fidx, fval in enumerate(ps7_forecastset):
     fval.load_cmb_fisher(
         fisher_order=[
             'omega_b',                                    
@@ -153,7 +109,7 @@ for fidx, fval in enumerate(ps7_forecastset[0:-1]):
             'tau_reio',                                   
             'h',                                                                             
             'T_ncdm'],
-        fisherpath=inpath+str(fidx+1)+"_T1.1K.txt", 
+        fisherpath=inpath+str(fidx+1)+"_T0.9K.txt", 
         colnames=[
             'omega_b',                                    
             'omega_cdm',                                  
@@ -163,7 +119,7 @@ for fidx, fval in enumerate(ps7_forecastset[0:-1]):
             'h',                                                                             
             'T_ncdm[gamma]'])
     print("CMB Fisher information loaded to forecast " + str(fidx) + "...")
-    outdir=os.path.join(ps7_resultsdir, 'M'+str(fidx))
+    outdir=os.path.join(ps7_resultsdir, 'M'+str(fidx+1))
     cf.makedirectory(outdir)
     fval.export_matrices(outdir)
     np.savetxt(outdir + 'Full_Fisher.dat', fval.numpy_full_fisher, delimiter='\t', header=head)
