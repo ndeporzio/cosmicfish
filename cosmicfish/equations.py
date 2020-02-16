@@ -4,7 +4,8 @@ from scipy.integrate import quad
 import cosmicfish as cf
 
 def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2, 
-    relic, T_ncdm, step=True, delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR):
+    relic, T_ncdm, lss_survey_name, step=True, 
+    delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR, beta0=1.7, beta1=1.0):
 
     if relic==False:             
         m_ncdm = cf.m_ncdm(omega_ncdm/3., cf.RELIC_TEMP_SCALE)     
@@ -19,15 +20,24 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
         omega_b, omega_cdm, omega_ncdm, step, delta_L)                
     g = g_unnormalized / g_normalization_factor
     bl = cf.bL(b0, D) 
-    b1tilde =  (1. + bl * g + alphak2 * np.power(k, 2.))  
-                                                                               
+                                                                              
+    if lss_survey_name=='DESI':                                                 
+        b1tilde =  (1. + bl * g + alphak2 * np.power(k, 2.))                    
+    elif lss_survey_name=='EUCLID':                                             
+        b1tilde = ((1. + (beta0-1.)*g + alphak2*np.power(k, 2.))                
+            * np.power((1.+z), 0.5*beta1))                                      
+    else:                                                                       
+        print("ERROR: bias function not defined for given LSS survey.") 
+ 
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
     return R                                                                    
                                                                                 
 def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
-    relic, T_ncdm, step=True, delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR):                 
+    relic, T_ncdm, lss_survey_name, step=True, 
+    delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR, beta0=1.7, beta1=1.0):                 
     return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, 
-        b0, D, alphak2, relic, T_ncdm, step, delta_L))
+        b0, D, alphak2, relic, T_ncdm, lss_survey_name, step, delta_L,
+        beta0, beta1))
 
 def fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):              
     sigma_z = cf.SIGMA_Z                                                        
@@ -292,7 +302,7 @@ def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,
     zmax = z + (0.5 * z_spacing)                                                          
     zmin = z - (0.5 * z_spacing)                                                            
     zsteps = 10000.                                                               
-    dz = zmin / zsteps                                                          
+    dz = ((zmin+zmax)/2.) / zsteps                                                          
     z_table_max = np.arange(0., zmax, dz)                                       
     z_table_min = np.arange(0., zmin, dz)                                       
     z_integrand_max = (h * dz) /  np.sqrt(omega_m                               
@@ -325,7 +335,10 @@ def gen_k_table(volume, z, h, n_s, k_steps, scaling='log'):
 
     kmin = np.pi * np.power(volume, -1./3.) 
     #kmin = np.power(10., -4) * h
-    kmax = cf.K_MAX_PREFACTOR * np.power(1.+z, 2./(2.+n_s)) * h                                   
+    #kmin = 1. / (160. * np.power(h, -1.)) #SDSS analysis 
+    #kmax = 1. / (20. * np.power(h, -1.)) #SDSS analysis
+    #kmax = cf.K_MAX_PREFACTOR * np.power(1.+z, 2./(2.+n_s)) * h                                   
+    kmax = cf.K_MAX_PREFACTOR * h 
 
     if scaling=='linear': 
         k_table = np.linspace(kmin, kmax, k_steps) 

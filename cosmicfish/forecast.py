@@ -16,7 +16,8 @@ class forecast:
                  datastore,
                  forecast_type,  
                  fiducialcosmo, 
-                 z_steps, 
+                 z_steps,
+                 lss_survey_name,  
                  dNdz,
                  fsky=None, 
                  fcoverage_deg=None,
@@ -30,6 +31,7 @@ class forecast:
         self.forecast = forecast_type
         self.fid = fiducialcosmo
         self.z_steps = z_steps
+        self.lss_survey_name = lss_survey_name
         self.dNdz = dNdz
         self.dstep = dstep
         self.use_rsd = RSD
@@ -48,19 +50,27 @@ class forecast:
         self.relic_fix = self.fid['relic_fix']   
         self.T_cmb_fid = self.fid['T_cmb']
 
+        if self.lss_survey_name=='DESI': 
+            self.lss_survey_params = ['alphak2', 'b0', 'delta_L'] 
+        elif self.lss_survey_name=='EUCLID':
+            self.lss_survey_params = ['alphak2', 'beta0', 'beta1', 'delta_L'] 
+        elif self.lss_survey_name=='BOSS': 
+            self.lss_survey_params = []
+
+        if 'b0' in self.fid:
+            self.b0_fid = self.fid['b0']
+
         if self.use_rsd==True:
-            if 'b0' in self.fid:
-                self.b0_fid = self.fid['b0']
-            else:
-                print("Error: Must specify fiducial b0 to compute RSD.") 
-            if 'alphak2' in self.fid:
-                self.alphak2_fid = self.fid['alphak2'] 
-            else:
-                print("Error: Must specify fiducial alphak2 to compute RSD.")
-            if 'delta_L' in self.fid:
-                self.delta_L_fid = self.fid['delta_L']  
-            else: 
-                self.delta_L_fid = cf.RSD_DELTA_L_NUMERATOR_FACTOR
+            for pidx, pval in enumerate(self.lss_survey_params): 
+                if pval not in self.fid: 
+                    if pval=='delta_L':
+                        self.delta_L_fid = cf.RSD_DELTA_L_NUMERATOR_FACTOR
+                        self.fid['delta_L'] = self.delta_L_fid
+                    else: 
+                        print("ERROR: missing parameter "
+                            + pval
+                            + " from fiducial"
+                            + " cosmology!") 
  
         if self.use_fog==True:
             if 'sigma_fog_0' in self.fid:                                       
@@ -246,12 +256,14 @@ class forecast:
                         'omega_cdm' : self.omega_cdm_fid, 
                         'omega_ncdm' : self.omega_ncdm_fid,
                         'h' : self.h_fid, 
-                        'b0' : self.b0_fid,
-                        'alphak2' : self.alphak2_fid,
                         'mu' : mu,
                         'relic' : relic,
                         'T_ncdm' : self.T_ncdm_fid,
-                        'delta_L' : self.delta_L_fid}
+                        'lss_survey_name' : self.lss_survey_name,
+                        'delta_L' : self.delta_L_fid,
+                        'b0' : self.b0_fid}
+            for pidx, pval in enumerate(self.lss_survey_params):
+                fiducial[pval]=self.fid[pval] 
     
             self.RSD = [[cf.rsd(**dict(fiducial, **{'z' : zval, 'k' : kval,
                 'D' : self.spectra_mid[zidx].D})) 
@@ -323,25 +335,63 @@ class forecast:
                     'D' : self.spectra_mid[zidx].D})) 
                 for kidx, kval in enumerate(self.k_table[zidx])]                                           
                 for zidx, zval in enumerate(self.z_steps)]   
-    
-            self.dlogRSDdb0 = [[cf.derivative(                                       
-                cf.log_rsd,                                                         
-                'b0',                                                                
-                self.dstep,                                                         
-                **dict(fiducial, **{'z' : zval, 'k' :  kval,
-                    'D' : self.spectra_mid[zidx].D}))                                                  
-                for kidx, kval in enumerate(self.k_table[zidx])]                                           
-                for zidx, zval in enumerate(self.z_steps)]
-    
-            self.dlogRSDdalphak2 = [[cf.derivative(                                       
-                cf.log_rsd,                                                         
-                'alphak2',                                                                
-                self.dstep,                                                         
-                **dict(fiducial, **{'z' : zval, 'k' :  kval,
-                    'D' : self.spectra_mid[zidx].D}))                                                  
-                for kidx, kval in enumerate(self.k_table[zidx])]                                           
-                for zidx, zval in enumerate(self.z_steps)]
-        
+   
+            if 'b0' in self.lss_survey_params:  
+                self.dlogRSDdb0 = [[cf.derivative(                                       
+                    cf.log_rsd,                                                         
+                    'b0',                                                                
+                    self.dstep,                                                         
+                    **dict(fiducial, **{'z' : zval, 'k' :  kval,
+                        'D' : self.spectra_mid[zidx].D}))                                                  
+                    for kidx, kval in enumerate(self.k_table[zidx])]                                           
+                    for zidx, zval in enumerate(self.z_steps)]
+            else: 
+                self.dlogRSDdb0 = [[0.
+                    for kidx, kval in enumerate(self.k_table[zidx])]                                       
+                    for zidx, zval in enumerate(self.z_steps)]     
+
+            if 'alphak2' in self.lss_survey_params:     
+                self.dlogRSDdalphak2 = [[cf.derivative(                                       
+                    cf.log_rsd,                                                         
+                    'alphak2',                                                                
+                    self.dstep,                                                         
+                    **dict(fiducial, **{'z' : zval, 'k' :  kval,
+                        'D' : self.spectra_mid[zidx].D}))                                                  
+                    for kidx, kval in enumerate(self.k_table[zidx])]                                           
+                    for zidx, zval in enumerate(self.z_steps)]
+            else:                                                               
+                self.dlogRSDdalphak2 = [[0.                                          
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)] 
+
+            if 'beta0' in self.lss_survey_params:                             
+                self.dlogRSDdbeta0 = [[cf.derivative(                             
+                    cf.log_rsd,                                                           
+                    'beta0',                                                      
+                    self.dstep,                                                 
+                    **dict(fiducial, **{'z' : zval, 'k' :  kval,                                       
+                        'D' : self.spectra_mid[zidx].D}))                                                  
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                  
+            else:                                                               
+                self.dlogRSDdbeta0 = [[0.                                     
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]
+
+            if 'beta1' in self.lss_survey_params:                               
+                self.dlogRSDdbeta1 = [[cf.derivative(                           
+                    cf.log_rsd,                                                 
+                    'beta1',                                                    
+                    self.dstep,                                                 
+                    **dict(fiducial, **{'z' : zval, 'k' :  kval,                
+                        'D' : self.spectra_mid[zidx].D}))                       
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)]                  
+            else:                                                               
+                self.dlogRSDdbeta1 = [[0.                                       
+                    for kidx, kval in enumerate(self.k_table[zidx])]            
+                    for zidx, zval in enumerate(self.z_steps)] 
+
             self.dlogRSDddeltaL = [[cf.derivative(
                 cf.log_rsd,
                 'delta_L',
@@ -395,6 +445,12 @@ class forecast:
             self.dlogRSDdalphak2 = [[0.
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]
+            self.dlogRSDdbeta0 = [[0.                                         
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
+            self.dlogRSDdbeta1 = [[0.                                         
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
             self.dlogRSDddeltaL = [[0.                                         
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]
@@ -816,6 +872,10 @@ class forecast:
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
             dlogPdalphak2 = np.zeros(
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))        
+            dlogPdbeta0 = np.zeros(                                           
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))  
+            dlogPdbeta1 = np.zeros(                                           
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))  
             dlogPddeltaL = np.zeros(                                           
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
     
@@ -954,6 +1014,12 @@ class forecast:
                         dlogPdalphak2[zidx][kidx][muidx] = (                          
                             self.dlogRSDdalphak2[zidx][kidx]                                                    
                             )
+                        dlogPdbeta0[zidx][kidx][muidx] = (                    
+                            self.dlogRSDdbeta0[zidx][kidx]                    
+                            )
+                        dlogPdbeta1[zidx][kidx][muidx] = (                    
+                            self.dlogRSDdbeta1[zidx][kidx]                    
+                            )
                         dlogPddeltaL[zidx][kidx][muidx] = (                    
                             self.dlogRSDddeltaL[zidx][kidx]                    
                             ) 
@@ -999,7 +1065,9 @@ class forecast:
             self.dlogPgdT_ncdm = np.array(dlogPdT_ncdm)
             self.dlogPgdsigmafog = np.array(dlogPdsigmafog)
             self.dlogPgdb0 = np.array(dlogPdb0)
-            self.dlogPgdalphak2 = np.array(dlogPdalphak2)       
+            self.dlogPgdalphak2 = np.array(dlogPdalphak2) 
+            self.dlogPgdbeta0 = np.array(dlogPdbeta0)
+            self.dlogPgdbeta1 = np.array(dlogPdbeta1)      
             self.dlogPgddeltaL = np.array(dlogPddeltaL) 
 
         param_dict = {
@@ -1016,6 +1084,8 @@ class forecast:
             'sigma_fog' : self.dlogPgdsigmafog,
             'b0' : self.dlogPgdb0,
             'alpha_k2' : self.dlogPgdalphak2,
+            'beta0' : self.dlogPgdbeta0,
+            'beta1' : self.dlogPgdbeta1,
             'D_Amp' : self.D_Amp,
             'b_Amp' : self.b_Amp,
             'delta_L' : self.dlogPgddeltaL}
@@ -1024,17 +1094,30 @@ class forecast:
 
         for parameter in self.fisher_order:
             if parameter=='b0':
-                if self.use_rsd==True:
+                if (self.use_rsd==True) and ('b0' in self.lss_survey_params):
                     paramvec.append(param_dict[parameter])
                 else:
                     print("RSD not requested. Can't forecast b0.")
                     self.fisher_order.remove('b0') 
-            elif parameter=='alpha_k2': 
+            elif (parameter=='alpha_k2') and ('alphak2' 
+                in self.lss_survey_params): 
                 if self.use_rsd==True:                      
                     paramvec.append(param_dict[parameter]) 
                 else: 
                     print("RSD not requested. Can't forecast alpha_k2.")
                     self.fisher_order.remove('alpha_k2')
+            elif (parameter=='beta0') and ('beta0' in self.lss_survey_params):    
+                if self.use_rsd==True:                                          
+                    paramvec.append(param_dict[parameter])                      
+                else:                                                           
+                    print("RSD not requested. Can't forecast beta0.")        
+                    self.fisher_order.remove('beta0') 
+            elif (parameter=='beta1') and ('beta1' in self.lss_survey_params):    
+                if self.use_rsd==True:                                          
+                    paramvec.append(param_dict[parameter])                      
+                else:                                                           
+                    print("RSD not requested. Can't forecast beta1.")        
+                    self.fisher_order.remove('beta1') 
             elif parameter=='delta_L':                                         
                 if self.use_rsd==True:                                          
                     paramvec.append(param_dict[parameter])                      
@@ -1134,8 +1217,8 @@ class forecast:
         omega_lambda = np.power(self.h_fid, 2.) - omega_m                       
         zmax = self.z_steps[zidx]+(0.5 *  delta_z)                                              
         zmin = self.z_steps[zidx]-(0.5 *  delta_z)                                                
-        zsteps = 100.                                                           
-        dz = zmin / zsteps                                                      
+        zsteps = 100.
+        dz = ((zmin+zmax)/2.) / zsteps    
         z_table_max = np.arange(0., zmax, dz)                                   
         z_table_min = np.arange(0., zmin, dz)                                   
         z_integrand_max = ((self.h_fid * dz)                                    

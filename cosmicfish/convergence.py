@@ -12,7 +12,8 @@ class convergence:
         datastore, 
         forecast_type,
         fiducialcosmology,
-        z_steps, 
+        z_steps,
+        lss_survey_name, 
         dNdz,
         fisher_order,
         fsky=None,
@@ -34,6 +35,7 @@ class convergence:
         self.type = forecast_type
         self.fid = fiducialcosmology
         self.z_steps = z_steps
+        self.lss_survey_name = lss_survey_name
         self.dNdz = dNdz
         self.fsky, self.fcoverage_deg = cf.set_sky_cover(fsky,  fcoverage_deg)    
         self.use_rsd = RSD
@@ -69,6 +71,7 @@ class convergence:
                             forecast_type=self.type,
                             fiducialcosmo=self.fid,
                             z_steps=self.z_steps,
+                            lss_survey_name=self.lss_survey_name,
                             dNdz=self.dNdz,
                             fsky=self.fsky,
                             dstep=vfactor,  
