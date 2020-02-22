@@ -49,6 +49,8 @@ class forecast:
         self.N_eff_fid = self.fid['N_eff'] 
         self.relic_fix = self.fid['relic_fix']   
         self.T_cmb_fid = self.fid['T_cmb']
+    
+        self.fisher=None
 
         if self.lss_survey_name=='DESI': 
             self.lss_survey_params = ['alphak2', 'b0', 'delta_L'] 
@@ -1174,6 +1176,118 @@ class forecast:
 #                print(fisher[pidx1][pidx1+pidx2]) 
         self.fisher=fisher
 
+    def reorder_fisher(self, fisher_order): 
+        if type(self.fisher)==type(None):
+            print("Error: You have to first run gen_fisher(...).")
+            return
+        else: 
+            self.fisher_order = fisher_order    
+            param_dict = {                                                          
+                'omega_b' : self.dlogPgdomega_b,                                    
+                'omega_cdm' : self.dlogPgdomega_cdm,                                
+                'n_s' : self.dlogPgdn_s,                                            
+                'A_s' : self.dlogPgdA_s,                                            
+                'tau_reio' : self.dlogPgdtau_reio,                                  
+                'h' : self.dlogPgdh,                                                
+                'H_0' : self.dlogPgdH_0,                                            
+                'M_ncdm' : self.dlogPgdM_ncdm,                                      
+                'omega_ncdm' : self.dlogPgdomega_ncdm,                              
+                'T_ncdm' : self.dlogPgdT_ncdm,                                      
+                'sigma_fog' : self.dlogPgdsigmafog,                                 
+                'b0' : self.dlogPgdb0,                                              
+                'alpha_k2' : self.dlogPgdalphak2,                                   
+                'beta0' : self.dlogPgdbeta0,                                        
+                'beta1' : self.dlogPgdbeta1,                                        
+                'D_Amp' : self.D_Amp,                                               
+                'b_Amp' : self.b_Amp,                                               
+                'delta_L' : self.dlogPgddeltaL}                                     
+                                                                                
+            paramvec =  [] 
+
+            for parameter in self.fisher_order:                                     
+                if parameter=='b0':                                                 
+                    if (self.use_rsd==True) and ('b0' in self.lss_survey_params):   
+                        paramvec.append(param_dict[parameter])                      
+                    else:                                                           
+                        print("RSD not requested. Can't forecast b0.")              
+                        self.fisher_order.remove('b0')                              
+                elif (parameter=='alpha_k2') and ('alphak2'                         
+                    in self.lss_survey_params):                                     
+                    if self.use_rsd==True:                                          
+                        paramvec.append(param_dict[parameter])                      
+                    else:                                                           
+                        print("RSD not requested. Can't forecast alpha_k2.")        
+                        self.fisher_order.remove('alpha_k2')                        
+                elif (parameter=='beta0') and ('beta0' in self.lss_survey_params):  
+                    if self.use_rsd==True:                                          
+                        paramvec.append(param_dict[parameter])                      
+                    else:                                                           
+                        print("RSD not requested. Can't forecast beta0.")           
+                        self.fisher_order.remove('beta0')                           
+                elif (parameter=='beta1') and ('beta1' in self.lss_survey_params):  
+                    if self.use_rsd==True:                                          
+                        paramvec.append(param_dict[parameter])                      
+                    else:                                                           
+                        print("RSD not requested. Can't forecast beta1.")           
+                        self.fisher_order.remove('beta1')                           
+                elif parameter=='delta_L':                                          
+                    if self.use_rsd==True:                                          
+                        paramvec.append(param_dict[parameter])                      
+                    else:                                                           
+                        print("RSD not requested. Can't forecast delta_L.")         
+                        self.fisher_order.remove('delta_L')                         
+                elif parameter=='sigma_fog':                                        
+                    if self.use_fog==True:                                          
+                        paramvec.append(param_dict[parameter])                      
+                    else:                                                           
+                        print("FOG not requested. Can't forecast sigma_fog.")       
+                        self.fisher_order.remove('sigma_fog')                       
+                else:                                                               
+                    paramvec.append(param_dict[parameter])                          
+                                                                                    
+            fisher = np.zeros((len(paramvec), len(paramvec)))
+            mu_step = self.mu_table[1] - self.mu_table[0]
+
+            # Highly inefficient set of loops                                       
+            for pidx1, p1 in enumerate(paramvec):                                   
+                for pidx2, p2 in enumerate(paramvec[pidx1:]):                       
+                    integrand = np.zeros((len(self.z_steps), len(self.k_table[0]))) 
+                    integral = np.zeros(len(self.z_steps))                          
+                    for zidx, zval in enumerate(self.z_steps):                      
+                        Volume = self.V(zidx)                                       
+                        # print("For z = ", zval, ", V_eff = ",                     
+                        #       (Volume*self.h_fid)/(1.e9), " [h^{-1} Gpc^{3}]")    
+                        for kidx, kval in enumerate(self.k_table[zidx]): # Center intgrl? 
+                            integrand[zidx][kidx] = np.sum( #Perform mu integral    
+                                mu_step                                             
+                                * paramvec[pidx1][zidx][kidx]                       
+                                * paramvec[pidx1+pidx2][zidx][kidx]                 
+                                * np.power(kval, 2.)                                
+                                * (1. / (8.  * np.power(np.pi, 2)))                 
+                                * cf.neff(self.n_densities[zidx],                   
+                                    self.Pg[zidx][kidx])                            
+                                * Volume)                                           
+                                                                                    
+                    for zidx, zval in enumerate(self.z_steps):                      
+                        val = 0                                                     
+                        for kidx, kval in enumerate(self.k_table[zidx][:-1]):       
+                            #Center?                                                
+                            #Approximating average in k_bin to integrate over k     
+                            val += (((integrand[zidx][kidx]                         
+                                      + integrand[zidx][kidx+1])                    
+                                     / 2.)                                          
+                                    * (self.k_table[zidx][kidx+1]                   
+                                        -self.k_table[zidx][kidx]))                 
+                        integral[zidx] = val                                        
+                    fisher[pidx1][pidx2+pidx1] = np.sum(integral)                   
+                    fisher[pidx2+pidx1][pidx1] = np.float(                          
+                        fisher[pidx1][pidx2+pidx1])                                 
+                    print("Fisher element (", pidx1, ", ", (pidx2+pidx1),"), (",    
+                        (pidx2+pidx1), ", ", pidx1,") calculated...")               
+    #                print(fisher[pidx1][pidx1+pidx2])                              
+            self.fisher=fisher
+
+
     def generate_spectra(
         self,
         param,
@@ -1292,7 +1406,8 @@ class forecast:
             'A_s', 
             'tau_reio', 
             'H_0', 
-            'M_ncdm', 
+            'M_ncdm',
+            'm_ncdm',
             'h', 
             'T_ncdm',
             'T_ncdm[gamma]', 
@@ -1304,7 +1419,7 @@ class forecast:
                 print("No information loaded...")  
                 return
 
-        fmat = pd.read_csv(fisherpath, sep='\t', header=None, names=colnames)
+        fmat = pd.read_csv(fisherpath, sep='\t', header=0)
 
         for pidx, pval in enumerate(fisher_order): 
             if pval not in fmat.columns: 
@@ -1346,6 +1461,7 @@ class forecast:
                         index = fmat.columns.get_loc('M_ncdm')
                         dM_ncdm_domega_ncdm = cf.dM_ncdm_domega_ncdm(
                             cf.RELIC_TEMP_SCALE)
+                        print('dM_ncdm/domega_ncdm = ', dM_ncdm_domega_ncdm) 
                         fmat.iloc[:,index] *= dM_ncdm_domega_ncdm
                         fmat.iloc[index,:] *= dM_ncdm_domega_ncdm
                         fmat = fmat.rename(
@@ -1362,6 +1478,31 @@ class forecast:
                         fmat = fmat.rename(                                     
                             index=str,                                          
                             columns={"omega_ncdm": "M_ncdm"})
+                    if (pval=='omega_ncdm') and ('m_ncdm' in fmat.columns):     
+                        # Change of variables m->omega_ncdm                     
+                        print('Converting m_ncdm --> omega_ncdm...')            
+                        index = fmat.columns.get_loc('m_ncdm')                  
+                        dM_ncdm_domega_ncdm = cf.dM_ncdm_domega_ncdm(           
+                            cf.RELIC_TEMP_SCALE)
+                        dm_dM = 3.
+                        fmat.iloc[:,index] *= dM_ncdm_domega_ncdm * dm_dM               
+                        fmat.iloc[index,:] *= dM_ncdm_domega_ncdm * dm_dM               
+                        fmat = fmat.rename(                                     
+                            index=str,                                          
+                            columns={"m_ncdm": "omega_ncdm"})                   
+                    elif (pval=='m_ncdm') and ('omega_ncdm' in fmat.columns):   
+                        # Change of variables omega_ncdm --> m_ncdm             
+                        print('Converting omega_ncdm --> m_ncdm...')            
+                        index = fmat.columns.get_loc('omega_ncdm')              
+                        dM_ncdm_domega_ncdm = cf.dM_ncdm_domega_ncdm(           
+                            cf.RELIC_TEMP_SCALE) 
+                        dm_dM = 3.   
+                        fmat.iloc[:,index] *= 1./(dM_ncdm_domega_ncdm * dm_dM)            
+                        fmat.iloc[index,:] *= 1./(dM_ncdm_domega_ncdm * dm_dM)            
+                        fmat = fmat.rename(                                     
+                            index=str,                                          
+                            columns={"omega_ncdm": "m_ncdm"})
+
                 elif self.forecast=='relic': 
                     if (pval=='omega_ncdm') and ('T_ncdm' in fmat.columns):
                         # Change T_ncdm --> omega_ncdm
@@ -1384,12 +1525,39 @@ class forecast:
                         fmat = fmat.rename(                                     
                             index=str, columns={"omega_ncdm": "T_ncdm"})
 
+                    if (pval=='omega_ncdm') and ('T_ncdm[gamma]' in fmat.columns):     
+                        # Change T_ncdm[gamma] --> omega_ncdm                          
+                        print('Converting T_ncdm[gamma] --> omega_ncdm...')            
+                        index = fmat.columns.get_loc('T_ncdm[gamma]')       
+                        fmat.iloc[:, index] *= 1./self.T_cmb_fid                    
+                        fmat.iloc[index, :] *= 1./self.T_cmb_fid           
+                        dT_ncdm_domega_ncdm = cf.dT_ncdm_domega_ncdm(           
+                            self.T_ncdm_fid, self.M_ncdm_fid)                   
+                        fmat.iloc[:,index] *= dT_ncdm_domega_ncdm               
+                        fmat.iloc[index,:] *= dT_ncdm_domega_ncdm               
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"T_ncdm[gamma]": "omega_ncdm"})        
+                    elif (pval=='T_ncdm[gamma]') and (pval=='omega_ncdm'):             
+                        # Change omega_ncdm --> T_ncdm[gamma]                          
+                        print('Converting omega_ncdm --> T_ncdm[gamma]...')            
+                        index = fmat.columns.get_loc('omega_ncdm')              
+                        dT_ncdm_domega_ncdm = cf.dT_ncdm_domega_ncdm(           
+                            self.T_ncdm_fid, self.M_ncdm_fid)                   
+                        fmat.iloc[:,index] *= 1./dT_ncdm_domega_ncdm            
+                        fmat.iloc[index,:] *= 1./dT_ncdm_domega_ncdm
+                        fmat.iloc[:, index] *= self.T_cmb_fid                       
+                        fmat.iloc[index, :] *= self.T_cmb_fid             
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"omega_ncdm": "T_ncdm[gamma]"}) 
+
                     elif (pval=='omega_ncdm') and ('M_ncdm' in fmat.columns):     
                         # Change M_ncdm --> omega_ncdm              
                         print('Converting M_ncdm --> omega_ncdm...')             
                         index = fmat.columns.get_loc('M_ncdm')                  
                         dM_ncdm_domega_ncdm = cf.dM_ncdm_domega_ncdm(           
-                            self.T_ncdm_fid)                   
+                            self.T_ncdm_fid)  
+                        print('T_ncdm = ', self.T_ncdm_fid)
+                        print('dM_ncdm/domega_ncdm = ', dM_ncdm_domega_ncdm)                 
                         fmat.iloc[:,index] *= dM_ncdm_domega_ncdm               
                         fmat.iloc[index,:] *= dM_ncdm_domega_ncdm               
                         fmat = fmat.rename(                                     
@@ -1404,6 +1572,29 @@ class forecast:
                         fmat.iloc[index,:] *= 1./dM_ncdm_domega_ncdm               
                         fmat = fmat.rename(                                     
                             index=str, columns={"omega_ncdm": "M_ncdm"})
+
+                    elif (pval=='omega_ncdm') and ('m_ncdm' in fmat.columns):   
+                        # Change m_ncdm --> omega_ncdm                          
+                        print('Converting m_ncdm --> omega_ncdm...')            
+                        index = fmat.columns.get_loc('m_ncdm')                  
+                        dM_ncdm_domega_ncdm = cf.dM_ncdm_domega_ncdm(           
+                            self.T_ncdm_fid)           
+                        dm_dM = 1.                         
+                        fmat.iloc[:,index] *= dM_ncdm_domega_ncdm * dm_dM               
+                        fmat.iloc[index,:] *= dM_ncdm_domega_ncdm * dm_dM              
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"m_ncdm": "omega_ncdm"})        
+                    elif (pval=='m_ncdm') and ('omega_ncdm' in fmat.columns):   
+                        # Change omega_ncdm --> m_ncdm                          
+                        print('Converting omega_ncdm --> m_ncdm...')            
+                        index = fmat.columns.get_loc('omega_ncdm')              
+                        dM_ncdm_domega_ncdm = cf.dM_ncdm_domega_ncdm(           
+                            self.T_ncdm_fid)              
+                        dm_dM = 1.                      
+                        fmat.iloc[:,index] *= 1./(dM_ncdm_domega_ncdm*dm_dM)           
+                        fmat.iloc[index,:] *= 1./(dM_ncdm_domega_ncdm*dm_dM)            
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"omega_ncdm": "m_ncdm"}) 
 
         for pidx, pval in enumerate(fmat.columns): 
             if pval != self.fisher_order[pidx]:
