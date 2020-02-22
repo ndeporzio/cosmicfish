@@ -1,5 +1,9 @@
 CMB Prior Information for Light Relics
 
+Parameter ordering: 
+omega_b, omega_cdm, n_s, A_s, tau_reio, h, T_ncdm[gamma]
+
+
 bin#                    relic mass [eV]
 -------                 ------------
 bin1                    0.001
