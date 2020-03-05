@@ -112,7 +112,6 @@ class forecast:
                 n_s=self.n_s_fid,
                 k_steps=cf.DEFAULT_K_TABLE_STEPS)           
 
-
     def gen_pm(self):  
         if 'pm' not in self.psterms: 
             self.psterms.append('pm') 
@@ -808,14 +807,14 @@ class forecast:
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]    
 
-    
+    #MOST INEFFICIENT PART OF CODE 98% OF EVALUATION TIME SPENT HERE    
     def gen_fisher(self, fisher_order, mu_step=0.05, skipgen=False): #inefficient
         
         self.fisher_order = fisher_order
 
         if skipgen==False: 
             if 'pm' not in self.psterms:                                        
-                self.gen_pm() 
+                self.gen_pm() # 5% time spent here 
     
             mu_vals = np.arange(-1., 1., mu_step)
             self.mu_table = mu_vals
@@ -882,10 +881,10 @@ class forecast:
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
     
             for muidx, muval in enumerate(mu_vals):
-                self.gen_rsd(muval)
-                self.gen_fog(muval)
-                self.gen_ap()
-                self.gen_cov(muval)
+                self.gen_rsd(muval) # 39% time spent here
+                self.gen_fog(muval) # 12% time spent here
+                self.gen_ap() # 30% time spent here 
+                self.gen_cov(muval) # 54% time spent here
     
                 for zidx, zval in enumerate(self.z_steps): 
                     for kidx, kval in enumerate(self.k_table[zidx]):
@@ -1526,8 +1525,8 @@ class forecast:
                             index=str, columns={"omega_ncdm": "T_ncdm"})
 
                     if (pval=='omega_ncdm') and ('T_ncdm[gamma]' in fmat.columns):     
-                        # Change T_ncdm[gamma] --> omega_ncdm                          
-                        print('Converting T_ncdm[gamma] --> omega_ncdm...')            
+                        # Change T_ncdm[CMB] --> omega_ncdm                          
+                        print('Converting T_ncdm[CMB] --> omega_ncdm...')            
                         index = fmat.columns.get_loc('T_ncdm[gamma]')       
                         fmat.iloc[:, index] *= 1./self.T_cmb_fid                    
                         fmat.iloc[index, :] *= 1./self.T_cmb_fid           
@@ -1538,8 +1537,8 @@ class forecast:
                         fmat = fmat.rename(                                     
                             index=str, columns={"T_ncdm[gamma]": "omega_ncdm"})        
                     elif (pval=='T_ncdm[gamma]') and (pval=='omega_ncdm'):             
-                        # Change omega_ncdm --> T_ncdm[gamma]                          
-                        print('Converting omega_ncdm --> T_ncdm[gamma]...')            
+                        # Change omega_ncdm --> T_ncdm[CMB]                          
+                        print('Converting omega_ncdm --> T_ncdm[CMB]...')            
                         index = fmat.columns.get_loc('omega_ncdm')              
                         dT_ncdm_domega_ncdm = cf.dT_ncdm_domega_ncdm(           
                             self.T_ncdm_fid, self.M_ncdm_fid)                   
