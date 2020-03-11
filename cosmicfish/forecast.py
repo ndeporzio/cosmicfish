@@ -96,7 +96,7 @@ class forecast:
             self.M_ncdm_fid = 3. * self.m_ncdm_fid # Unit [eV] 
             self.omega_ncdm_fid = cf.omega_ncdm(None, 
                                                 self.m_ncdm_fid,
-                                                self.N_ncdm_fid, 
+                                                3., 
                                                 "neutrino")
         self.kp = cf.k_pivot() # Units [Mpc^-1]
 
@@ -161,7 +161,7 @@ class forecast:
                     )
             if self.relic_vary=="N_ncdm": 
                 self.N_ncdm_high, self.N_ncdm_low = self.generate_spectra(      
-                    'N_ncdm') 
+                    'deg_ncdm') 
 
         # Calculate centered derivatives about fiducial cosmo at each z 
         if cf.ANALYTIC_A_S==False: 

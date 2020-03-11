@@ -10,7 +10,7 @@ CLASSVARS = ['h', 'T_cmb', 'omega_b', 'N_eff', 'omega_cdm', 'N_ncdm',
     'write background', 'write parameters', 'background_verbose',           
     'thermodynamics_verbose', 'perturbations_verbose', 'transfer_verbose',  
     'primordial_verbose', 'spectra_verbose',  'nonlinear_verbose',          
-    'lensing_verbose', 'output_verbose']
+    'lensing_verbose', 'output_verbose', 'deg_ncdm']
 
 C = 2.9979e8 # Speed of light in [m s^-1]
 FULL_SKY_DEGREES = 41253. # Sky size in [deg^2]
