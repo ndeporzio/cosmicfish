@@ -1485,6 +1485,7 @@ class forecast:
             'H_0', 
             'M_ncdm',
             'm_ncdm',
+            'N_ncdm', 
             'h', 
             'T_ncdm',
             'T_ncdm[gamma]', 
