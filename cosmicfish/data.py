@@ -146,18 +146,29 @@ class spectrum:
         self.D = interpolator(self.z_pk)                                        
 
 
+#    def interpolate(self):
+#        log_k = np.log10(self.h * np.array(self.rawdata['k (h/Mpc)']))
+#        log_minus_db = np.log10(-1. * np.array(self.rawdata['d_b']))
+#        log_minus_dcdm = np.log10(-1. * np.array(self.rawdata['d_cdm']))
+#        self.b_interpolator = scipy.interpolate.interp1d(
+#                             log_k, 
+#                             log_minus_db)
+#        self.cdm_interpolator = scipy.interpolate.interp1d(
+#                               log_k, 
+#                               log_minus_dcdm)
+#        self.b_interp_table = -1. * np.power(10., self.b_interpolator(np.log10(np.array(self.k_table))))
+#        self.cdm_interp_table = -1. * np.power(10., self.cdm_interpolator(np.log10(np.array(self.k_table))))
+
     def interpolate(self):
-        log_k = np.log10(self.h * np.array(self.rawdata['k (h/Mpc)']))
-        log_minus_db = np.log10(-1. * np.array(self.rawdata['d_b']))
-        log_minus_dcdm = np.log10(-1. * np.array(self.rawdata['d_cdm']))
         self.b_interpolator = scipy.interpolate.interp1d(
-                             log_k, 
-                             log_minus_db)
+            self.h * self.rawdata['k (h/Mpc)'],
+            self.rawdata['d_b'])
         self.cdm_interpolator = scipy.interpolate.interp1d(
-                               log_k, 
-                               log_minus_dcdm)
-        self.b_interp_table = -1. * np.power(10., self.b_interpolator(np.log10(np.array(self.k_table))))
-        self.cdm_interp_table = -1. * np.power(10., self.cdm_interpolator(np.log10(np.array(self.k_table))))
+            self.h * self.rawdata['k (h/Mpc)'],
+            self.rawdata['d_cdm'])
+        self.b_interp_table = self.b_interpolator(self.k_table)
+        self.cdm_interp_table = self.cdm_interpolator(self.k_table)
+
 
     def gen_primordial_table(self):
         table = (self.A_s 
