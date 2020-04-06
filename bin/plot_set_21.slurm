@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH -J plot_set_17         ##Job name
-#SBATCH -o plot_set_17.out     ##Write stdout to this file
-#SBATCH -e plot_set_17.err     ##Write error messages to this file
+#SBATCH -J plot_set_21         ##Job name
+#SBATCH -o plot_set_21.out     ##Write stdout to this file
+#SBATCH -e plot_set_21.err     ##Write error messages to this file
 #SBATCH --open-mode=append              ##Not sure
 #SBATCH -p shared               ##Use the 'shared' partition 
 #SBATCH -t 3-0:00                       ##Run up to 3 days, 0 hours, 0 minutes
@@ -17,8 +17,8 @@
 ## SETUP STORAGE ##
 PROJECT_DIR="${HOME}/projects/cosmicfish/cfworkspace/"
 STORAGE_DIR="${HOME}/projects/cosmicfish/cfworkspace/results/${SLURM_JOB_ID}"
-DATASTORE_DIR="${SCRATCH}/dvorkin_lab/ndeporzio/datastore/data17/"
-CLASS_DIR="/n/home02/ndeporzio/projects/cosmicfish/cfworkspace/class17/"
+DATASTORE_DIR="${SCRATCH}/dvorkin_lab/ndeporzio/datastore/data21/"
+CLASS_DIR="/n/home02/ndeporzio/projects/cosmicfish/cfworkspace/class21/"
 PRIORS_DIR="/n/home02/ndeporzio/projects/cosmicfish/cosmicfish/cosmicfish/priors/"
 
 echo "PROJECT_DIR: $PROJECT_DIR"
@@ -49,21 +49,23 @@ module load Anaconda/5.0.1-fasrc02
 source activate /n/home02/ndeporzio/projects/cosmicfish/py36
 
 ## RUN PROGRAM ##
-SCRIPT_DIR="/n/home02/ndeporzio/projects/cosmicfish/cosmicfish/bin/plot_set_17.py"
-python $SCRIPT_DIR >> plot_set_17.scriptout
+SCRIPT_DIR="/n/home02/ndeporzio/projects/cosmicfish/cosmicfish/bin/plot_set_21.py"
+python $SCRIPT_DIR >> plot_set_21.scriptout
 
 ## COPY OUTPUT TO SECURE STORAGE ##
-if [[ -f "${SLURM_SUBMIT_DIR}/plot_set_17.out" ]]
+
+if [[ -f "${SLURM_SUBMIT_DIR}/plot_set_21.out" ]]
 then
-    mv "${SLURM_SUBMIT_DIR}/plot_set_17.out" $STORAGE_DIR
+    mv "${SLURM_SUBMIT_DIR}/plot_set_21.out" $STORAGE_DIR
 fi
 
-if [[ -f "${SLURM_SUBMIT_DIR}/plot_set_17.err" ]]
+if [[ -f "${SLURM_SUBMIT_DIR}/plot_set_21.err" ]]
 then
-    mv "${SLURM_SUBMIT_DIR}/plot_set_17.err" $STORAGE_DIR
+    mv "${SLURM_SUBMIT_DIR}/plot_set_21.err" $STORAGE_DIR
 fi
 
-if [[ -f "${SLURM_SUBMIT_DIR}/plot_set_17.scriptout" ]]
+if [[ -f "${SLURM_SUBMIT_DIR}/plot_set_21.scriptout" ]]
 then
-    mv "${SLURM_SUBMIT_DIR}/plot_set_17.scriptout" $STORAGE_DIR
+    mv "${SLURM_SUBMIT_DIR}/plot_set_21.scriptout" $STORAGE_DIR
 fi
+
