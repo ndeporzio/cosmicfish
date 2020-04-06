@@ -3,14 +3,14 @@
 #SBATCH -J plot_set_17         ##Job name
 #SBATCH -o plot_set_17.out     ##Write stdout to this file
 #SBATCH -e plot_set_17.err     ##Write error messages to this file
-#SBATCH --open-mode=append              ##Not sure
-#SBATCH -p shared               ##Use the 'shared' partition 
-#SBATCH -t 3-0:00                       ##Run up to 3 days, 0 hours, 0 minutes
-#SBATCH -n 1                            ##Number of cores 
-#SBATCH --mem=6000                      ##Use no more than 6Gb RAM 
-#SBATCH -N 1                            ##Use no more than 1 compute node
+#SBATCH --open-mode=append     ##Not sure
+#SBATCH -p shared              ##Use the 'shared' partition 
+#SBATCH -t 4-0:00              ##Run up to 4 days, 0 hours, 0 minutes
+#SBATCH -n 1                   ##Number of cores 
+#SBATCH --mem=15000             ##Use no more than 15Gb RAM 
+#SBATCH -N 1                   ##Use no more than 1 compute node
 #SBATCH --account=dvorkin_lab
-#SBATCH --mail-type=ALL               ## BEGIN, END, FAIL, ALL
+#SBATCH --mail-type=ALL        ## BEGIN, END, FAIL, ALL
 #SBATCH --mail-user=nicholasdeporzio@g.harvard.edu
 ####  #SBATCH --test-only
 

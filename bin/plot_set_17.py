@@ -90,7 +90,7 @@ for frowidx, frowval in enumerate(ps17_forecastset):
             mu_step=mu_integral_step, 
             skipgen=False)
         print("Relic Forecast ", fidx, " complete...")
-        dill.dump_session(os.path.join(ps17_resultsdir, 'ps17.db'))
+        dill.dump_session(os.path.join(ps17_resultsdir, str(frowidx)+'_'+str(fidx)+'_ps17.db'))
 
 
 
