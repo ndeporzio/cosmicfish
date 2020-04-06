@@ -12,7 +12,7 @@ import dill
 sns.set()
 
 # Set project, data, CLASS directories 
-projectdir = os.environ['PROJECT_DIR'] 
+projectdir = os.environ['STORAGE_DIR'] 
 datastore = os.environ['DATASTORE_DIR']    
 classpath = os.environ['CLASS_DIR']
 
@@ -21,7 +21,8 @@ derivative_step = 0.008 # How much to vary parameter to calculate numerical deri
 mu_integral_step = 0.05 # For calculating numerical integral wrt mu between -1 and 1 
 
 # Generate output paths  
-ps20_resultsdir = os.path.join(projectdir, 'results', 'ps20')
+#ps20_resultsdir = os.path.join(projectdir, 'results', 'ps20')
+ps20_resultsdir = projectdir
 #ps20_convergencedir = os.path.join(ps20_resultsdir, 'convergence')
 cf.makedirectory(ps20_resultsdir)
 #cf.makedirectory(ps20_convergencedir) 
