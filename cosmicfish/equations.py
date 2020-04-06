@@ -126,7 +126,7 @@ def kfs(m_ncdm, T_ncdm, h, z):
         * np.power(T_ncdm/cf.RELIC_TEMP_SCALE, -1.))           
     return k_fs 
 
-def omega_ncdm(T_ncdm, m_ncdm, forecast_type):                                  
+def omega_ncdm(T_ncdm, m_ncdm, N_ncdm, forecast_type):                                  
     """Returns omega_ncdm as a function of T_ncdm, m_ncdm.                      
                                                                                 
     T_ncdm : relic temperature in units [K]                                     
@@ -138,7 +138,7 @@ def omega_ncdm(T_ncdm, m_ncdm, forecast_type):
         omega_ncdm = 3. * (m_ncdm / cf.NEUTRINO_SCALE_FACTOR)                                      
     if forecast_type=="relic":                                                  
         omega_ncdm = np.power(T_ncdm / cf.RELIC_TEMP_SCALE, 3.) * (m_ncdm 
-            / cf.NEUTRINO_SCALE_FACTOR)               
+            / cf.NEUTRINO_SCALE_FACTOR) * N_ncdm                
     return omega_ncdm
 
 def T_ncdm(omega_ncdm, m_ncdm):                                                 
@@ -289,11 +289,11 @@ def gen_V(h, omega_b, omega_cdm, z, N_ncdm, T_ncdm=None, m_ncdm=0,
     H = 1000. * 100. * h # H has units of [m*s^-1*Mpc^-1]                       
     if m_ncdm is not None:                                                      
         if N_ncdm==3.: # Degenerate neutrinos CAUTION                                  
-            omega_chi = cf.omega_ncdm(T_ncdm, m_ncdm, "neutrino")                                   
-        elif N_ncdm==1.: # Light relic CAUTION                                         
-            omega_chi = omega_ncdm(T_ncdm, m_ncdm, "relic")               
-        else:                                                                   
-            print("N_ncdm must be 1 (relics) or 3 (degenerate neutrinos).")
+            omega_chi = cf.omega_ncdm(T_ncdm, m_ncdm, N_ncdm, "neutrino")                                   
+        else: # Light relic CAUTION                                         
+            omega_chi = cf.omega_ncdm(T_ncdm, m_ncdm, N_ncdm, "relic")               
+       # else:                                                                   
+       #     print("N_ncdm must be 1 (relics) or 3 (degenerate neutrinos).")
     else:                                                                       
         omega_chi = 0                                                           
     omega_m = omega_b + omega_cdm + omega_chi # Unitless                        
