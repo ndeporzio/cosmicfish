@@ -51,7 +51,7 @@ source activate /n/home02/ndeporzio/projects/cosmicfish/py36
 ## RUN PROGRAM ##
 SCRIPT_DIR="/n/home02/ndeporzio/projects/cosmicfish/cosmicfish/bin/plot_set_19.py"
 cp $SCRIPT_DIR $STORAGE_DIR
-python $SCRIPT_DIR >> plot_set_19.scriptout
+python $SCRIPT_DIR >> "${STORAGE_DIR}/plot_set_19.scriptout"
 
 ## COPY OUTPUT TO SECURE STORAGE ##
 

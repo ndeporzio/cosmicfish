@@ -73,26 +73,31 @@ ps17_forecastset = [[cf.forecast(
     FOG=True,
     AP=True,
     COV=True) for fididx, fidval in enumerate(fidrowvals)] for fidrowidx, fidrowvals in enumerate(ps17_fiducialset)]
+
+
+dill.load_session('/n/home02/ndeporzio/projects/cosmicfish/cfworkspace/results/51392647/3_2_ps17.db') 
 for frowidx, frowval in enumerate(ps17_forecastset): 
     for fidx, fcst in enumerate(frowval): 
-        fcst.gen_pm()
-        fcst.gen_fisher(
-            fisher_order=[
-                'omega_b',                                    
-                'omega_cdm',                                  
-                'n_s',                                        
-                'A_s',                                        
-                'tau_reio',                                   
-                'h',                                                                             
-                'N_ncdm',                                 
-                'sigma_fog',                                   
-                'b0',                                         
-                'alpha_k2'],
-            mu_step=mu_integral_step, 
-            skipgen=False)
-        print("Relic Forecast ", fidx, " complete...")
-        dill.dump_session(os.path.join(ps17_resultsdir, str(frowidx)+'_'+str(fidx)+'_ps17.db'))
-
+        if type(fcst.fisher)==type(None): 
+            fcst.gen_pm()
+            fcst.gen_fisher(
+                fisher_order=[
+                    'omega_b',                                    
+                    'omega_cdm',                                  
+                    'n_s',                                        
+                    'A_s',                                        
+                    'tau_reio',                                   
+                    'h',                                                                             
+                    'N_ncdm',                                 
+                    'sigma_fog',                                   
+                    'b0',                                         
+                    'alpha_k2'],
+                mu_step=mu_integral_step, 
+                skipgen=False)
+            print("Relic Forecast ", fidx, " complete...")
+            dill.dump_session(os.path.join(ps17_resultsdir, str(frowidx)+'_'+str(fidx)+'_ps17.db'))
+        else: 
+            print('Fisher matrix already generated!')
 
 
 data = np.array([[np.sqrt(
