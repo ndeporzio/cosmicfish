@@ -1673,6 +1673,20 @@ class forecast:
                         fmat.iloc[index,:] *= 1./(dM_ncdm_domega_ncdm*dm_dM)            
                         fmat = fmat.rename(                                     
                             index=str, columns={"omega_ncdm": "m_ncdm"}) 
+                    elif (pval=='N_ncdm') and ('T[gamma]' in fmat.columns): 
+                        print('Converting T[gamma] --> N_ncdm...')
+                        index = fmat.columns.get_loc('T[gamma]') 
+                        dT_ncdm_dN_ncdm = cf.dT_ncdm_dN_ncdm(
+                            self.m_ncdm_fid, 
+                            self.omega_ncdm_fid,
+                            self.N_ncdm_fid) 
+                        dTcmb_dT = 1./cf.dT_dTcmb(self.T_cmb_fid) 
+                        dTcmb_dN_ncdm = dTcmb_dT * dT_ncdm_dN_Ncdm 
+                        fmat.iloc[:,index] *= dTcmb_dN_ncdm    
+                        fmat.iloc[index,:] *= dTcmb_dN_ncdm
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"T[gamma]": "N_ncdm"})  
+                    
 
         for pidx, pval in enumerate(fmat.columns): 
             if pval != self.fisher_order[pidx]:

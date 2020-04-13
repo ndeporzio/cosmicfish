@@ -182,6 +182,20 @@ def dT_ncdm_domega_ncdm(T_ncdm, M_ncdm):
         (3. * np.power(T_ncdm, 2.) * M_ncdm))
     return deriv
 
+def dT_ncdm_dN_ncdm(m_ncdm, omega_ncdm, N_ncdm): 
+    deriv = (
+        np.power(cf.NEUTRINO_SCALE_FACTOR / m_ncdm, 1./3.)
+        * cf.RELIC_TEMP_SCALE
+        * np.power(3./2., 1./3.)
+        * (-1./3.) 
+        * np.power(N_ncdm, -2./3.)
+        * np.power(omega_ncdm, 1./3.) 
+        ) 
+    return deriv 
+
+def dT_dTcmb(T_cmb):
+    return T_cmb
+
 def sigmafog(z, sigma_fog_0):                                                                
     """Returns sigma_fog as function of redshift.                               
                                                                                 
