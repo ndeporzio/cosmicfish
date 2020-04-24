@@ -131,10 +131,10 @@ class spectrum:
         
 
     def growthfactor(self):    
-        if self.forecast=="neutrino":
-            colidx = 20
-        elif self.forecast=="relic": 
-            colidx = 16                                                 
+        #if self.forecast=="neutrino":
+        #    colidx = 20
+        #elif self.forecast=="relic": 
+        colidx = 22                                                 
         rawdata = pd.read_csv(self.background_data,                             
                               delim_whitespace=True,                            
                               skipinitialspace=True,                            

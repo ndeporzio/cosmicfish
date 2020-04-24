@@ -7,12 +7,15 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
     relic, T_ncdm, lss_survey_name, step=True, 
     delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR, beta0=1.7, beta1=1.0):
 
-    if relic==False:             
-        m_ncdm = cf.m_ncdm(omega_ncdm/3., cf.RELIC_TEMP_SCALE)     
-        k_fs = cf.kfs(m_ncdm, T_ncdm, h, z)
-    elif relic==True: 
-        m_ncdm = cf.m_ncdm(omega_ncdm, T_ncdm)
-        k_fs = cf.kfs(m_ncdm, T_ncdm, h, z) 
+    #if relic==False:             
+    #    m_ncdm = cf.m_ncdm(omega_ncdm/3., cf.RELIC_TEMP_SCALE)     
+    #    k_fs = cf.kfs(m_ncdm, T_ncdm, h, z)
+    #elif relic==True: 
+    #    m_ncdm = cf.m_ncdm(omega_ncdm, T_ncdm)
+    #    k_fs = cf.kfs(m_ncdm, T_ncdm, h, z) 
+
+    m_ncdm = float(relic)
+    k_fs = cf.kfs(m_ncdm, T_ncdm, h, z) 
     f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
     g_unnormalized = cf.ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, 
         step, delta_L)  
