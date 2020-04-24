@@ -74,7 +74,7 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
         end_ini = os.path.join(config_directory(), tstamp+".ini")
         os.system('cp ' + start_ini + ' ' + end_ini)
         for key, value in modify.items():
-            if (key=='m_ncdm') or (key=='T_ncdm') :
+            if (key=='m_ncdm') or (key=='T_ncdm') or (key=='deg_ncdm'):
                 if modify['N_ncdm']==3: # Degenerate neutrinos
                     print('#'+key+'-->'
                           + key + ' = ' + str(value) 

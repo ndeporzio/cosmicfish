@@ -1075,6 +1075,10 @@ class forecast:
                                     self.m_ncdm_fid,
                                     self.N_ncdm_fid,
                                     'relic')) 
+                        if self.forecast=='neutrino':
+                            dlogPdM_ncdm[zidx][kidx][muidx] = (                 
+                                dlogPdomega_ncdm[zidx][kidx][muidx]             
+                                * (1./cf.NEUTRINO_SCALE_FACTOR))
                         # ^^^Careful, this overwrites the earlier dP_g value. 
     
                         dlogPdsigmafog[zidx][kidx][muidx] = (                       
@@ -1128,6 +1132,9 @@ class forecast:
                 self.dlogPmdM_ncdm = np.array(self.dlogPdM_ncdm)
             elif self.relic_vary=="N_ncdm":                                     
                 self.dlogPmdN_ncdm = np.array(self.dlogPdN_ncdm)
+
+            if self.forecast=='neutrino': 
+                self.dlogPmdM_ncdm = np.array(self.dlogPdM_ncdm)
 
             self.dlogPgdA_s = np.array(dlogPdA_s)
             self.dlogPgdn_s = np.array(dlogPdn_s)
