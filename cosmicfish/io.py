@@ -168,13 +168,12 @@ def is_data(path, **kwargs):
         text = open(correct_path(path)).read()                                 
         # Check if it contains provided parameter values                       
         for key, val in kwargs.items():
-            if (key=='m_ncdm') or (key=="T_ncdm"):
+            if (key=='m_ncdm') or (key=='T_ncdm') or (key=='deg_ncdm'):
                 if (kwargs['N_ncdm']==3): 
                     test = ('\n'
                             + key 
                             + ' = '
-                            + str(val) + ', '
-                            + str(val) + ', '
+                            + (int(kwargs['N_ncdm'])-1) * (str(val) + ', ')
                             + str(val)
                             + '\n')                                         
                 else: 
