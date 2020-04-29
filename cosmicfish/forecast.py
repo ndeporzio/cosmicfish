@@ -355,7 +355,7 @@ class forecast:
                         'relic'))
             if self.forecast=='neutrino': 
                 self.dlogRSDdM_ncdm = (np.array(self.dlogRSDdomega_ncdm)
-                    * (1./cf.RELIC_TEMP_SCALE)) 
+                    * (1./cf.NEUTRINO_SCALE_FACTOR)) 
     
             self.dlogRSDdh = [[cf.derivative(                                 
                 cf.log_rsd,                                                         
