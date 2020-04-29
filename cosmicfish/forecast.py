@@ -340,7 +340,8 @@ class forecast:
             elif self.forecast=="relic":                                            
                 relic = True
             elif self.forecast=='2relic':
-                relic = self.M_chi_fid  
+                #relic = self.M_chi_fid 
+                relic = self.m_nu_fid 
 
             fiducial = {'omega_b' : self.omega_b_fid, 
                         'omega_cdm' : self.omega_cdm_fid, 
