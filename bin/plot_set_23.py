@@ -15,8 +15,8 @@ sns.set()
 #projectdir = os.environ['STORAGE_DIR'] 
 #datastore = os.environ['DATASTORE_DIR']    
 #classpath = os.environ['CLASS_DIR']
-projectdir = '/Volumes/SSD01/results/ps23/'
-datastore = '/Volumes/SSD01/data.nosync23/'
+projectdir = '/Volumes/SSD01/results/test3/'
+datastore = '/Volumes/SSD01/data.nosynctest3/'
 classpath = '/Users/nicholasdeporzio/Desktop/cfworkspace/class/'
 
 # Specify resolution of numerical integrals
@@ -57,13 +57,14 @@ dNdz = np.array([309., 2269., 1923., 2094., 1441., 1353., 1337., 523., 466., 329
 skycover = 14000. # Sky coverage of survey in degrees^2
 
 # Run Fisher Forecast
-masses = np.geomspace(0.01, 10., 21) #these are RELIC masses 
+#masses = np.geomspace(0.01, 10., 21) #these are RELIC masses 
 #temps = np.array([0.79, 0.91, 0.94, 1.08])
+masses = np.array([0.01])
 temps = np.array([0.91])
 
 omegacdm_set = np.array([
     ps23_fid['omega_cdm'] 
-    - ps23_fid["N_ncdm"]*(
+    - (
         (masses/cf.NEUTRINO_SCALE_FACTOR)
         * np.power(tval / 1.95, 3.)) 
     for tidx, tval in enumerate(temps)])                                  
