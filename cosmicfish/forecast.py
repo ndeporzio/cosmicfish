@@ -1158,12 +1158,18 @@ class forecast:
     
                         if self.forecast=='2relic': 
                             dlogPdM_ncdm[zidx][kidx][muidx] = (
-                                dlogPdomega_ncdm[zidx][kidx][muidx]
-                                * (1./cf.NEUTRINO_SCALE_FACTOR)) 
+                                self.dlogPdM_ncdm[zidx][kidx]
+                                + self.dlogRSDdM_ncdm[zidx][kidx]
+                                + self.dlogFOGdM_ncdm[zidx][kidx]
+                                + self.dlogAPdM_ncdm[zidx][kidx]
+                                + self.dlogCOVdM_ncdm[zidx][kidx]) 
                             dlogPdN_ncdm[zidx][kidx][muidx] = (
-                                dlogPdomega_ncdm[zidx][kidx][muidx]
-                                * ((self.M_chi_fid/cf.NEUTRINO_SCALE_FACTOR)                
-                                * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.))) 
+                                self.dlogPdN_ncdm[zidx][kidx]
+                                + self.dlogRSDdN_ncdm[zidx][kidx]
+                                + self.dlogFOGdN_ncdm[zidx][kidx]
+                                + self.dlogAPdN_ncdm[zidx][kidx]
+                                + self.dlogCOVdN_ncdm[zidx][kidx]
+                                ) 
                         else: 
                             if self.relic_vary=="T_ncdm": 
                                 dlogPdT_ncdm[zidx][kidx][muidx] = (                     

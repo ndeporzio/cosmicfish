@@ -200,20 +200,19 @@ def is_data(path, **kwargs):
         text = open(correct_path(path)).read()                                 
         # Check if it contains provided parameter values                       
         for key, val in kwargs.items():
-#            if (key=='m_ncdm') or (key=="T_ncdm"):
-#                if (kwargs['N_ncdm']==3): 
-#                    test = ('\n'
-#                            + key 
-#                            + ' = '
-#                            + str(val) + ', '
-#                            + str(val) + ', '
-#                            + str(val)
-#                            + '\n')                                         
-#                else: 
-#                    test = ('\n' + key + ' = ' + str(val) + '\n')
-#            else: 
-            test = (key+' = '+str(val)+'\n')     
+            if (key=="T_ncdm"): 
+                test = ('\n'
+                        + key 
+                        + ' = '
+                        + str(val) + ', '
+                        + str(1.95/2.726) + ', '
+                        + str(1.95/2.726) + ', '
+                        + str(1.95/2.726)
+                        + '\n')                                         
+            else: 
+                test = ('\n' + key + ' = ' + str(val) + '\n')
             if test not in text:
+                print(test)
                 check += 1                                                     
         if check > 0:                                                          
             return False                                                       
