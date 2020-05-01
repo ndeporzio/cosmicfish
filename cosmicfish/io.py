@@ -212,7 +212,6 @@ def is_data(path, **kwargs):
             else: 
                 test = ('\n' + key + ' = ' + str(val) + '\n')
             if test not in text:
-                print(test)
                 check += 1                                                     
         if check > 0:                                                          
             return False                                                       
