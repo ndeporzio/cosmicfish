@@ -534,7 +534,10 @@ class forecast:
                         self.m_ncdm_fid,
                         self.N_ncdm_fid,
                         'relic'))   
-    
+            if self.forecast=='neutrino':
+                self.dlogFOGdM_ncdm = (np.array(self.dlogFOGdomega_ncdm)
+                    * (1./cf.NEUTRINO_SCALE_FACTOR))   
+ 
             self.dlogFOGdh = [[cf.derivative(cf.log_fog, 'h', self.dstep,           
                 **dict(fiducial, **{'z' : zval, 'k' :  kval}))                      
                 for kidx, kval in enumerate(self.k_table[zidx])]                                           
@@ -629,6 +632,9 @@ class forecast:
                         self.m_ncdm_fid,
                         self.N_ncdm_fid,
                         'relic'))  
+            if self.forecast=='neutrino': 
+                self.dlogAPdM_ncdm = (np.array(self.dlogAPdomega_ncdm)
+                    * (1./cf.NEUTRINO_SCALE_FACTOR))
 
             self.dlogAPdh = [[cf.derivative(cf.log_ap, 'h', self.dstep,             
                 **dict(fiducial, **{'z' : zval, 'z_fid' : zval}))                   
@@ -841,6 +847,9 @@ class forecast:
                         self.m_ncdm_fid,
                         self.N_ncdm_fid,
                         'relic'))  
+            if self.forecast=='neutrino': 
+                self.dlogCOVdM_ncdm = (np.array(self.dlogCOVdomega_ncdm)
+                    * (1./cf.NEUTRINO_SCALE_FACTOR))
     
             self.dlogCOVdh = (dlogPdk * dkdh 
                 + dlogPdmu * dmudh)
@@ -1063,25 +1072,36 @@ class forecast:
     
                         if self.relic_vary=="T_ncdm": 
                             dlogPdT_ncdm[zidx][kidx][muidx] = (                     
-                                dlogPdomega_ncdm[zidx][kidx][muidx]                 
-                                * cf.domega_ncdm_dT_ncdm(
-                                    self.T_ncdm_fid, self.M_ncdm_fid)) 
-                        elif self.relic_vary=="m_ncdm": 
-                            dlogPdM_ncdm[zidx][kidx][muidx] = (
-                                dlogPdomega_ncdm[zidx][kidx][muidx] 
-                                * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid)) 
-                        elif self.relic_vary=="N_ncdm":                         
+                                self.dlogPdT_ncdm[zidx][kidx]
+                                + self.dlogRSDdT_ncdm[zidx][kidx]
+                                + self.dlogFOGdT_ncdm[zidx][kidx]
+                                + self.dlogAPdT_ncdm[zidx][kidx]
+                                + self.dlogCOVdT_ncdm[zidx][kidx]                 
+                                ) 
+                        elif self.relic_vary=="m_ncdm":
+                            dlogPdM_ncdm[zidx][kidx][muidx] = (                 
+                                self.dlogPdM_ncdm[zidx][kidx]                   
+                                + self.dlogRSDdM_ncdm[zidx][kidx]               
+                                + self.dlogFOGdM_ncdm[zidx][kidx]               
+                                + self.dlogAPdM_ncdm[zidx][kidx]                
+                                + self.dlogCOVdM_ncdm[zidx][kidx]               
+                                ) 
+                        elif self.relic_vary=="N_ncdm":    
                             dlogPdN_ncdm[zidx][kidx][muidx] = (                 
-                                dlogPdomega_ncdm[zidx][kidx][muidx]             
-                                * cf.omega_ncdm(
-                                    self.T_ncdm_fid,
-                                    self.m_ncdm_fid,
-                                    self.N_ncdm_fid,
-                                    'relic')) 
+                                self.dlogPdN_ncdm[zidx][kidx]                   
+                                + self.dlogRSDdN_ncdm[zidx][kidx]               
+                                + self.dlogFOGdN_ncdm[zidx][kidx]               
+                                + self.dlogAPdN_ncdm[zidx][kidx]                
+                                + self.dlogCOVdN_ncdm[zidx][kidx]               
+                                )                     
                         if self.forecast=='neutrino':
                             dlogPdM_ncdm[zidx][kidx][muidx] = (                 
-                                dlogPdomega_ncdm[zidx][kidx][muidx]             
-                                * (1./cf.NEUTRINO_SCALE_FACTOR))
+                                self.dlogPdM_ncdm[zidx][kidx]                   
+                                + self.dlogRSDdM_ncdm[zidx][kidx]               
+                                + self.dlogFOGdM_ncdm[zidx][kidx]               
+                                + self.dlogAPdM_ncdm[zidx][kidx]                
+                                + self.dlogCOVdM_ncdm[zidx][kidx]               
+                                )
                         # ^^^Careful, this overwrites the earlier dP_g value. 
     
                         dlogPdsigmafog[zidx][kidx][muidx] = (                       
@@ -1135,7 +1155,6 @@ class forecast:
                 self.dlogPmdM_ncdm = np.array(self.dlogPdM_ncdm)
             elif self.relic_vary=="N_ncdm":                                     
                 self.dlogPmdN_ncdm = np.array(self.dlogPdN_ncdm)
-
             if self.forecast=='neutrino': 
                 self.dlogPmdM_ncdm = np.array(self.dlogPdM_ncdm)
 
