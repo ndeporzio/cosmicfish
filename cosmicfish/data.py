@@ -134,7 +134,7 @@ class spectrum:
         #if self.forecast=="neutrino":
         #    colidx = 20
         #elif self.forecast=="relic": 
-        colidx = 22                                                 
+        colidx = 25                                                 
         rawdata = pd.read_csv(self.background_data,                             
                               delim_whitespace=True,                            
                               skipinitialspace=True,                            
