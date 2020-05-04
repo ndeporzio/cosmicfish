@@ -1486,7 +1486,7 @@ class forecast:
         else: 
             step_high = manual_high                         
             step_low = manual_low    
-        if (param is not 'm_ncdm') and (param is not 'deg_ncdm'):
+        if (param != 'm_ncdm') and (param != 'deg_ncdm'):
             newdicthigh = dict(self.fid, **{
                 param : step_high, 
                 'm_ncdm' : (str(self.M_chi_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)),
@@ -1495,14 +1495,14 @@ class forecast:
                 param : step_low,                                              
                 'm_ncdm' : (str(self.M_chi_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)),
                 'deg_ncdm' : (str(self.N_ncdm_fid)+', '+str(1.0)+', '+str(1.0)+', '+str(1.0))})
-        elif (param is 'm_ncdm'): 
+        elif (param == 'm_ncdm'): 
             newdicthigh = dict(self.fid, **{                                    
                 param : step_high,                                              
                 'deg_ncdm' : (str(self.N_ncdm_fid)+', '+str(1.0)+', '+str(1.0)+', '+str(1.0))})
             newdictlow = dict(self.fid, **{                                     
                 param : step_low,                                               
                 'deg_ncdm' : (str(self.N_ncdm_fid)+', '+str(1.0)+', '+str(1.0)+', '+str(1.0))})
-        elif (param is 'deg_ncdm'): 
+        elif (param == 'deg_ncdm'): 
             newdicthigh = dict(self.fid, **{                                    
                 param : step_high,                                              
                 'm_ncdm' : (str(self.M_chi_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)),
