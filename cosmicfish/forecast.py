@@ -532,6 +532,12 @@ class forecast:
             self.dlogRSDdomega_ncdm = [[0.
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]
+            self.dlogRSDdN_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
+            self.dlogRSDdM_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
             if self.relic_vary=="T_ncdm": 
                 self.dlogRSDdT_ncdm = [[0.
                     for kidx, kval in enumerate(self.k_table[zidx])]                
@@ -641,7 +647,12 @@ class forecast:
             self.dlogFOGdomega_ncdm = [[0.
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]                      
-                                                                                
+            self.dlogFOGdN_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]
+            self.dlogFOGdM_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]                                                                                
             if self.relic_vary=="T_ncdm":                                        
                 self.dlogFOGdT_ncdm = [[0.
                     for kidx, kval in enumerate(self.k_table[zidx])]                
@@ -735,15 +746,21 @@ class forecast:
             self.dlogAPdomega_ncdm = [[0.
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]
+            self.dlogAPdN_ncdm = [[0.                                       
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
+            self.dlogAPdM_ncdm = [[0.                                       
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
             if self.relic_vary=="T_ncdm":
                 self.dlogAPdT_ncdm = [[0.
                     for kidx, kval in enumerate(self.k_table[zidx])]                
                     for zidx, zval in enumerate(self.z_steps)]
-            elif self.reliv_vary=="m_ncdm":
+            elif self.relic_vary=="m_ncdm":
                 self.dlogAPdM_ncdm = [[0.
                     for kidx, kval in enumerate(self.k_table[zidx])]                
                     for zidx, zval in enumerate(self.z_steps)]
-            elif self.reliv_vary=="N_ncdm":                                     
+            elif self.relic_vary=="N_ncdm":                                     
                 self.dlogAPdN_ncdm = [[0.                                       
                     for kidx, kval in enumerate(self.k_table[zidx])]                
                     for zidx, zval in enumerate(self.z_steps)]  
@@ -952,6 +969,12 @@ class forecast:
             self.dlogCOVdomega_ncdm = [[0.
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]    
+            self.dlogCOVdN_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]
+            self.dlogCOVdM_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]
             if self.relic_vary=="T_ncdm":                                        
                 self.dlogCOVdT_ncdm = [[0.
                     for kidx, kval in enumerate(self.k_table[zidx])]                
