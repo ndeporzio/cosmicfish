@@ -55,8 +55,8 @@ skycover = 14000. # Sky coverage of survey in degrees^2
 full_masses = np.geomspace(0.01, 10., 21)                                                    
 full_temps = np.array([0.79, 0.91, 0.94, 1.08])    
 
-mass_index=((fidx - 1) % 21)
-temp_index=((fidx - 1) // 21)
+mass_index=(fidx % 21)
+temp_index=(fidx // 21)
 
 masses = np.array([full_masses[mass_index]])
 temps = np.array([full_temps[temp_index]])
