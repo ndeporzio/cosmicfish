@@ -128,7 +128,8 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
         os.system('cd ' + classdir)
         os.chdir(classdir)
         os.system('pwd')
-        os.system('./class ' + end_ini)
+        os.system('./class ' + end_ini + ' cl_permille.pre')
+        print('./class ' + end_ini + ' cl_permille.pre') 
         print("Dataset generated at: " + newdatapath)
         os.system('mv ' 
                   + os.path.join(classdir, 'output') 

@@ -33,8 +33,8 @@ DB_ELG = 0.84
 
 K_MAX_PREFACTOR = 0.2
 
-ANALYTIC_A_S = True
-ANALYTIC_N_S = True
+ANALYTIC_A_S = False
+ANALYTIC_N_S = False
 
 RSD_DELTA_LAMBDACDM = 4.8e-3                                                    
 #RSD_DELTA_LAMBDACDM = 0.  
