@@ -21,7 +21,8 @@ class forecast:
                  dNdz,
                  fsky=None, 
                  fcoverage_deg=None,
-                 dstep=0.03,
+                 dstep=0.008,
+                 gstep=0.1, 
                  RSD=True,  
                  FOG=True, 
                  AP=True, 
@@ -34,6 +35,7 @@ class forecast:
         self.lss_survey_name = lss_survey_name
         self.dNdz = dNdz
         self.dstep = dstep
+        self.gstep = gstep
         self.use_rsd = RSD
         self.use_fog = FOG     
         self.use_ap = AP
@@ -199,11 +201,11 @@ class forecast:
                     + str((1.-self.dstep)*self.m_nu_fid)))
             self.N_ncdm_high, self.N_ncdm_low = self.generate_spectra(
                 'deg_ncdm', #(1.+self.dstep)*self.deg_ncdm_fid, (1.-self.dstep)*self.deg_ncdm_fid) 
-                (str((1.+self.dstep)*self.N_ncdm_fid) + ', '
+                (str((1.+self.gstep)*self.N_ncdm_fid) + ', '
                     + str(1.) + ', '
                     + str(1.) + ', '
                     + str(1.)),
-                (str((1.-self.dstep)*self.N_ncdm_fid) + ', '                    
+                (str((1.-self.gstep)*self.N_ncdm_fid) + ', '                    
                     + str(1.) + ', '                                            
                     + str(1.) + ', '                                            
                     + str(1.)))
@@ -309,7 +311,7 @@ class forecast:
             self.dPdN_ncdm, self.dlogPdN_ncdm = cf.dPs_array(               
                 self.N_ncdm_low,                                            
                 self.N_ncdm_high,                                           
-                self.N_ncdm_fid*self.dstep)                                 
+                self.N_ncdm_fid*self.gstep)                                 
             self.dPdM_ncdm, self.dlogPdM_ncdm = cf.dPs_array(               
                 self.M_ncdm_low,                                            
                 self.M_ncdm_high,                                           
@@ -349,6 +351,8 @@ class forecast:
                         'h' : self.h_fid, 
                         'mu' : mu,
                         'relic' : relic,
+                        'M_chi' : self.M_chi_fid, 
+                        'm_nu' : self.m_nu_fid,  
                         'T_ncdm' : self.T_chi_fid,
                         'lss_survey_name' : self.lss_survey_name,
                         'delta_L' : self.delta_L_fid,
@@ -1840,8 +1844,40 @@ class forecast:
                         fmat.iloc[index,:] *= dTcmb_dN_ncdm
                         fmat = fmat.rename(                                     
                             index=str, columns={"T_ncdm[gamma]": "N_ncdm"})  
-                    
-
+                elif self.forecast=='2relic':     
+                    if (pval=='N_ncdm') and ('T_ncdm[gamma]' in fmat.columns):
+                        print('Converting T_ncdm[gamma] --> N_ncdm...')         
+                        index = fmat.columns.get_loc('T_ncdm[gamma]')           
+                        dT_ncdm_dN_ncdm = cf.dT_ncdm_dN_ncdm(                   
+                            self.m_ncdm_fid,                                    
+                            self.omega_ncdm_fid,                                
+                            self.N_ncdm_fid)                                    
+                        dTcmb_dT = 1./cf.dT_dTcmb(self.T_cmb_fid)               
+                        dTcmb_dN_ncdm = dTcmb_dT * dT_ncdm_dN_ncdm              
+                        fmat.iloc[:,index] *= dTcmb_dN_ncdm                     
+                        fmat.iloc[index,:] *= dTcmb_dN_ncdm                     
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"T_ncdm[gamma]": "N_ncdm"})
+                    if (pval=='N_ncdm') and ('T_ncdm' in fmat.columns):  
+                        print('Converting T_ncdm --> N_ncdm...')         
+                        index = fmat.columns.get_loc('T_ncdm')           
+                        dT_ncdm_dN_ncdm = (
+                            (-1. / (3. * self.omega_chi_fid))
+                            * (self.M_chi_fid /93.14)
+                            * np.power(self.T_chi_fid, 2.)
+                            * np.power(1.95, -3))                   
+                        fmat.iloc[:,index] *= dT_ncdm_dN_ncdm                     
+                        fmat.iloc[index,:] *= dT_ncdm_dN_ncdm                     
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"T_ncdm": "N_ncdm"}) 
+                    if (pval=='M_ncdm') and ('m_ncdm' in fmat.columns):         
+                        print('Converting m_ncdm --> M_ncdm...')                
+                        index = fmat.columns.get_loc('m_ncdm')                  
+                        dm_ncdm_dM_ncdm = (1./3.)                                    
+                        fmat.iloc[:,index] *= dm_ncdm_dM_ncdm                   
+                        fmat.iloc[index,:] *= dm_ncdm_dM_ncdm                   
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"m_ncdm": "M_ncdm"}) 
         for pidx, pval in enumerate(fmat.columns): 
             if pval != self.fisher_order[pidx]:
                 print(fmat.columns)
