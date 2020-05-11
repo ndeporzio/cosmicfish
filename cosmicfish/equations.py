@@ -4,7 +4,7 @@ from scipy.integrate import quad
 import cosmicfish as cf
 
 def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2, 
-    relic, T_ncdm, lss_survey_name, step=True, 
+    relic, T_ncdm, lss_survey_name, M_chi, m_nu, step=True, 
     delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR, beta0=1.7, beta1=1.0):
 
     #if relic==False:             
@@ -14,18 +14,37 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
     #    m_ncdm = cf.m_ncdm(omega_ncdm, T_ncdm)
     #    k_fs = cf.kfs(m_ncdm, T_ncdm, h, z) 
 
+    if step==True:                                                              
+        delta_L_numerator = delta_L                                             
+        rlcdm_unnorm = cf.rlambdacdm(h, k)                                        
+    else:                                                                       
+        delta_L_numerator = 0.                                                  
+        rlcdm_unnorm = 1. 
+
+    rlcdm_norm = cf.rlambdacdm(h, cf.BIAS_NORMALIZATION_SCALE*h)
+    rlcdm = rlcdm_unnorm/rlcdm_norm  
+
     m_ncdm = float(relic)
-    k_fs = cf.kfs(m_ncdm, T_ncdm, h, z) 
-    f = cf.fgrowth(omega_b, omega_cdm, h, z)                                 
-    g_unnormalized = cf.ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, 
+    f = cf.fgrowth(omega_b, omega_cdm, h, z) 
+
+    k_fs_1 = cf.kfs(M_chi, T_ncdm, h, z) 
+    g1_unnorm = cf.ggrowth(k, k_fs_1, h, omega_b, omega_cdm, omega_ncdm, 
         step, delta_L)  
-    g_normalization_factor = cf.ggrowth(cf.BIAS_NORMALIZATION_SCALE*h, k_fs, h, 
+    g1_norm = cf.ggrowth(cf.BIAS_NORMALIZATION_SCALE*h, k_fs_1, h, 
         omega_b, omega_cdm, omega_ncdm, step, delta_L)                
-    g = g_unnormalized / g_normalization_factor
+    g1 = g1_unnorm / g1_norm
+
+    k_fs_2 = cf.kfs(m_nu, T_ncdm, h, z)                                        
+    g2_unnorm = cf.ggrowth(k, k_fs_2, h, omega_b, omega_cdm, omega_ncdm,        
+        step, delta_L)                                                          
+    g2_norm = cf.ggrowth(cf.BIAS_NORMALIZATION_SCALE*h, k_fs_2, h,             
+        omega_b, omega_cdm, omega_ncdm, step, delta_L)                          
+    g2 = g2_unnorm / g2_norm
+
     bl = cf.bL(b0, D) 
                                                                               
     if lss_survey_name=='DESI':                                                 
-        b1tilde =  (1. + bl * g + alphak2 * np.power(k, 2.))                    
+        b1tilde =  (1. + (bl * rlcdm * g1 * g2) + alphak2 * np.power(k, 2.))                    
     elif lss_survey_name=='EUCLID':                                             
         b1tilde = ((1. + (beta0-1.)*g + alphak2*np.power(k, 2.))                
             * np.power((1.+z), 0.5*beta1))                                      
@@ -36,7 +55,7 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
     return R                                                                    
                                                                                 
 def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
-    relic, T_ncdm, lss_survey_name, step=True, 
+    relic, T_ncdm, lss_survey_name, M_chi, m_nu, step=True, 
     delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR, beta0=1.7, beta1=1.0):                 
     return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, 
         b0, D, alphak2, relic, T_ncdm, lss_survey_name, step, delta_L,
@@ -275,17 +294,14 @@ def ggrowth(k, k_fs, h, omega_b, omega_cdm, omega_ncdm, step=True,
     
     if step==True:  
         delta_L_numerator = delta_L 
-        rlambdacdm = cf.rlambdacdm(h, k)
     else: 
         delta_L_numerator = 0. 
-        rlambdacdm = 1.
                                                                                 
     Delta_q = cf.RSD_DELTA_Q                                                               
     q = cf.RSD_Q_NUMERATOR_FACTOR * k / k_fs                                          
     Delta_L =  (delta_L_numerator * omega_ncdm 
                 / (omega_b + omega_cdm))                         
-    g = (rlambdacdm
-        * (1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))))               
+    g = ((1. + (Delta_L / 2.) * np.tanh(1. + (np.log(q) / Delta_q))))               
     return g
 
 
