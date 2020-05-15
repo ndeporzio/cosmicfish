@@ -50,16 +50,18 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
             * np.power((1.+z), 0.5*beta1))                                      
     else:                                                                       
         print("ERROR: bias function not defined for given LSS survey.") 
- 
+    print(b1tilde) 
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
     return R                                                                    
                                                                                 
-def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
-    relic, T_ncdm, lss_survey_name, M_chi, m_nu, step=True, 
-    delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR, beta0=1.7, beta1=1.0):                 
-    return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, 
-        b0, D, alphak2, relic, T_ncdm, lss_survey_name, step, delta_L,
-        beta0, beta1))
+def log_rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,            
+    relic, T_ncdm, lss_survey_name, M_chi, m_nu, step=True,                     
+    delta_L=cf.RSD_DELTA_L_NUMERATOR_FACTOR, beta0=1.7, beta1=1.0
+    ):                 
+    return np.log(cf.rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,            
+    relic, T_ncdm, lss_survey_name, M_chi, m_nu, step,                     
+    delta_L, beta0, beta1
+        ))
 
 def fog(omega_b, omega_cdm, omega_ncdm, h, z, k, mu, sigma_fog_0):              
     sigma_z = cf.SIGMA_Z                                                        
