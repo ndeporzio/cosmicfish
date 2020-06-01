@@ -50,7 +50,7 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
             * np.power((1.+z), 0.5*beta1))                                      
     else:                                                                       
         print("ERROR: bias function not defined for given LSS survey.") 
-    print(b1tilde) 
+#    print(b1tilde) 
     R = np.power((b1tilde + np.power(mu, 2.) * f), 2.)                          
     return R                                                                    
                                                                                 
