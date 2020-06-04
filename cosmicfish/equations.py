@@ -45,9 +45,9 @@ def rsd(omega_b, omega_cdm, omega_ncdm, h, z, mu, k, b0, D, alphak2,
                                                                               
     if lss_survey_name=='DESI':                                                 
         b1tilde =  (1. + (bl * rlcdm * g1 * g2) + alphak2 * np.power(k, 2.))                    
+        #b1tilde =  (1. + (b0*np.power((1.+z), 0.5*1.0)-1.)*(rlcdm * g1 * g2) + alphak2 * np.power(k, 2.))
     elif lss_survey_name=='EUCLID':                                             
-        b1tilde = ((1. + (beta0-1.)*(rlcdm * g1 * g2) + alphak2*np.power(k, 2.))                
-            * np.power((1.+z), 0.5*beta1))                                      
+        b1tilde = (1. + (beta0*np.power((1.+z), 0.5*beta1)-1.)*(rlcdm * g1 * g2) + alphak2*np.power(k, 2.))                                      
     else:                                                                       
         print("ERROR: bias function not defined for given LSS survey.") 
 #    print(b1tilde) 
