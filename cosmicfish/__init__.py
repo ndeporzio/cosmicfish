@@ -10,7 +10,8 @@ from .equations import (H, Da, neff, fog, log_fog, kfs, rsd, log_rsd,
     sigmav, fgrowth, ggrowth, gen_V, gen_k_table, ap, log_ap,
     cov, log_cov, cov_dkdH, cov_dkdDa, set_sky_cover, sigma_fog, sigma_v,
     rlambdacdm, bL, dT_ncdm_domega_ncdm, m_ncdm, domega_ncdm_dM_ncdm,  
-    dM_ncdm_domega_ncdm, k_pivot,dlogPdAs, dlogPdns) 
+    dM_ncdm_domega_ncdm, k_pivot,dlogPdAs, dlogPdns, dT_ncdm_dN_ncdm, 
+    dT_dTcmb) 
 from .methods import (dPs_array, dPs, dlogPs, derivative, log_interp) 
 from .convergence import (convergence)
 from .forecast import (forecast) 

@@ -21,7 +21,8 @@ class forecast:
                  dNdz,
                  fsky=None, 
                  fcoverage_deg=None,
-                 dstep=0.03,
+                 dstep=0.008,
+                 gstep=0.1, 
                  RSD=True,  
                  FOG=True, 
                  AP=True, 
@@ -34,6 +35,7 @@ class forecast:
         self.lss_survey_name = lss_survey_name
         self.dNdz = dNdz
         self.dstep = dstep
+        self.gstep = gstep
         self.use_rsd = RSD
         self.use_fog = FOG     
         self.use_ap = AP
@@ -46,10 +48,12 @@ class forecast:
         self.h_fid = self.fid['h']
         self.tau_reio_fid = self.fid['tau_reio']
         self.m_ncdm_fid = self.fid['m_ncdm'] # Unit [eV]   
+        self.M_ncdm_fid = float(self.m_ncdm_fid)
         self.N_eff_fid = self.fid['N_eff'] 
         self.relic_vary = self.fid['relic_vary']   
         self.T_cmb_fid = self.fid['T_cmb']
-    
+        self.deg_ncdm_fid = self.fid['deg_ncdm'] 
+   
         self.fisher=None
 
         if self.lss_survey_name=='DESI': 
@@ -98,6 +102,25 @@ class forecast:
                                                 self.m_ncdm_fid,
                                                 3., 
                                                 "neutrino")
+
+        elif self.forecast=='2relic': 
+            self.N_ncdm_fid = self.fid['deg_ncdm']                                
+            self.M_chi_fid = self.m_ncdm_fid
+            self.m_chi_fid = float(self.M_chi_fid)                                   
+            self.T_chi_fid = self.fid['T_ncdm'] * self.T_cmb_fid               
+            self.omega_chi_fid = cf.omega_ncdm(self.T_chi_fid,                
+                                                self.m_chi_fid,                
+                                                self.N_ncdm_fid,                
+                                                "relic")
+            self.T_nu_fid = cf.RELIC_TEMP_SCALE
+            self.m_nu_fid = self.fid['m_nu']                                
+            self.M_nu_fid = 3. * self.fid['m_nu'] # Unit [eV]                  
+            self.omega_nu_fid = cf.omega_ncdm(None,                           
+                                                self.m_nu_fid,                
+                                                3.,                             
+                                                "neutrino")
+            self.omega_ncdm_fid = self.omega_chi_fid+self.omega_nu_fid
+
         self.kp = cf.k_pivot() # Units [Mpc^-1]
 
         self.fsky, self.fcoverage_deg = cf.set_sky_cover(fsky, fcoverage_deg)
@@ -123,7 +146,9 @@ class forecast:
         self.spectra_mid = [cf.spectrum(
                                 cf.generate_data(
                                     dict(self.fid,      
-                                         **{'z_pk' : zval}),
+                                         **{'z_pk' : zval,
+                                            'm_ncdm' : str(self.M_chi_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid),
+                                            'deg_ncdm' : str(self.N_ncdm_fid)+', '+str(1.0)+', '+str(1.0)+', '+str(1.0) }),
                                     self.classdir,       
                                     self.datastore)[0:-20],
                                 fsky=self.fsky,
@@ -162,6 +187,29 @@ class forecast:
             if self.relic_vary=="N_ncdm": 
                 self.N_ncdm_high, self.N_ncdm_low = self.generate_spectra(      
                     'deg_ncdm') 
+        elif self.forecast=='2relic': 
+            self.M_ncdm_high, self.M_ncdm_low = self.generate_spectra(
+#               'm_ncdm', (1.+self.dstep)*self.M_chi_fid, (1.-self.dstep)*self.M_chi_fid)
+                'm_ncdm', 
+                (str(self.M_chi_fid) + ', '
+                    + str((1.+self.dstep)*self.m_nu_fid) + ', '
+                    + str((1.+self.dstep)*self.m_nu_fid) + ', '
+                    + str((1.+self.dstep)*self.m_nu_fid)),
+                (str(self.M_chi_fid) + ', '                                     
+                    + str((1.-self.dstep)*self.m_nu_fid) + ', '                 
+                    + str((1.-self.dstep)*self.m_nu_fid) + ', '                 
+                    + str((1.-self.dstep)*self.m_nu_fid)))
+            self.N_ncdm_high, self.N_ncdm_low = self.generate_spectra(
+                'deg_ncdm', #(1.+self.dstep)*self.deg_ncdm_fid, (1.-self.dstep)*self.deg_ncdm_fid) 
+                (str((1.+self.gstep)*self.N_ncdm_fid) + ', '
+                    + str(1.) + ', '
+                    + str(1.) + ', '
+                    + str(1.)),
+                (str((1.-self.gstep)*self.N_ncdm_fid) + ', '                    
+                    + str(1.) + ', '                                            
+                    + str(1.) + ', '                                            
+                    + str(1.)))
+ 
 
         # Calculate centered derivatives about fiducial cosmo at each z 
         if cf.ANALYTIC_A_S==False: 
@@ -259,6 +307,28 @@ class forecast:
                     np.array(self.dlogPdN_ncdm[zidx])                              
                     * np.array(1./self.omega_ncdm_fid)                          
                     for zidx, zval in enumerate(self.z_steps)]  
+        elif self.forecast=='2relic': 
+            self.dPdN_ncdm, self.dlogPdN_ncdm = cf.dPs_array(               
+                self.N_ncdm_low,                                            
+                self.N_ncdm_high,                                           
+                self.N_ncdm_fid*self.gstep)                                 
+            self.dPdM_ncdm, self.dlogPdM_ncdm = cf.dPs_array(               
+                self.M_ncdm_low,                                            
+                self.M_ncdm_high,                                           
+                self.M_nu_fid*self.dstep) 
+            self.dPdomega_ncdm = [                                          
+                ((np.array(self.dPdN_ncdm[zidx])
+                * (cf.NEUTRINO_SCALE_FACTOR/self.M_chi_fid)
+                * np.power(cf.RELIC_TEMP_SCALE / self.T_chi_fid, 3.))
+                + (np.array(self.dPdM_ncdm[zidx])*cf.NEUTRINO_SCALE_FACTOR)) 
+                for zidx, zval in enumerate(self.z_steps)]                  
+            self.dlogPdomega_ncdm = [                                       
+                ((np.array(self.dlogPdN_ncdm[zidx])                                
+                * (cf.NEUTRINO_SCALE_FACTOR/self.M_chi_fid)                     
+                * np.power(cf.RELIC_TEMP_SCALE / self.T_chi_fid, 3.))            
+                + (np.array(self.dlogPdM_ncdm[zidx])*cf.NEUTRINO_SCALE_FACTOR))
+                for zidx, zval in enumerate(self.z_steps)]
+
  
     def gen_rsd(self, mu): 
         '''Given mu, creates len(z_steps) array. Each elem is len(k_table).'''
@@ -270,7 +340,10 @@ class forecast:
             if self.forecast=="neutrino":                                           
                 relic = False                                                       
             elif self.forecast=="relic":                                            
-                relic = True 
+                relic = True
+            elif self.forecast=='2relic':
+                #relic = self.M_chi_fid 
+                relic = self.m_nu_fid 
 
             fiducial = {'omega_b' : self.omega_b_fid, 
                         'omega_cdm' : self.omega_cdm_fid, 
@@ -278,7 +351,9 @@ class forecast:
                         'h' : self.h_fid, 
                         'mu' : mu,
                         'relic' : relic,
-                        'T_ncdm' : self.T_ncdm_fid,
+                        'M_chi' : self.M_chi_fid, 
+                        'm_nu' : self.m_nu_fid,  
+                        'T_ncdm' : self.T_chi_fid,
                         'lss_survey_name' : self.lss_survey_name,
                         'delta_L' : self.delta_L_fid,
                         'b0' : self.b0_fid}
@@ -339,20 +414,26 @@ class forecast:
                     'D' : self.spectra_mid[zidx].D})) 
                 for kidx, kval in enumerate(self.k_table[zidx])]                                           
                 for zidx, zval in enumerate(self.z_steps)]
-    
-            if self.relic_vary=="T_ncdm": 
-                self.dlogRSDdT_ncdm = (np.array(self.dlogRSDdomega_ncdm)            
-                    * cf.domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))    
-            elif self.relic_vary=="m_ncdm": 
-                self.dlogRSDdM_ncdm = (np.array(self.dlogRSDdomega_ncdm) 
-                    * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid))
-            elif self.relic_vary=="N_ncdm": 
+            if self.forecast=='2relic': 
                 self.dlogRSDdN_ncdm = (np.array(self.dlogRSDdomega_ncdm)
-                    * cf.omega_ncdm(
-                        self.T_ncdm_fid, 
-                        self.m_ncdm_fid,        
-                        self.N_ncdm_fid, 
-                        'relic'))
+                    * ((self.M_chi_fid/cf.NEUTRINO_SCALE_FACTOR)
+                        * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))
+                self.dlogRSDdM_ncdm = (np.array(self.dlogRSDdomega_ncdm)
+                    * (1./cf.NEUTRINO_SCALE_FACTOR))
+            else:
+                if self.relic_vary=="T_ncdm": 
+                    self.dlogRSDdT_ncdm = (np.array(self.dlogRSDdomega_ncdm)            
+                        * cf.domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))    
+                elif self.relic_vary=="m_ncdm": 
+                    self.dlogRSDdM_ncdm = (np.array(self.dlogRSDdomega_ncdm) 
+                        * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid))
+                elif self.relic_vary=="N_ncdm": 
+                    self.dlogRSDdN_ncdm = (np.array(self.dlogRSDdomega_ncdm)
+                        * cf.omega_ncdm(
+                            self.T_ncdm_fid, 
+                            self.m_ncdm_fid,        
+                            self.N_ncdm_fid, 
+                            'relic'))
     
             self.dlogRSDdh = [[cf.derivative(                                 
                 cf.log_rsd,                                                         
@@ -455,6 +536,12 @@ class forecast:
             self.dlogRSDdomega_ncdm = [[0.
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]
+            self.dlogRSDdN_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
+            self.dlogRSDdM_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
             if self.relic_vary=="T_ncdm": 
                 self.dlogRSDdT_ncdm = [[0.
                     for kidx, kval in enumerate(self.k_table[zidx])]                
@@ -517,20 +604,27 @@ class forecast:
                 self.dstep, **dict(fiducial, **{'z' : zval, 'k' :  kval}))           
                 for kidx, kval in enumerate(self.k_table[zidx])]                                           
                 for zidx, zval in enumerate(self.z_steps)]
-    
-            if self.relic_vary=="T_ncdm":                                            
-                self.dlogFOGdT_ncdm = (np.array(self.dlogFOGdomega_ncdm)            
-                    * cf.domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))     
-            elif self.relic_vary=="m_ncdm":                                                                   
-                self.dlogFOGdM_ncdm = (np.array(self.dlogFOGdomega_ncdm)            
-                    * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid))
-            elif self.relic_vary=="N_ncdm":
-                self.dlogFOGdN_ncdm = (np.array(self.dlogFOGdomega_ncdm)
-                    * cf.omega_ncdm(
-                        self.T_ncdm_fid,
-                        self.m_ncdm_fid,
-                        self.N_ncdm_fid,
-                        'relic'))   
+
+            if self.forecast=='2relic':                                         
+                self.dlogFOGdN_ncdm = (np.array(self.dlogFOGdomega_ncdm)        
+                    * ((self.M_chi_fid/cf.NEUTRINO_SCALE_FACTOR)                
+                        * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))    
+                self.dlogFOGdM_ncdm = (np.array(self.dlogFOGdomega_ncdm)        
+                    * (1./cf.NEUTRINO_SCALE_FACTOR))                            
+            else:  
+                if self.relic_vary=="T_ncdm":                                            
+                    self.dlogFOGdT_ncdm = (np.array(self.dlogFOGdomega_ncdm)            
+                        * cf.domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))     
+                elif self.relic_vary=="m_ncdm":                                                                   
+                    self.dlogFOGdM_ncdm = (np.array(self.dlogFOGdomega_ncdm)            
+                        * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid))
+                elif self.relic_vary=="N_ncdm":
+                    self.dlogFOGdN_ncdm = (np.array(self.dlogFOGdomega_ncdm)
+                        * cf.omega_ncdm(
+                            self.T_ncdm_fid,
+                            self.m_ncdm_fid,
+                            self.N_ncdm_fid,
+                            'relic'))   
     
             self.dlogFOGdh = [[cf.derivative(cf.log_fog, 'h', self.dstep,           
                 **dict(fiducial, **{'z' : zval, 'k' :  kval}))                      
@@ -557,7 +651,12 @@ class forecast:
             self.dlogFOGdomega_ncdm = [[0.
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]                      
-                                                                                
+            self.dlogFOGdN_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]
+            self.dlogFOGdM_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]                                                                                
             if self.relic_vary=="T_ncdm":                                        
                 self.dlogFOGdT_ncdm = [[0.
                     for kidx, kval in enumerate(self.k_table[zidx])]                
@@ -612,20 +711,27 @@ class forecast:
                 self.dstep, **dict(fiducial, **{'z' : zval, 'z_fid' : zval}))                    
                 for kidx, kval in enumerate(self.k_table[zidx])] 
                 for zidx, zval in enumerate(self.z_steps)]
-    
-            if self.relic_vary=="T_ncdm":                                            
-                self.dlogAPdT_ncdm = (np.array(self.dlogAPdomega_ncdm)            
-                    * cf.domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))     
-            elif self.relic_vary=="m_ncdm":                                                                   
-                self.dlogAPdM_ncdm = (np.array(self.dlogAPdomega_ncdm)            
-                    * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid))   
-            elif self.relic_vary=="N_ncdm":                                                                  
-                self.dlogAPdN_ncdm = (np.array(self.dlogAPdomega_ncdm)            
-                    * cf.omega_ncdm(
-                        self.T_ncdm_fid,
-                        self.m_ncdm_fid,
-                        self.N_ncdm_fid,
-                        'relic'))  
+
+            if self.forecast=='2relic':                                         
+                self.dlogAPdN_ncdm = (np.array(self.dlogAPdomega_ncdm)        
+                    * ((self.M_chi_fid/cf.NEUTRINO_SCALE_FACTOR)                
+                        * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))    
+                self.dlogAPdM_ncdm = (np.array(self.dlogAPdomega_ncdm)        
+                    * (1./cf.NEUTRINO_SCALE_FACTOR))                            
+            else:     
+                if self.relic_vary=="T_ncdm":                                            
+                    self.dlogAPdT_ncdm = (np.array(self.dlogAPdomega_ncdm)            
+                        * cf.domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))     
+                elif self.relic_vary=="m_ncdm":                                                                   
+                    self.dlogAPdM_ncdm = (np.array(self.dlogAPdomega_ncdm)            
+                        * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid))   
+                elif self.relic_vary=="N_ncdm":                                                                  
+                    self.dlogAPdN_ncdm = (np.array(self.dlogAPdomega_ncdm)            
+                        * cf.omega_ncdm(
+                            self.T_ncdm_fid,
+                            self.m_ncdm_fid,
+                            self.N_ncdm_fid,
+                            'relic'))  
 
             self.dlogAPdh = [[cf.derivative(cf.log_ap, 'h', self.dstep,             
                 **dict(fiducial, **{'z' : zval, 'z_fid' : zval}))                   
@@ -644,15 +750,21 @@ class forecast:
             self.dlogAPdomega_ncdm = [[0.
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]
+            self.dlogAPdN_ncdm = [[0.                                       
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
+            self.dlogAPdM_ncdm = [[0.                                       
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)] 
             if self.relic_vary=="T_ncdm":
                 self.dlogAPdT_ncdm = [[0.
                     for kidx, kval in enumerate(self.k_table[zidx])]                
                     for zidx, zval in enumerate(self.z_steps)]
-            elif self.reliv_vary=="m_ncdm":
+            elif self.relic_vary=="m_ncdm":
                 self.dlogAPdM_ncdm = [[0.
                     for kidx, kval in enumerate(self.k_table[zidx])]                
                     for zidx, zval in enumerate(self.z_steps)]
-            elif self.reliv_vary=="N_ncdm":                                     
+            elif self.relic_vary=="N_ncdm":                                     
                 self.dlogAPdN_ncdm = [[0.                                       
                     for kidx, kval in enumerate(self.k_table[zidx])]                
                     for zidx, zval in enumerate(self.z_steps)]  
@@ -825,19 +937,26 @@ class forecast:
             self.dlogCOVdomega_ncdm = (dlogPdk * dkdomegancdm 
                 + dlogPdmu * dmudomegancdm)
     
-            if self.relic_vary=="T_ncdm":                                            
-                self.dlogCOVdT_ncdm = (np.array(self.dlogCOVdomega_ncdm)            
-                    * cf.domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))     
-            elif self.relic_vary=="m_ncdm":                                                                   
-                self.dlogCOVdM_ncdm = (np.array(self.dlogCOVdomega_ncdm)            
-                    * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid))   
-            elif self.relic_vary=="N_ncdm":                                                                  
-                self.dlogCOVdN_ncdm = (np.array(self.dlogCOVdomega_ncdm)            
-                    * cf.omega_ncdm(
-                        self.T_ncdm_fid,
-                        self.m_ncdm_fid,
-                        self.N_ncdm_fid,
-                        'relic'))  
+            if self.forecast=='2relic':                                         
+                self.dlogCOVdN_ncdm = (np.array(self.dlogCOVdomega_ncdm)        
+                    * ((self.M_chi_fid/cf.NEUTRINO_SCALE_FACTOR)                
+                        * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))    
+                self.dlogCOVdM_ncdm = (np.array(self.dlogCOVdomega_ncdm)        
+                    * (1./cf.NEUTRINO_SCALE_FACTOR))                            
+            else: 
+                if self.relic_vary=="T_ncdm":                                            
+                    self.dlogCOVdT_ncdm = (np.array(self.dlogCOVdomega_ncdm)            
+                        * cf.domega_ncdm_dT_ncdm(self.T_ncdm_fid, self.M_ncdm_fid))     
+                elif self.relic_vary=="m_ncdm":                                                                   
+                    self.dlogCOVdM_ncdm = (np.array(self.dlogCOVdomega_ncdm)            
+                        * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid))   
+                elif self.relic_vary=="N_ncdm":                                                                  
+                    self.dlogCOVdN_ncdm = (np.array(self.dlogCOVdomega_ncdm)            
+                        * cf.omega_ncdm(
+                            self.T_ncdm_fid,
+                            self.m_ncdm_fid,
+                            self.N_ncdm_fid,
+                            'relic'))  
     
             self.dlogCOVdh = (dlogPdk * dkdh 
                 + dlogPdmu * dmudh)
@@ -854,6 +973,12 @@ class forecast:
             self.dlogCOVdomega_ncdm = [[0.
                 for kidx, kval in enumerate(self.k_table[zidx])]                
                 for zidx, zval in enumerate(self.z_steps)]    
+            self.dlogCOVdN_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]
+            self.dlogCOVdM_ncdm = [[0.                                      
+                for kidx, kval in enumerate(self.k_table[zidx])]                
+                for zidx, zval in enumerate(self.z_steps)]
             if self.relic_vary=="T_ncdm":                                        
                 self.dlogCOVdT_ncdm = [[0.
                     for kidx, kval in enumerate(self.k_table[zidx])]                
@@ -1058,24 +1183,39 @@ class forecast:
                             + self.dlogCOVdomega_ncdm[zidx][kidx]
                             )
     
-                        if self.relic_vary=="T_ncdm": 
-                            dlogPdT_ncdm[zidx][kidx][muidx] = (                     
-                                dlogPdomega_ncdm[zidx][kidx][muidx]                 
-                                * cf.domega_ncdm_dT_ncdm(
-                                    self.T_ncdm_fid, self.M_ncdm_fid)) 
-                        elif self.relic_vary=="m_ncdm": 
+                        if self.forecast=='2relic': 
                             dlogPdM_ncdm[zidx][kidx][muidx] = (
-                                dlogPdomega_ncdm[zidx][kidx][muidx] 
-                                * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid)) 
-                        elif self.relic_vary=="N_ncdm":                         
-                            dlogPdN_ncdm[zidx][kidx][muidx] = (                 
-                                dlogPdomega_ncdm[zidx][kidx][muidx]             
-                                * cf.omega_ncdm(
-                                    self.T_ncdm_fid,
-                                    self.m_ncdm_fid,
-                                    self.N_ncdm_fid,
-                                    'relic')) 
-                        # ^^^Careful, this overwrites the earlier dP_g value. 
+                                self.dlogPdM_ncdm[zidx][kidx]
+                                + self.dlogRSDdM_ncdm[zidx][kidx]
+                                + self.dlogFOGdM_ncdm[zidx][kidx]
+                                + self.dlogAPdM_ncdm[zidx][kidx]
+                                + self.dlogCOVdM_ncdm[zidx][kidx]) 
+                            dlogPdN_ncdm[zidx][kidx][muidx] = (
+                                self.dlogPdN_ncdm[zidx][kidx]
+                                + self.dlogRSDdN_ncdm[zidx][kidx]
+                                + self.dlogFOGdN_ncdm[zidx][kidx]
+                                + self.dlogAPdN_ncdm[zidx][kidx]
+                                + self.dlogCOVdN_ncdm[zidx][kidx]
+                                ) 
+                        else: 
+                            if self.relic_vary=="T_ncdm": 
+                                dlogPdT_ncdm[zidx][kidx][muidx] = (                     
+                                    dlogPdomega_ncdm[zidx][kidx][muidx]                 
+                                    * cf.domega_ncdm_dT_ncdm(
+                                        self.T_ncdm_fid, self.M_ncdm_fid)) 
+                            elif self.relic_vary=="m_ncdm": 
+                                dlogPdM_ncdm[zidx][kidx][muidx] = (
+                                    dlogPdomega_ncdm[zidx][kidx][muidx] 
+                                    * cf.domega_ncdm_dM_ncdm(self.T_ncdm_fid)) 
+                            elif self.relic_vary=="N_ncdm":                         
+                                dlogPdN_ncdm[zidx][kidx][muidx] = (                 
+                                    dlogPdomega_ncdm[zidx][kidx][muidx]             
+                                    * cf.omega_ncdm(
+                                        self.T_ncdm_fid,
+                                        self.m_ncdm_fid,
+                                        self.N_ncdm_fid,
+                                        'relic')) 
+                            # ^^^Careful, this overwrites the earlier dP_g value. 
     
                         dlogPdsigmafog[zidx][kidx][muidx] = (                       
                             self.dlogFOGdsigmafog0[zidx][kidx]
@@ -1122,12 +1262,9 @@ class forecast:
             self.dlogPmdh = np.array(self.dlogPdh)
             self.dlogPmdtau_reio = np.array(self.dlogPdtau_reio)
             self.dlogPmdomega_ncdm = np.array(self.dlogPdomega_ncdm)
-            if self.relic_vary=="T_ncdm":  
-                self.dlogPmdT_ncdm  = np.array(self.dlogPdT_ncdm) 
-            elif self.relic_vary=="m_ncdm": 
-                self.dlogPmdM_ncdm = np.array(self.dlogPdM_ncdm)
-            elif self.relic_vary=="N_ncdm":                                     
-                self.dlogPmdN_ncdm = np.array(self.dlogPdN_ncdm)
+
+            self.dlogPmdM_ncdm = np.array(self.dlogPdM_ncdm)
+            self.dlogPmdN_ncdm = np.array(self.dlogPdN_ncdm)
 
             self.dlogPgdA_s = np.array(dlogPdA_s)
             self.dlogPgdn_s = np.array(dlogPdn_s)
@@ -1370,19 +1507,42 @@ class forecast:
         param,
         manual_high=None,
         manual_low=None):
-
         if (manual_high==None) and (manual_low==None): 
             step_high = (1. + self.dstep) * self.fid[param]
             step_low = (1. - self.dstep) * self.fid[param]
         else: 
             step_high = manual_high                         
             step_low = manual_low    
-                                         
+        if (param != 'm_ncdm') and (param != 'deg_ncdm'):
+            newdicthigh = dict(self.fid, **{
+                param : step_high, 
+                'm_ncdm' : (str(self.M_chi_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)),
+                'deg_ncdm' : (str(self.N_ncdm_fid)+', '+str(1.0)+', '+str(1.0)+', '+str(1.0))})
+            newdictlow = dict(self.fid, **{                                    
+                param : step_low,                                              
+                'm_ncdm' : (str(self.M_chi_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)),
+                'deg_ncdm' : (str(self.N_ncdm_fid)+', '+str(1.0)+', '+str(1.0)+', '+str(1.0))})
+        elif (param == 'm_ncdm'): 
+            newdicthigh = dict(self.fid, **{                                    
+                param : step_high,                                              
+                'deg_ncdm' : (str(self.N_ncdm_fid)+', '+str(1.0)+', '+str(1.0)+', '+str(1.0))})
+            newdictlow = dict(self.fid, **{                                     
+                param : step_low,                                               
+                'deg_ncdm' : (str(self.N_ncdm_fid)+', '+str(1.0)+', '+str(1.0)+', '+str(1.0))})
+        elif (param == 'deg_ncdm'): 
+            newdicthigh = dict(self.fid, **{                                    
+                param : step_high,                                              
+                'm_ncdm' : (str(self.M_chi_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)),
+                })
+            newdictlow = dict(self.fid, **{                                     
+                param : step_low,                                               
+                'm_ncdm' : (str(self.M_chi_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)+', '+str(self.m_nu_fid)),
+                })
+
+
         spectra_high = [cf.spectrum(                                            
                             cf.generate_data(                                   
-                                dict(self.fid,                                  
-                                     **{'z_pk' : zval,                             
-                                     param : step_high}), 
+                                dict(newdicthigh, **{'z_pk' : zval}), 
                                 self.classdir,                                  
                                 self.datastore)[0:-20],                         
                             self.fsky,
@@ -1391,9 +1551,7 @@ class forecast:
                         for zidx, zval in enumerate(self.z_steps)]                                  
         spectra_low = [cf.spectrum(                                             
                             cf.generate_data(                                    
-                                dict(self.fid,                                   
-                                    **{'z_pk' : zval,                              
-                                    param : step_low}),  
+                                dict(newdictlow, **{'z_pk' : zval}),  
                                 self.classdir,                                   
                                 self.datastore)[0:-20],                          
                             self.fsky,
@@ -1673,7 +1831,53 @@ class forecast:
                         fmat.iloc[index,:] *= 1./(dM_ncdm_domega_ncdm*dm_dM)            
                         fmat = fmat.rename(                                     
                             index=str, columns={"omega_ncdm": "m_ncdm"}) 
-
+                    elif (pval=='N_ncdm') and ('T_ncdm[gamma]' in fmat.columns): 
+                        print('Converting T_ncdm[gamma] --> N_ncdm...')
+                        index = fmat.columns.get_loc('T_ncdm[gamma]') 
+                        dT_ncdm_dN_ncdm = cf.dT_ncdm_dN_ncdm(
+                            self.m_ncdm_fid, 
+                            self.omega_ncdm_fid,
+                            self.N_ncdm_fid) 
+                        dTcmb_dT = 1./cf.dT_dTcmb(self.T_cmb_fid) 
+                        dTcmb_dN_ncdm = dTcmb_dT * dT_ncdm_dN_ncdm 
+                        fmat.iloc[:,index] *= dTcmb_dN_ncdm    
+                        fmat.iloc[index,:] *= dTcmb_dN_ncdm
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"T_ncdm[gamma]": "N_ncdm"})  
+                elif self.forecast=='2relic':     
+                    if (pval=='N_ncdm') and ('T_ncdm[gamma]' in fmat.columns):
+                        print('Converting T_ncdm[gamma] --> N_ncdm...')         
+                        index = fmat.columns.get_loc('T_ncdm[gamma]')           
+                        dT_ncdm_dN_ncdm = cf.dT_ncdm_dN_ncdm(                   
+                            self.m_ncdm_fid,                                    
+                            self.omega_ncdm_fid,                                
+                            self.N_ncdm_fid)                                    
+                        dTcmb_dT = 1./cf.dT_dTcmb(self.T_cmb_fid)               
+                        dTcmb_dN_ncdm = dTcmb_dT * dT_ncdm_dN_ncdm              
+                        fmat.iloc[:,index] *= dTcmb_dN_ncdm                     
+                        fmat.iloc[index,:] *= dTcmb_dN_ncdm                     
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"T_ncdm[gamma]": "N_ncdm"})
+                    if (pval=='N_ncdm') and ('T_ncdm' in fmat.columns):  
+                        print('Converting T_ncdm --> N_ncdm...')         
+                        index = fmat.columns.get_loc('T_ncdm')           
+                        dT_ncdm_dN_ncdm = (
+                            (-1. / (3. * self.omega_chi_fid))
+                            * (self.M_chi_fid /93.14)
+                            * np.power(self.T_chi_fid, 2.)
+                            * np.power(1.95, -3))                   
+                        fmat.iloc[:,index] *= dT_ncdm_dN_ncdm                     
+                        fmat.iloc[index,:] *= dT_ncdm_dN_ncdm                     
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"T_ncdm": "N_ncdm"}) 
+                    if (pval=='M_ncdm') and ('m_ncdm' in fmat.columns):         
+                        print('Converting m_ncdm --> M_ncdm...')                
+                        index = fmat.columns.get_loc('m_ncdm')                  
+                        dm_ncdm_dM_ncdm = (1./3.)                                    
+                        fmat.iloc[:,index] *= dm_ncdm_dM_ncdm                   
+                        fmat.iloc[index,:] *= dm_ncdm_dM_ncdm                   
+                        fmat = fmat.rename(                                     
+                            index=str, columns={"m_ncdm": "M_ncdm"}) 
         for pidx, pval in enumerate(fmat.columns): 
             if pval != self.fisher_order[pidx]:
                 print(fmat.columns)

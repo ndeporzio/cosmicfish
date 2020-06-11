@@ -74,18 +74,50 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
         end_ini = os.path.join(config_directory(), tstamp+".ini")
         os.system('cp ' + start_ini + ' ' + end_ini)
         for key, value in modify.items():
-            if (key=='m_ncdm') or (key=='T_ncdm') :
-                if modify['N_ncdm']==3: # Degenerate neutrinos
-                    print('#'+key+'-->'
-                          + key + ' = ' + str(value) 
-                          + ", " + str(value) 
-                          + ", " + str(value))
-                    replace_text(end_ini, '#'+key, key + ' = ' + str(value) 
-                                                   + ", " + str(value) 
-                                                   + ", " + str(value))
-                if modify['N_ncdm']==1: # Light relics
-                    print('#'+key+'-->'+ key + ' = ' + str(value))
-                    replace_text(end_ini, '#'+key, key + ' = ' + str(value)) 
+#            if (key=='m_ncdm') or (key=='T_ncdm') :
+#                if modify['N_ncdm']==3: # Degenerate neutrinos
+#                    print('#'+key+'-->'
+#                          + key + ' = ' + str(value) 
+#                          + ", " + str(value) 
+#                          + ", " + str(value))
+#                    replace_text(end_ini, '#'+key, key + ' = ' + str(value) 
+#                                                   + ", " + str(value) 
+#                                                   + ", " + str(value))
+#                if modify['N_ncdm']==1: # Light relics
+#                    print('#'+key+'-->'+ key + ' = ' + str(value))
+#                    replace_text(end_ini, '#'+key, key + ' = ' + str(value)) 
+#            else: 
+
+            if (key=='T_ncdm'): 
+                print('#'+key+'-->'                                        
+                        + key + ' = ' + str(value)                           
+                        + ", " + str(1.95/2.726)                                  
+                        + ", " + str(1.95/2.726)
+                        + ", " + str(1.95/2.726))                                 
+                replace_text(end_ini, '#'+key, key + ' = ' + str(value)    
+                                                + ", " + str(1.95/2.726)         
+                                                + ", " + str(1.95/2.726)
+                                                + ", " + str(1.95/2.726))
+            #elif (key=='m_ncdm'):                                                 
+            #    print('#'+key+'-->'                                             
+            #            + key + ' = ' + str(0.01)  #WRONG!                            
+            #            + ", " + str(value)                                
+            #            + ", " + str(value)                                
+            #            + ", " + str(value))                               
+            #    replace_text(end_ini, '#'+key, key + ' = ' + str(value)         
+            #                                    + ", " + str(0.02)        
+            #                                    + ", " + str(0.02)        
+            #                                    + ", " + str(0.02))
+            #elif (key=='deg_ncdm'):                                               
+            #    print('#'+key+'-->'                                             
+            #            + key + ' = ' + str(value)                              
+            #            + ", " + str(1.)                                      
+            #            + ", " + str(1.)                                      
+            #            + ", " + str(1.))                                     
+            #    replace_text(end_ini, '#'+key, key + ' = ' + str(value)         
+            #                                    + ", " + str(1.)              
+            #                                    + ", " + str(1.)              
+            #                                    + ", " + str(1.)) 
             else: 
                 print('#'+key+'-->'+ key + ' = ' + str(value))
                 replace_text(end_ini, '#'+key, key + ' = ' + str(value))
@@ -96,7 +128,8 @@ def generate_data(fiducial, classdir, datastore, **kwargs):
         os.system('cd ' + classdir)
         os.chdir(classdir)
         os.system('pwd')
-        os.system('./class ' + end_ini)
+        os.system('./class ' + end_ini + ' cl_permille.pre')
+        print('./class ' + end_ini + ' cl_permille.pre') 
         print("Dataset generated at: " + newdatapath)
         os.system('mv ' 
                   + os.path.join(classdir, 'output') 
@@ -168,19 +201,17 @@ def is_data(path, **kwargs):
         text = open(correct_path(path)).read()                                 
         # Check if it contains provided parameter values                       
         for key, val in kwargs.items():
-            if (key=='m_ncdm') or (key=="T_ncdm"):
-                if (kwargs['N_ncdm']==3): 
-                    test = ('\n'
-                            + key 
-                            + ' = '
-                            + str(val) + ', '
-                            + str(val) + ', '
-                            + str(val)
-                            + '\n')                                         
-                else: 
-                    test = ('\n' + key + ' = ' + str(val) + '\n')
+            if (key=="T_ncdm"): 
+                test = ('\n'
+                        + key 
+                        + ' = '
+                        + str(val) + ', '
+                        + str(1.95/2.726) + ', '
+                        + str(1.95/2.726) + ', '
+                        + str(1.95/2.726)
+                        + '\n')                                         
             else: 
-                test = (key+' = '+str(val)+'\n')     
+                test = ('\n' + key + ' = ' + str(val) + '\n')
             if test not in text:
                 check += 1                                                     
         if check > 0:                                                          
