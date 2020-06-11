@@ -76,7 +76,7 @@ ps21_forecastset = [[cf.forecast(
     AP=True,
     COV=True) for fididx, fidval in enumerate(fidrowvals)] for fidrowidx, fidrowvals in enumerate(ps21_fiducialset)]
 
-dill.load_session('/n/home02/ndeporzio/projects/cosmicfish/cfworkspace/results/51392654/6_1_ps21.db')
+#dill.load_session('')
 for frowidx, frowval in enumerate(ps21_forecastset): 
     for fidx, fcst in enumerate(frowval): 
         if type(fcst.fisher)==type(None):
