@@ -22,7 +22,8 @@ class forecast:
                  fsky=None, 
                  fcoverage_deg=None,
                  dstep=0.008,
-                 gstep=0.1, 
+                 gstep=0.1,
+		 mchistep=0.01, 
                  RSD=True,  
                  FOG=True, 
                  AP=True, 
@@ -199,6 +200,17 @@ class forecast:
                     + str((1.-self.dstep)*self.m_nu_fid) + ', '                 
                     + str((1.-self.dstep)*self.m_nu_fid) + ', '                 
                     + str((1.-self.dstep)*self.m_nu_fid)))
+            self.M_chi_high, self.M_chi_low = self.generate_spectra(
+#               'm_ncdm', (1.+self.dstep)*self.M_chi_fid, (1.-self.dstep)*self.M_chi_fid)
+                'm_ncdm', 
+                (str((1.+self.mchistep)*self.M_chi_fid) + ', '
+                    + str((1.)*self.m_nu_fid) + ', '
+                    + str((1.)*self.m_nu_fid) + ', '
+                    + str((1.)*self.m_nu_fid)),
+                (str((1.-self.mchistep)*self.M_chi_fid) + ', '
+                    + str((1.)*self.m_nu_fid) + ', '
+                    + str((1.)*self.m_nu_fid) + ', '
+                    + str((1.)*self.m_nu_fid)))
             self.N_ncdm_high, self.N_ncdm_low = self.generate_spectra(
                 'deg_ncdm', #(1.+self.dstep)*self.deg_ncdm_fid, (1.-self.dstep)*self.deg_ncdm_fid) 
                 (str((1.+self.gstep)*self.N_ncdm_fid) + ', '
@@ -316,6 +328,10 @@ class forecast:
                 self.M_ncdm_low,                                            
                 self.M_ncdm_high,                                           
                 self.M_nu_fid*self.dstep) 
+            self.dPdM_chi, self.dlogPdM_chi = cf.dPs_array(
+                self.M_chi_low,
+                self.M_chi_high,
+                self.M_chi_fid*self.mchistep)
             self.dPdomega_ncdm = [                                          
                 ((np.array(self.dPdN_ncdm[zidx])
                 * (cf.NEUTRINO_SCALE_FACTOR/self.M_chi_fid)
@@ -417,6 +433,9 @@ class forecast:
             if self.forecast=='2relic': 
                 self.dlogRSDdN_ncdm = (np.array(self.dlogRSDdomega_ncdm)
                     * ((self.M_chi_fid/cf.NEUTRINO_SCALE_FACTOR)
+                        * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))
+		self.dlogRSDdM_chi = (np.array(self.dlogRSDdomega_ncdm)
+		    * ((self.N_ncdm_fid/cf.NEUTRINO_SCALE_FACTOR)
                         * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))
                 self.dlogRSDdM_ncdm = (np.array(self.dlogRSDdomega_ncdm)
                     * (1./cf.NEUTRINO_SCALE_FACTOR))
@@ -609,6 +628,9 @@ class forecast:
                 self.dlogFOGdN_ncdm = (np.array(self.dlogFOGdomega_ncdm)        
                     * ((self.M_chi_fid/cf.NEUTRINO_SCALE_FACTOR)                
                         * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))    
+                self.dlogFOGdM_chi = (np.array(self.dlogFOGdomega_ncdm)   
+                    * ((self.N_ncdm_fid/cf.NEUTRINO_SCALE_FACTOR)
+                        * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))
                 self.dlogFOGdM_ncdm = (np.array(self.dlogFOGdomega_ncdm)        
                     * (1./cf.NEUTRINO_SCALE_FACTOR))                            
             else:  
@@ -716,6 +738,9 @@ class forecast:
                 self.dlogAPdN_ncdm = (np.array(self.dlogAPdomega_ncdm)        
                     * ((self.M_chi_fid/cf.NEUTRINO_SCALE_FACTOR)                
                         * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))    
+                self.dlogAPdM_chi = (np.array(self.dlogAPdomega_ncdm)
+                    * ((self.N_ncdm_fid/cf.NEUTRINO_SCALE_FACTOR)
+                        * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))
                 self.dlogAPdM_ncdm = (np.array(self.dlogAPdomega_ncdm)        
                     * (1./cf.NEUTRINO_SCALE_FACTOR))                            
             else:     
@@ -941,6 +966,9 @@ class forecast:
                 self.dlogCOVdN_ncdm = (np.array(self.dlogCOVdomega_ncdm)        
                     * ((self.M_chi_fid/cf.NEUTRINO_SCALE_FACTOR)                
                         * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))    
+                self.dlogCOVdM_chi = (np.array(self.dlogCOVdomega_ncdm)
+                    * ((self.N_ncdm_fid/cf.NEUTRINO_SCALE_FACTOR)
+                        * np.power(self.T_chi_fid/cf.RELIC_TEMP_SCALE, 3.)))
                 self.dlogCOVdM_ncdm = (np.array(self.dlogCOVdomega_ncdm)        
                     * (1./cf.NEUTRINO_SCALE_FACTOR))                            
             else: 
@@ -1053,6 +1081,8 @@ class forecast:
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
             dlogPdM_ncdm = np.zeros(                                            
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals))) 
+            dlogPdM_chi = np.zeros(
+                (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
             dlogPdT_ncdm = np.zeros(                                                
                 (len(self.z_steps), len(self.k_table[0]), len(mu_vals)))
             dlogPdN_ncdm = np.zeros(                                            
@@ -1190,6 +1220,12 @@ class forecast:
                                 + self.dlogFOGdM_ncdm[zidx][kidx]
                                 + self.dlogAPdM_ncdm[zidx][kidx]
                                 + self.dlogCOVdM_ncdm[zidx][kidx]) 
+                            dlogPdM_chi[zidx][kidx][muidx] = (
+                                self.dlogPdM_chi[zidx][kidx]
+                                + self.dlogRSDdM_chi[zidx][kidx]
+                                + self.dlogFOGdM_chi[zidx][kidx]
+                                + self.dlogAPdM_chi[zidx][kidx]
+                                + self.dlogCOVdM_chi[zidx][kidx])
                             dlogPdN_ncdm[zidx][kidx][muidx] = (
                                 self.dlogPdN_ncdm[zidx][kidx]
                                 + self.dlogRSDdN_ncdm[zidx][kidx]
@@ -1264,6 +1300,7 @@ class forecast:
             self.dlogPmdomega_ncdm = np.array(self.dlogPdomega_ncdm)
 
             self.dlogPmdM_ncdm = np.array(self.dlogPdM_ncdm)
+            self.dlogPmdM_chi = np.array(self.dlogPdM_chi)
             self.dlogPmdN_ncdm = np.array(self.dlogPdN_ncdm)
 
             self.dlogPgdA_s = np.array(dlogPdA_s)
@@ -1275,6 +1312,7 @@ class forecast:
             self.dlogPgdtau_reio = np.array(dlogPdtau_reio)
             self.dlogPgdomega_ncdm = np.array(dlogPdomega_ncdm)
             self.dlogPgdM_ncdm = np.array(dlogPdM_ncdm)
+            self.dlogPgdM_chi = np.array(dlogPdM_chi)
             self.dlogPgdT_ncdm = np.array(dlogPdT_ncdm)
             self.dlogPgdN_ncdm = np.array(dlogPdN_ncdm)
             self.dlogPgdsigmafog = np.array(dlogPdsigmafog)
@@ -1295,6 +1333,7 @@ class forecast:
             'M_ncdm' : self.dlogPgdM_ncdm,
             'omega_ncdm' : self.dlogPgdomega_ncdm,
             'T_ncdm' : self.dlogPgdT_ncdm,
+	    'M_chi' : self.dlogPgdM_chi, 
             'N_ncdm' : self.dlogPgdN_ncdm,
             'sigma_fog' : self.dlogPgdsigmafog,
             'b0' : self.dlogPgdb0,
@@ -1406,6 +1445,7 @@ class forecast:
                 'M_ncdm' : self.dlogPgdM_ncdm,                                      
                 'omega_ncdm' : self.dlogPgdomega_ncdm,                              
                 'T_ncdm' : self.dlogPgdT_ncdm,
+		'M_chi' : self.dlogPgdM_chi, 
                 'N_ncdm' : self.dlogPgdN_ncdm,                                      
                 'sigma_fog' : self.dlogPgdsigmafog,                                 
                 'b0' : self.dlogPgdb0,                                              
