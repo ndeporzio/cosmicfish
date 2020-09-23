@@ -25,6 +25,7 @@ cf.makedirectory(fp_resultsdir)
 # Specify resolution of numerical integrals                                     
 derivative_step = 0.008 # How much to vary parameter to calculate numerical derivative
 g_derivative_step = 0.1
+mchi_derivative_step = 0.008
 mu_integral_step = 0.05 # For calculating numerical integral wrt mu between -1 and 1 
 
 # Linda Fiducial Cosmology                                                      
@@ -88,7 +89,8 @@ fp_forecastset = [[cf.forecast(
     dNdz,                                                                       
     fcoverage_deg=skycover,                                                     
     dstep=derivative_step,
-    gstep=g_derivative_step,                                                       
+    gstep=g_derivative_step,  
+    mchistep=mchi_derivative_step,                                                     
     RSD=True,                                                                   
     FOG=True,                                                                   
     AP=True,                                                                    
@@ -109,7 +111,8 @@ for frowidx, frowval in enumerate(fp_forecastset):
                     'A_s',                                                      
                     'tau_reio',                                                 
                     'h',                                                        
-                    'N_ncdm',                                                   
+                    'N_ncdm',   
+                    'M_chi',                                                 
                     'M_ncdm',                                                   
                     'sigma_fog',                                                
                     'beta0',
