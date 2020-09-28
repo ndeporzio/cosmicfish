@@ -1,0 +1,20 @@
+* Install cosmicfish to python build
+
+* Run batch analysis script (job array index should start at 0)
+**** --sbatch boss_fine_plot_array.slurm --job-array=0-83
+
+* End up with a bunch of .db files in the scratch datastore directory
+
+* Make sure you didn't get any empty CLASS runs in the scratch datastore directory. Seems to happen randomly. Will need to delete those empty folders and re-do the forecast. 
+
+* Run the output_mover.py script
+
+* Now you have two versions of the same output in the results directory. The second version you just made will be in the "Parsed" directory. 
+
+* Copy the "Parsed" directory to local computer for Jupyter Notebook analysis and plotting. 
+
+* In "Testing2RelicForecast.ipynb" run the "Add Priors to Cluster Output" block. Note that you will need to run the Jupyter notebook with a python kernel that is the same python version that the cluster used to generate the .db Dill files. 
+
+* In "Testing2RelicForecast.ipynb" in the "Plot Errors" block, run the "Forecast Class Definition" block. 
+
+* Use the "forecast(...)" class to do your analysis... 
