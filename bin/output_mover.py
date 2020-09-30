@@ -1,7 +1,7 @@
 import os
 import shutil
 
-lss_survey = 'BOSS' # 'BOSS' or 'DESI' or 'EUCLID' 
+lss_survey = 'DESI' # 'BOSS' or 'DESI' or 'EUCLID' 
 plot_type = 'Fine' # 'Fine' or 'Grid' 
 results_dir_name = 'FINAL_RESULTS_18SEP2020'
 
