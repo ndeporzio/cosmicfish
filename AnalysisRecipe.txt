@@ -1,13 +1,13 @@
 * Install cosmicfish to python build
 
 * Run batch analysis script (job array index should start at 0)
-**** --sbatch boss_fine_plot_array.slurm --job-array=0-83
+**** --sbatch --array=0-83 boss_fine_plot_array.slurm
 
 * End up with a bunch of .db files in the scratch datastore directory
 
 * Make sure you didn't get any empty CLASS runs in the scratch datastore directory. Seems to happen randomly. Will need to delete those empty folders and re-do the forecast. 
 
-* Run the output_mover.py script
+* Run the output_mover.py script using python3
 
 * Now you have two versions of the same output in the results directory. The second version you just made will be in the "Parsed" directory. 
 
